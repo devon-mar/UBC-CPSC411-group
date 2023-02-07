@@ -1,7 +1,7 @@
 #lang racket
 
 (module+ test
-  (require rackunit cpsc411/compiler-lib cpsc411/2c-run-time "compiler.rkt")
+  (require rackunit cpsc411/compiler-lib cpsc411/2c-run-time "compiler-m2.rkt")
 
   ; generate-x64 tests
   (check-equal? (generate-x64 '(begin)) "\n")

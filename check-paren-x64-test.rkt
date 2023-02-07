@@ -1,7 +1,7 @@
 #lang racket
 
 (module+ test
-  (require rackunit cpsc411/compiler-lib cpsc411/langs/v2 "compiler.rkt")
+  (require rackunit cpsc411/compiler-lib cpsc411/langs/v2 "compiler-m2.rkt")
 
   ; check-paren-x64 tests
   (define (check-paren-x64-success p)
