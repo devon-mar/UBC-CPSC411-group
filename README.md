@@ -11,3 +11,7 @@ To submit, make sure you most recent work is merged into this branch and this
 branch is pushed.
 
 For versions of the skeletons from prior versions of the course, see the tags.
+
+Exercise 2, interp-paren-x64 tests -> interp-paren-x64-test.rkt
+Exercise 2, check-paren-x64 tests -> check-paren-x64-test.rkt
+Exercise 2, all other tests -> compiler-test.rkt
