@@ -28,7 +28,7 @@
   ;; Computes the undead-in set for instruction t
   ;; given the undead-out set for t.
   ;;
-  ;; tail undead-set? undead-set-tree? -> (values undead-set-tree? undead-set?)
+  ;; tail undead-set? -> (values undead-set-tree? undead-set?)
   (define (undead-analysis-tail t uo)
     (-> any/c undead-set? 
         (values undead-set-tree? undead-set?))
@@ -270,9 +270,9 @@
     '((x.1)
       ()))
 
-	;; from book 2
-	(check-ust
-		'(v.1 w.2 x.3 y.4 z.5 t.6 p.1)
+  ;; from book 2
+  (check-ust
+    '(v.1 w.2 x.3 y.4 z.5 t.6 p.1)
     '(begin
        (set! v.1 1)
        (set! w.2 46)
