@@ -4,10 +4,12 @@
   cpsc411/compiler-lib
   cpsc411/graph-lib)
 
+;; M3 Exercise 2
 ;; Asm-lang-v2/undead -> Asm-lang-v2/conflicts
 ;; Create a conflict graph for the Asm-lang program with the undead-set tree
 (define (conflict-analysis p)
   ;; (Asm-lang-v2/undead tail) undead-set-tree graph -> graph
+  ;; Returns the conflicts graph for the alocs in the tail
   (define (conflict-tail tail ust graph)
     (match (cons tail ust)
       [(cons `(halt ,_) _) graph]
@@ -17,6 +19,7 @@
        (conflict-tail tail (last ust) g)]))
   
   ;; (Asm-lang-v2/undead effect) undead-set-tree graph -> graph
+  ;; Returns the conflicts graph for the alocs in the effect
   (define (conflict-effect effect ust graph)
     (match (cons effect ust)
       [(cons `(set! ,aloc ,_) undead-out)
