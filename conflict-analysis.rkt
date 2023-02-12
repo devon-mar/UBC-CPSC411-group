@@ -9,7 +9,7 @@
 ;; Create a conflict graph for the Asm-lang program with the undead-set tree
 (define (conflict-analysis p)
   ;; (Asm-lang-v2/undead tail) undead-set-tree graph -> graph
-  ;; Returns the conflicts graph for the alocs in the tail
+  ;; Returns the updated conflict graph for the alocs in the tail
   (define (conflict-tail tail ust graph)
     (match (cons tail ust)
       [(cons `(halt ,_) _) graph]
@@ -19,10 +19,13 @@
        (conflict-tail tail (last ust) g)]))
   
   ;; (Asm-lang-v2/undead effect) undead-set-tree graph -> graph
-  ;; Returns the conflicts graph for the alocs in the effect
+  ;; Returns the updated conflict graph for the alocs in the effect
   (define (conflict-effect effect ust graph)
     (match (cons effect ust)
       [(cons `(set! ,aloc ,_) undead-out)
+       ;; for both:
+       ;; (set! aloc triv)
+       ;; (set! aloc_1 (binop aloc_1 triv))
        (for/fold ([g graph]) ([u undead-out])
          (if (equal? aloc u)
              g
@@ -47,9 +50,9 @@
   (define keys2 (sort (sequence->list (in-dict-keys g2)) symbol<?))
   (and (equal? (length g1) (length g2))
        (equal? keys1 keys2)
-       (for/and ([k1 keys1] [k2 keys2])
-         (define s1 (get-neighbors g1 k1))
-         (define s2 (get-neighbors g2 k2))
+       (for/and ([k keys1])
+         (define s1 (get-neighbors g1 k))
+         (define s2 (get-neighbors g2 k))
          (and
            (equal? (length s1) (length s2))
            (equal? (list->set s1) (list->set s2))))))
@@ -71,6 +74,14 @@
   (check-true (graph-equals?
     '((x.1 (x.2 x.3)) (x.2 (x.1 x.3)) (x.3 (x.4)))
     '((x.2 (x.3 x.1)) (x.3 (x.4)) (x.1 (x.3 x.2)))))
+  ; check extra vertex
+  (check-false (graph-equals?
+    '((x.1 (x.2 x.3)) (x.2 (x.1 x.3)) (x.3 (x.4)))
+    '((x.1 (x.2 x.3)) (x.2 (x.1 x.3)) (x.3 (x.4)) (x.4 ()))))
+  ; check extra edge
+  (check-false (graph-equals?
+    '((x.1 (x.2 x.3)) (x.2 (x.1 x.3)) (x.3 (x.4 x.2)) (x.4 (x.3)))
+    '((x.1 (x.2 x.3)) (x.2 (x.1 x.3)) (x.3 (x.4)) (x.4 (x.3)))))
   
   ;; conflict-analysis tests
   (check-equal?
