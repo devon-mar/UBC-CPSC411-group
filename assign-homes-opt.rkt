@@ -1,37 +1,45 @@
 #lang racket
 (require 
     cpsc411/compiler-lib
-    "compiler.rkt")
+    "assign-registers.rkt"
+    "undead-analysis.rkt"
+    "conflict-analysis.rkt"
+    "replace-locations.rkt"
+    "uncover-locals.rkt")
+(provide
+assign-homes-opt)
+
 ;; asm-lang-v2 -> nested-asm-lang-v2
-;; Replaces each abstract location with a physical location
+;; Replaces each abstract location with a physical location from
+;; graph coloring algorithm
 (define (assign-homes-opt p)
-    (define (set-triv triv mapping)
-        (match triv
-            [(? integer?) triv]
-            [_ (first (dict-ref mapping triv))]))
-    (define (set-effect p mapping)
-        (match p
-            [`(set! ,triv1 (,binop ,triv1 ,triv2))
-                (define new-triv1 (set-triv triv1 mapping))
-                (define new-triv2 (set-triv triv2 mapping))
-                `(set! ,new-triv1 (,binop ,new-triv1 ,new-triv2))]
-            [`(set! ,triv1 ,triv2)
-                (define new-triv1 (set-triv triv1 mapping))
-                (define new-triv2 (set-triv triv2 mapping))
-                `(set! ,new-triv1 , new-triv2)]
-            [`(begin ,effect ...)
-                `(begin ,@(map (lambda (e) (set-effect e mapping)) effect))]))
-    (define (set-tail p mapping)
-        (match p
-            [`(halt ,triv)
-                `(halt ,(set-triv triv mapping))]
-            [`(begin ,effect ... ,tail)
-                `(begin ,@(map (lambda (e) (set-effect e mapping)) effect) ,(set-tail tail mapping))]))
-    (define (assign-homes p) 
-        (match p
-            [`(module (,info ... (assignment (,mapping ...))) ,tail)
-                `(module (,@info (assignment ,mapping)) ,(set-tail tail mapping))]))
-    (assign-homes
+    (replace-locations 
         (assign-registers 
             (conflict-analysis 
-                (undead-analysis p)))))
+                (undead-analysis 
+                    (uncover-locals p))))))
+(module+ test
+    (require rackunit)
+    (check-true
+        (equal?
+            (assign-homes-opt 
+                '(module
+                    (begin
+                        (set! x.1 0)
+                        (halt x.1))))
+            `((begin (set! r15 0) (halt r15)))))
+    (check-true
+        (equal?
+            (assign-homes-opt '(module
+                (begin
+                    (set! x.1 0)
+                    (set! y.1 x.1)
+                    (set! w.1 1)
+                    (set! w.1 (+ w.1 y.1))
+                    (halt w.1))))
+            '(begin
+                (set! r15 0)
+                (set! r14 r15)
+                (set! r15 1)
+                (set! r15 (+ r15 r14))
+                (halt r15)))))
