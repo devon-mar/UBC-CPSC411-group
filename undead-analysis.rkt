@@ -5,6 +5,8 @@
   cpsc411/langs/v2
   cpsc411/langs/v2-reg-alloc)
 
+;; Milestone 3 - Exercise 1
+
 ;; Performs undeadness analysis, decorating the program with undead-set tree.
 ;; Only the info field of the program is modified.
 (define (undead-analysis p)
