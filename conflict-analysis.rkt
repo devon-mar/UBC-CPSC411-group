@@ -4,6 +4,8 @@
   cpsc411/compiler-lib
   cpsc411/graph-lib)
 
+(provide conflict-analysis)
+
 ;; M3 Exercise 2
 ;; Asm-lang-v2/undead -> Asm-lang-v2/conflicts
 ;; Create a conflict graph for the Asm-lang program with the undead-set tree
