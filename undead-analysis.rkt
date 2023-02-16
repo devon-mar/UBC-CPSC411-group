@@ -5,6 +5,8 @@
   cpsc411/langs/v2
   cpsc411/langs/v2-reg-alloc)
 
+(provide undead-analysis)
+
 ;; Milestone 3 - Exercise 1
 
 ;; Performs undeadness analysis, decorating the program with undead-set tree.
@@ -307,6 +309,4 @@
       (t.6 z.5)
       (z.5)
       ()))
-
-  (run-tests (v2-reg-alloc-public-test-suite undead-analysis))
 )
