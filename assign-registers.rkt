@@ -64,10 +64,13 @@
        (define-values (pop-aloc new-aloc-list new-conf-list) (pop-ld-aloc aloc-list conf-list))
        (define new-assignment (generate-assignment new-aloc-list new-conf-list))
        (assign-aloc pop-aloc aloc-list conf-list new-assignment)]))
+
   (define (convert-info info)
-    (match info
-      [`((locals (,aloc ...)) (conflicts ,conf))
-       `((locals ,aloc) (conflicts ,conf) (assignment ,(generate-assignment aloc conf)))]))
+    (define local-list (info-ref info 'locals))
+    (define conflicts (info-ref info 'conflicts))
+    (info-set info 'assignment 
+      (generate-assignment local-list conflicts)))
+
   (match p
     [`(module ,info ,tail
         )
@@ -87,18 +90,6 @@
                (halt x.1))
        ))
   (define t2
-    '(module ((locals (x.1)) (conflicts ((x.1 ()))))
-             (begin
-               (set! x.1 42)
-               (halt x.1))
-       ))
-  (define t3
-    '(module ((locals (x.1)) (conflicts ((x.1 ()))))
-             (begin
-               (set! x.1 42)
-               (halt x.1))
-       ))
-  (define t4
     '(module ((locals (v.1 w.2 x.3 y.4 z.5 t.6 p.1))
               (conflicts ((x.3 (z.5 p.1 y.4 v.1 w.2)) (w.2 (z.5 p.1 y.4 v.1 x.3))
                                                       (v.1 (w.2 x.3))
@@ -126,12 +117,12 @@
 
   (check-equal? (interp-asm-lang-v2/assignments (assign-registers t1))
                 (interp-asm-lang-v2/conflicts t1))
+  (check-equal? (interp-asm-lang-v2/assignments (parameterize ([current-assignable-registers '()]) (assign-registers t1)))
+                (interp-asm-lang-v2/conflicts t1))
+  (check-equal? (interp-asm-lang-v2/assignments (parameterize ([current-assignable-registers '(r9)]) (assign-registers t1)))
+                (interp-asm-lang-v2/conflicts t1))
   (check-equal? (interp-asm-lang-v2/assignments (assign-registers t2))
                 (interp-asm-lang-v2/conflicts t2))
-  (check-equal? (interp-asm-lang-v2/assignments (assign-registers t3))
-                (interp-asm-lang-v2/conflicts t3))
-  (check-equal? (interp-asm-lang-v2/assignments (assign-registers t4))
-                (interp-asm-lang-v2/conflicts t4))
 
   (check-equal? (assign-registers '(module ((locals (x.1)) (conflicts ((x.1 ()))))
                                            (begin
