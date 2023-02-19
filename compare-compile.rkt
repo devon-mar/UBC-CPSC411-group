@@ -8,9 +8,11 @@
     "compile-m2.rkt"
     "compile-m3.rkt")
 
-  ;; int -> Asm-lang-v2
-  ;; Create a long Asm-lang program with `i` nested lets
+  ;; int -> Values-lang-v3
+  ;; Create a long Values-lang program with `i` nested lets
   (define (gen-long-program i)
+    ;; int -> (Values-lang-v3 tail)
+    ;; Create a tail with `i` nested lets
     (define (gen-tail i)
       (if (<= i 0)
           'a
@@ -18,7 +20,7 @@
              ,(gen-tail (- i 1)))))
     `(module (let ([a 7] [b 8] [c 1]) ,(gen-tail (- i 1)))))
   
-  ;; (Asm-lang-v2 -> x64) Asm-lang-v2 -> int
+  ;; (Values-lang-v3 -> x64) Values-lang-v3 -> int
   ;; Times the compiler's compile time and the running time of execution
   ;; Return the result of the execution
   (define (test-compiler compiler p)

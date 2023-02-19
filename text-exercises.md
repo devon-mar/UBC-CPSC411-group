@@ -17,4 +17,4 @@
     - Program 1: `222(6)`ms for M3 vs. `364(9)`ms for M2
     - Program 2: `246(7)`ms for M3 vs. `291(7)`ms for M2
 
-    Surprisingly, the execution time is not much faster. But the compile time is much slower (with program 3 reaching `15000`ms vs. `90`ms for M2).
+    Surprisingly, the execution time is not much faster. But the compile time is much slower (with program 2 reaching `15000`ms vs. `90`ms for M2).
