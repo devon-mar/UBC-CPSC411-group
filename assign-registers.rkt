@@ -19,7 +19,6 @@
     (define sorted
       (sort aloc-list
             (lambda (a b)
-              ;; Take first since the dict-ref returns singleton list
               (< (length (get-neighbors conf-list a)) (length (get-neighbors conf-list b))))))
     (define removed (car sorted))
     (values removed (remove removed aloc-list) (remove-vertex conf-list removed)))
@@ -37,11 +36,10 @@
   (define (assign-aloc-to-reg aloc prev-assignment whitelist-regs)
     (cons (list aloc (first whitelist-regs)) prev-assignment))
 
-  ;; aloc? (list aloc ...) (list (aloc (aloc...))...) ((aloc loc)...) -> ((aloc loc) ...)
+  ;; aloc (list aloc ...) ((aloc loc)...) -> ((aloc loc) ...)
   ;; assigns aloc to a location that does not conflict with existing assignments nor
   ;; its conflict list
   (define (assign-aloc aloc conf-list prev-assignment)
-    ;; Take first since dict-ref returns singleton list of conflict list
     (define conflicts (get-neighbors conf-list aloc))
     (define blacklist-regs
       (for/fold ([reg-list '()]) ([c conflicts])
