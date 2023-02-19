@@ -20,7 +20,7 @@
       (sort aloc-list
             (lambda (a b)
               ;; Take first since the dict-ref returns singleton list
-              (< (length (first (dict-ref conf-list a))) (length (first (dict-ref conf-list b)))))))
+              (< (length (get-neighbors conf-list a)) (length (get-neighbors conf-list b))))))
     (define removed (car sorted))
     (values removed (remove removed aloc-list) (remove-vertex conf-list removed)))
 
@@ -40,9 +40,9 @@
   ;; aloc? (list aloc ...) (list (aloc (aloc...))...) ((aloc loc)...) -> ((aloc loc) ...)
   ;; assigns aloc to a location that does not conflict with existing assignments nor
   ;; its conflict list
-  (define (assign-aloc aloc aloc-list conf-list prev-assignment)
+  (define (assign-aloc aloc conf-list prev-assignment)
     ;; Take first since dict-ref returns singleton list of conflict list
-    (define conflicts (first (dict-ref conf-list aloc)))
+    (define conflicts (get-neighbors conf-list aloc))
     (define blacklist-regs
       (for/fold ([reg-list '()]) ([c conflicts])
         ;; If conflict mapped to reg, get reg. Else empty list
@@ -63,7 +63,7 @@
       [else
        (define-values (pop-aloc new-aloc-list new-conf-list) (pop-ld-aloc aloc-list conf-list))
        (define new-assignment (generate-assignment new-aloc-list new-conf-list))
-       (assign-aloc pop-aloc aloc-list conf-list new-assignment)]))
+       (assign-aloc pop-aloc conf-list new-assignment)]))
 
   (define (convert-info info)
     (define local-list (info-ref info 'locals))
