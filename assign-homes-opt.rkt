@@ -16,21 +16,25 @@
 
 (module+ test
   (require rackunit)
-  (check-equal? (assign-homes-opt '(module () (begin
+  (check-equal? (assign-homes-opt '(module ()
+                                           (begin
                                              (set! x.1 0)
-                                             (halt x.1))))
-                `((begin
-                    (set! r15 0)
-                    (halt r15))))
-  (check-equal? (assign-homes-opt '(module () (begin
+                                             (halt x.1))
+                                     ))
+                `(begin
+                   (set! r15 0)
+                   (halt r15)))
+  (check-equal? (assign-homes-opt '(module ()
+                                           (begin
                                              (set! x.1 0)
                                              (set! y.1 x.1)
                                              (set! w.1 1)
                                              (set! w.1 (+ w.1 y.1))
-                                             (halt w.1))))
-                                  '(begin
-                                     (set! r15 0)
-                                     (set! r14 r15)
-                                     (set! r15 1)
-                                     (set! r15 (+ r15 r14))
-                                     (halt r15))))
+                                             (halt w.1))
+                                     ))
+                '(begin
+                   (set! r15 0)
+                   (set! r15 r15)
+                   (set! r14 1)
+                   (set! r14 (+ r14 r15))
+                   (halt r14))))
