@@ -1,8 +1,32 @@
 #lang racket
 
 (require
- cpsc411/compiler-lib
- cpsc411/2c-run-time)
+  cpsc411/compiler-lib
+  cpsc411/2c-run-time
+ 
+  "m2/uniquify.rkt"
+  "m2/sequentialize-let.rkt"
+  "m2/normalize-bind.rkt"
+  "m2/select-instructions.rkt"
+  "m2/assign-homes.rkt"
+  "m2/uncover-locals.rkt"
+  "m2/assign-fvars.rkt"
+  "m2/replace-locations.rkt"
+  "m2/flatten-begins.rkt"
+  "m2/patch-instructions.rkt"
+  "m2/implement-fvars.rkt"
+  "m2/generate-x64.rkt"
+  "m2/check-paren-x64.rkt"
+  "m2/interp-paren-x64.rkt"
+  "m2/check-values-lang.rkt"
+  "m2/interp-values-lang.rkt"
+
+  "undead-analysis.rkt"
+  "conflict-analysis.rkt"
+  "assign-registers.rkt"
+  "assign-homes-opt.rkt"
+  "compile-m2.rkt"
+  "compile-m3.rkt")
 
 (provide
  check-values-lang
@@ -24,50 +48,6 @@
 
  compile-m2
  compile-m3)
-
-;; STUBS; delete when you've begun to implement the passes or replaced them with
-;; your own stubs.
-(define-values (check-values-lang
-                uniquify
-                sequentialize-let
-                normalize-bind
-                select-instructions
-                uncover-locals
-                undead-analysis
-                conflict-analysis
-                assign-registers
-                replace-locations
-                assign-homes-opt
-                assign-homes
-                flatten-begins
-                patch-instructions
-                implement-fvars
-                generate-x64
-
-                compile-m2
-                compile-m3)
-  (values
-   values
-   values
-   values
-   values
-   values
-   values
-   values
-   values
-   values
-   values
-   values
-   values
-   values
-   values
-   values
-   values
-   values
-   values))
-
-;; TODO: Fill in.
-;; You'll want to merge milestone-2 code in
 
 (module+ test
   (require

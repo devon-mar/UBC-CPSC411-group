@@ -3,8 +3,8 @@
          "assign-registers.rkt"
          "undead-analysis.rkt"
          "conflict-analysis.rkt"
-         "replace-locations.rkt"
-         "uncover-locals.rkt")
+         "m2/replace-locations.rkt"
+         "m2/uncover-locals.rkt")
 (provide assign-homes-opt)
 
 ;; Exercise 4
