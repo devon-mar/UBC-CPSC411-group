@@ -66,27 +66,22 @@
   (define (convert-info info)
     (define local-list (info-ref info 'locals))
     (define conflicts (info-ref info 'conflicts))
-    (info-set info 'assignment 
-      (generate-assignment local-list conflicts)))
+    (info-set info 'assignment (generate-assignment local-list conflicts)))
 
   (match p
-    [`(module ,info ,tail
-        )
-     `(module ,(convert-info info) ,tail
-        )]))
+    [`(module ,info ,tail)
+     `(module ,(convert-info info) ,tail)]))
 
 (module+ test
-  (require
-  rackunit
-  cpsc411/langs/v2
-   cpsc411/langs/v2-reg-alloc)
+  (require rackunit
+           cpsc411/langs/v2
+           cpsc411/langs/v2-reg-alloc)
 
   (define t1
     '(module ((locals (x.1)) (conflicts ((x.1 ()))))
              (begin
                (set! x.1 42)
-               (halt x.1))
-       ))
+               (halt x.1))))
   (define t2
     '(module ((locals (v.1 w.2 x.3 y.4 z.5 t.6 p.1))
               (conflicts ((x.3 (z.5 p.1 y.4 v.1 w.2)) (w.2 (z.5 p.1 y.4 v.1 x.3))
@@ -110,14 +105,15 @@
                (set! p.1 -1)
                (set! t.6 (* t.6 p.1))
                (set! z.5 (+ z.5 t.6))
-               (halt z.5))
-       ))
+               (halt z.5))))
 
   (check-equal? (interp-asm-lang-v2/assignments (assign-registers t1))
                 (interp-asm-lang-v2/conflicts t1))
-  (check-equal? (interp-asm-lang-v2/assignments (parameterize ([current-assignable-registers '()]) (assign-registers t1)))
+  (check-equal? (interp-asm-lang-v2/assignments
+                 (parameterize ([current-assignable-registers '()]) (assign-registers t1)))
                 (interp-asm-lang-v2/conflicts t1))
-  (check-equal? (interp-asm-lang-v2/assignments (parameterize ([current-assignable-registers '(r9)]) (assign-registers t1)))
+  (check-equal? (interp-asm-lang-v2/assignments
+                 (parameterize ([current-assignable-registers '(r9)]) (assign-registers t1)))
                 (interp-asm-lang-v2/conflicts t1))
   (check-equal? (interp-asm-lang-v2/assignments (assign-registers t2))
                 (interp-asm-lang-v2/conflicts t2))
@@ -125,32 +121,26 @@
   (check-equal? (assign-registers '(module ((locals (x.1)) (conflicts ((x.1 ()))))
                                            (begin
                                              (set! x.1 42)
-                                             (halt x.1))
-                                     ))
+                                             (halt x.1))))
                 '(module ((locals (x.1)) (conflicts ((x.1 ()))) (assignment ((x.1 r15))))
                          (begin
                            (set! x.1 42)
-                           (halt x.1))
-                   ))
+                           (halt x.1))))
   (check-equal? (parameterize ([current-assignable-registers '(r9)])
                   (assign-registers '(module ((locals (x.1)) (conflicts ((x.1 ()))))
                                              (begin
                                                (set! x.1 42)
-                                               (halt x.1))
-                                       )))
+                                               (halt x.1)))))
                 '(module ((locals (x.1)) (conflicts ((x.1 ()))) (assignment ((x.1 r9))))
                          (begin
                            (set! x.1 42)
-                           (halt x.1))
-                   ))
+                           (halt x.1))))
   (check-equal? (parameterize ([current-assignable-registers '()])
                   (assign-registers '(module ((locals (x.1)) (conflicts ((x.1 ()))))
                                              (begin
                                                (set! x.1 42)
-                                               (halt x.1))
-                                       )))
+                                               (halt x.1)))))
                 '(module ((locals (x.1)) (conflicts ((x.1 ()))) (assignment ((x.1 fv0))))
                          (begin
                            (set! x.1 42)
-                           (halt x.1))
-                   )))
+                           (halt x.1)))))
