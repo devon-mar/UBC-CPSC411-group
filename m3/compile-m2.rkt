@@ -4,15 +4,15 @@
   cpsc411/compiler-lib
   cpsc411/2c-run-time
 
-  "m2/uniquify.rkt"
-  "m2/sequentialize-let.rkt"
-  "m2/normalize-bind.rkt"
-  "m2/select-instructions.rkt"
-  "m2/assign-homes.rkt"
-  "m2/flatten-begins.rkt"
-  "m2/patch-instructions.rkt"
-  "m2/implement-fvars.rkt"
-  "m2/generate-x64.rkt")
+  "../m2/uniquify.rkt"
+  "../m2/sequentialize-let.rkt"
+  "../m2/normalize-bind.rkt"
+  "../m2/select-instructions.rkt"
+  "../m2/assign-homes.rkt"
+  "../m2/flatten-begins.rkt"
+  "../m2/patch-instructions.rkt"
+  "../m2/implement-fvars.rkt"
+  "../m2/generate-x64.rkt")
 
 (provide compile-m2)
 

@@ -35,9 +35,9 @@ For versions of the skeletons from prior versions of the course, see the tags.
 
 ## Milestone 3
 
-- Exercise 1, `undead-analysis` ->  undead-analysis.rkt
-- Exercise 2, `conflict-analysis` ->  conflict-analysis.rkt
-- Exercise 3, `assign-registers` ->  assign-registers.rkt
-- Exercise 4, `assign-homes-opt` ->  assign-homes-opt.rkt
-- Exercise 5, `compile-m2` -> compile-m2.rkt
-- Exercise 5, `compile-m3` ->  compile-m3.rkt
+- Exercise 1, `undead-analysis` ->  m3/undead-analysis.rkt
+- Exercise 2, `conflict-analysis` ->  m3/conflict-analysis.rkt
+- Exercise 3, `assign-registers` ->  m3/assign-registers.rkt
+- Exercise 4, `assign-homes-opt` ->  m3/assign-homes-opt.rkt
+- Exercise 5, `compile-m2` ->  m3/compile-m2.rkt
+- Exercise 5, `compile-m3` ->  m3/compile-m3.rkt

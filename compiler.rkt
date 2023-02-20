@@ -21,12 +21,12 @@
   "m2/check-values-lang.rkt"
   "m2/interp-values-lang.rkt"
 
-  "undead-analysis.rkt"
-  "conflict-analysis.rkt"
-  "assign-registers.rkt"
-  "assign-homes-opt.rkt"
-  "compile-m2.rkt"
-  "compile-m3.rkt")
+  "m3/undead-analysis.rkt"
+  "m3/conflict-analysis.rkt"
+  "m3/assign-registers.rkt"
+  "m3/assign-homes-opt.rkt"
+  "m3/compile-m2.rkt"
+  "m3/compile-m3.rkt")
 
 (provide
  check-values-lang
