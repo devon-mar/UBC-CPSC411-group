@@ -31,7 +31,7 @@
 
   ;; Replace fvars with displacement mode operands in l.
   ;;
-  ;; paren-x64-fvars-v2-loc -> paren-x64-v2-loc
+  ;; paren-x64-fvars-v4-loc -> paren-x64-v4-loc
   (define (implement-fvars-loc l)
     (match l
       [reg #:when (register? reg) reg]
@@ -39,7 +39,7 @@
 
   ;; Replace fvars with displacement mode operands in s.
   ;;
-  ;; paren-x64-fvars-v2-s -> paren-x64-v2-s
+  ;; paren-x64-fvars-v4-s -> paren-x64-v4-s
   (define (implement-fvars-s s)
     (match s
       [`(set! ,_ (,_ ,_ ,int32))
@@ -69,7 +69,7 @@
 
   ;; Replace fvars with displacement mode operands in p.
   ;;
-  ;; paren-x64-fvars-v2-p -> paren-x64-v2-p
+  ;; paren-x64-fvars-v4-p -> paren-x64-v4-p
   (define (implement-fvars-p p)
     (match p
       [`(begin ,s ...) `(begin ,@(map implement-fvars-s s))]))
