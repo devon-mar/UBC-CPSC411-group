@@ -8,9 +8,7 @@
   "m2/sequentialize-let.rkt"
   "m2/normalize-bind.rkt"
   "m2/select-instructions.rkt"
-  "m2/assign-homes.rkt"
   "m2/uncover-locals.rkt"
-  "m2/assign-fvars.rkt"
   "m2/replace-locations.rkt"
   "m2/flatten-begins.rkt"
   "m2/patch-instructions.rkt"
@@ -24,9 +22,7 @@
   "m3/undead-analysis.rkt"
   "m3/conflict-analysis.rkt"
   "m3/assign-registers.rkt"
-  "m3/assign-homes-opt.rkt"
-  "m3/compile-m2.rkt"
-  "m3/compile-m3.rkt")
+  "m3/assign-homes-opt.rkt")
 
 (provide
  link-paren-x64
@@ -57,42 +53,11 @@
   (error "Unfinished template"))
 
 ;; Stubs; remove or replace with your definitions.
-(define-values (check-values-lang
-                interp-values-lang
-
-                uniquify
-                sequentialize-let
-                normalize-bind
-                select-instructions
-                uncover-locals
-                undead-analysis
-                conflict-analysis
-                assign-registers
-                replace-locations
-                assign-homes-opt
-                optimize-predicates
+(define-values (optimize-predicates
                 expose-basic-blocks
                 resolve-predicates
-                flatten-program
-                patch-instructions
-                implement-fvars
-                generate-x64)
+                flatten-program)
   (values
-   values
-   values
-   values
-   values
-   values
-   values
-   values
-   values
-   values
-   values
-   values
-   values
-   values
-   values
-   values
    values
    values
    values
