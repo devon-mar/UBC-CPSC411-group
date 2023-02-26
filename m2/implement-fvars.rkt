@@ -2,7 +2,7 @@
 
 (require
   cpsc411/compiler-lib
-  cpsc411/langs/v2)
+  cpsc411/langs/v4)
 
 (provide implement-fvars)
 
@@ -12,11 +12,15 @@
 ;; displacement mode operands. The pass should use
 ;; current-frame-base-pointer-register.
 (define/contract (implement-fvars p)
-  (-> paren-x64-fvars-v2? paren-x64-v2?)
+  (-> paren-x64-fvars-v4? paren-x64-v4?)
 
   (define/contract (loc? l)
     (-> any/c boolean?)
     (or (register? l) (fvar? l)))
+  
+  (define/contract (trg? l)
+    (-> any/c boolean?)
+    (or (register? l) (label? l)))
 
   ;; Return the displacement mode operand for fvar f.
   (define/contract (implement-fvars-fvar f)
@@ -45,14 +49,21 @@
       [`(set! ,fvar ,int32)
         #:when (and (fvar? fvar) (int32? int32))
         `(set! ,(implement-fvars-fvar fvar) ,int32)]
-      [`(set! ,fvar ,reg)
-        #:when (and (fvar? fvar) (register? reg))
-        `(set! ,(implement-fvars-fvar fvar) ,reg)]
+      [`(set! ,fvar ,trg)
+        #:when (and (fvar? fvar) (trg? trg))
+        `(set! ,(implement-fvars-fvar fvar) ,trg)]
       [`(set! ,reg ,loc)
         #:when (and (register? reg) (loc? loc))
         `(set! ,reg ,(implement-fvars-loc loc))]
-
       [`(set! ,_ ,_)
+        s]
+      [`(with-label ,_ ,_)
+        s]
+      [`(jump ,_)
+        s]
+      [`(compare ,_ ,_)
+        s]
+      [`(jump-if ,_ ,_)
         s]))
 
   ;; Replace fvars with displacement mode operands in p.
@@ -66,6 +77,8 @@
 
 (module+ test
   (require rackunit)
+  (check-equal? (implement-fvars '(begin)) '(begin))
+  (check-equal? (implement-fvars '(begin (set! rax 0))) '(begin (set! rax 0)))
 
   (check-match
     (implement-fvars
@@ -93,4 +106,21 @@
        (set! rax rsi))
   (and
     (equal? rbp (current-frame-base-pointer-register))
-    (equal? val1 (add1 (max-int 32))))))
+    (equal? val1 (add1 (max-int 32)))))
+  
+  ; control flow
+  (check-equal?
+    (implement-fvars
+      '(begin
+        (set! fv0 L.$!!@#*main.2)
+        (with-label L.$!!@#*main.2 (with-label L.test.3 (jump rax)))
+        (jump L.test.4)
+        (compare rax rbx)
+        (jump-if <= L.test!!.5)))
+    `(begin
+      (set! (,(current-frame-base-pointer-register) - 0) L.$!!@#*main.2)
+      (with-label L.$!!@#*main.2 (with-label L.test.3 (jump rax)))
+      (jump L.test.4)
+      (compare rax rbx)
+      (jump-if <= L.test!!.5)))
+  )
