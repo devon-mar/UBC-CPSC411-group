@@ -7,8 +7,9 @@
 (provide implement-fvars)
 
 ;; Milestone 2 Exercise 11
+;; Milestone 4 Exercise 4
 ;;
-;; Compiles the Paren-x64-fvars v2 to Paren-x64 v2 by reifying fvars into
+;; Compiles the Paren-x64-fvars v4 to Paren-x64 v4 by reifying fvars into
 ;; displacement mode operands. The pass should use
 ;; current-frame-base-pointer-register.
 (define/contract (implement-fvars p)
