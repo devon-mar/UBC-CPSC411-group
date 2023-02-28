@@ -43,29 +43,24 @@
   (define (implement-fvars-s s)
     (match s
       [`(set! ,_ (,_ ,_ ,int32))
-        #:when (int32? int32)
-        s]
+       #:when (int32? int32)
+       s]
       [`(set! ,reg (,binop ,reg ,loc))
-        `(set! ,reg (,binop ,reg ,(implement-fvars-loc loc)))]
+       `(set! ,reg (,binop ,reg ,(implement-fvars-loc loc)))]
       [`(set! ,fvar ,int32)
-        #:when (and (fvar? fvar) (int32? int32))
-        `(set! ,(implement-fvars-fvar fvar) ,int32)]
+       #:when (and (fvar? fvar) (int32? int32))
+       `(set! ,(implement-fvars-fvar fvar) ,int32)]
       [`(set! ,fvar ,trg)
-        #:when (and (fvar? fvar) (trg? trg))
-        `(set! ,(implement-fvars-fvar fvar) ,trg)]
+       #:when (and (fvar? fvar) (trg? trg))
+       `(set! ,(implement-fvars-fvar fvar) ,trg)]
       [`(set! ,reg ,loc)
-        #:when (and (register? reg) (loc? loc))
-        `(set! ,reg ,(implement-fvars-loc loc))]
-      [`(set! ,_ ,_)
-        s]
-      [`(with-label ,_ ,_)
-        s]
-      [`(jump ,_)
-        s]
-      [`(compare ,_ ,_)
-        s]
-      [`(jump-if ,_ ,_)
-        s]))
+       #:when (and (register? reg) (loc? loc))
+       `(set! ,reg ,(implement-fvars-loc loc))]
+      [`(set! ,_ ,_) s]
+      [`(with-label ,_ ,_) s]
+      [`(jump ,_) s]
+      [`(compare ,_ ,_) s]
+      [`(jump-if ,_ ,_) s]))
 
   ;; Replace fvars with displacement mode operands in p.
   ;;
