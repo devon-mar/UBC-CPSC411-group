@@ -2,9 +2,9 @@
 
 (require
   cpsc411/compiler-lib
-  cpsc411/langs/v2
   cpsc411/langs/v2-reg-alloc
-  "undead-analysis.rkt")
+  "undead-analysis.rkt"
+  "m2/uncover-locals.rkt")
 
 
 ;; Milestone 3 - Exercise 6 
@@ -69,9 +69,10 @@
       [`(module ,info ,tail)
         (define new
           (undead-analysis
-           `(module
-              ,(info-remove info 'undead-out)
-              ,(bury-dead-tail tail (info-ref info 'undead-out)))))
+            (uncover-locals
+             `(module
+                ()
+                ,(bury-dead-tail tail (info-ref info 'undead-out))))))
         (if (equal? new p)
           new
           (bury-dead-p new))]))
@@ -115,7 +116,7 @@
          (set! x.1 42)
          (halt 42)))
     '(module
-       ([locals (x.1)]
+       ([locals ()]
         [undead-out (())])
        (begin
          (halt 42))))
@@ -145,7 +146,7 @@
          (set! x.1 x.2)
          (halt x.2)))
     '(module
-       ([locals (x.1 x.2)]
+       ([locals (x.2)]
         [undead-out ((x.2) ())])
        (begin
          (set! x.2 42)
@@ -161,7 +162,7 @@
          (set! x.1 x.2)
          (halt 42)))
     '(module
-       ([locals (x.1 x.2)]
+       ([locals ()]
         [undead-out (())])
        (begin
          (halt 42))))
@@ -178,7 +179,7 @@
          (set! x.2 (+ x.2 2))
          (halt x.1)))
     '(module
-       ([locals (x.1 x.2)]
+       ([locals (x.1)]
         [undead-out ((x.1) ())])
        (begin
          (set! x.1 42)
@@ -195,7 +196,7 @@
          (set! x.2 (+ x.2 2))
          (halt 42)))
     '(module
-       ([locals (x.1 x.2)]
+       ([locals ()]
         [undead-out (())])
        (begin
          (halt 42))))
@@ -233,7 +234,7 @@
            (set! x.2 (+ x.2 2))
            (halt x.2))))
     '(module
-       ([locals (x.1 x.2 x.3)]
+       ([locals (x.2)]
         [undead-out (((x.2) (x.2) ()))])
        (begin
          (begin
@@ -255,7 +256,7 @@
            (set! x.2 (+ x.2 2))
            (halt 42))))
     '(module
-       ([locals (x.1 x.2 x.3)]
+       ([locals ()]
         [undead-out ((()))])
        (begin
          (begin
