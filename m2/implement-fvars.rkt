@@ -57,7 +57,8 @@
        #:when (and (register? reg) (loc? loc))
        `(set! ,reg ,(implement-fvars-loc loc))]
       [`(set! ,_ ,_) s]
-      [`(with-label ,_ ,_) s]
+      [`(with-label ,label ,s2)
+       `(with-label ,label ,(implement-fvars-s s2))]
       [`(jump ,_) s]
       [`(compare ,_ ,_) s]
       [`(jump-if ,_ ,_) s]))
@@ -104,18 +105,22 @@
     (equal? rbp (current-frame-base-pointer-register))
     (equal? val1 (add1 (max-int 32)))))
   
-  ; control flow
+  ; control flow statements
   (check-equal?
     (implement-fvars
       '(begin
-        (set! fv0 L.$!!@#*main.2)
-        (with-label L.$!!@#*main.2 (with-label L.test.3 (jump rax)))
+        (with-label L.$!!@#*main.2 (with-label L.test.3 (set! fv0 L.$!!@#*main.2)))
+        (jump rax)
         (jump L.test.4)
         (compare rax rbx)
         (jump-if <= L.test!!.5)))
     `(begin
-      (set! (,(current-frame-base-pointer-register) - 0) L.$!!@#*main.2)
-      (with-label L.$!!@#*main.2 (with-label L.test.3 (jump rax)))
+      (with-label
+        L.$!!@#*main.2
+        (with-label
+          L.test.3
+          (set! (,(current-frame-base-pointer-register) - 0) L.$!!@#*main.2)))
+      (jump rax)
       (jump L.test.4)
       (compare rax rbx)
       (jump-if <= L.test!!.5)))
