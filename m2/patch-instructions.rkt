@@ -44,7 +44,7 @@
   ;; and if false, the value inputted as is.
   ;; 
   ;; Returns list of all additional 'set!' created to assign the temp registers
-  ;; and the patched 's'
+  ;; and the patched 's' created by the function
   ;;
   (define (patch-set fn . cvs)
     (define cpir (current-patch-instructions-registers))
