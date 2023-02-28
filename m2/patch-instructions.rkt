@@ -67,13 +67,13 @@
       [`(set! ,loc (,binop ,loc ,triv))
        (cond
          [(register? loc)
-          ;; Paren-x64-fvars does not support (set! reg (binop _ int64))
+          ;; Paren-x64-fvars does not support (set! reg (binop reg int64))
           (patch-set
             (lambda (t) `((set! ,loc (,binop ,loc ,t))))
             (cons big-int? triv))]
          [(fvar? loc)
           ;; Paren-x64-fvars does not support (set! fvar (binop fvar _))
-          ;; Additional patch for (set! reg (binop _ int64))
+          ;; Additional patch for (set! reg (binop reg int64))
           (patch-set
             (lambda (l t) `((set! ,l (,binop ,l ,t)) (set! ,loc ,l)))
             (cons (lambda (_) #t) loc)
