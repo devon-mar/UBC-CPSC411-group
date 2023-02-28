@@ -38,13 +38,13 @@
   ;; (any ... -> (List-of Paren-x64-fvars-v4-s)) (cons (any -> boolean) any) ...
   ;; -> (List-of Paren-x64-fvars-v4-s)
   ;;
-  ;; Take a function that takes in parameters to create a Paren-x64-fvars 's'
+  ;; Take a function that takes in parameters to create list of Paren-x64-fvars 's'
   ;; and a pair of checks and values for those parameters.
   ;; If the check is true, the value is replaced by a temp register as input to the function,
   ;; and if false, the value inputted as is.
   ;; 
   ;; Returns list of all additional 'set!' created to assign the temp registers
-  ;; and the patched 's' created by the function
+  ;; and all of the patched 's' created by the function
   ;;
   (define (patch-set fn . cvs)
     (define cpir (current-patch-instructions-registers))
