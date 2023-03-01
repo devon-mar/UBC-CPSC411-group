@@ -37,6 +37,13 @@
         ;; Also makes it a bit more obvious what we're doing here.
         #:when (equal? aloc1 aloc2)
         e]
+      ;; modified template - added a new case
+      ;; We don't need to introduce a tmp if op1 is an aloc.
+      ;; We can just add another set!
+      [`(set! ,aloc (,binop ,op1 ,op2))
+        `(begin
+          (set! ,aloc ,op1)
+          (set! ,aloc (,binop ,aloc ,op2)))]
       [`(set! ,aloc ,value)
         (select-instructions-value
           value
@@ -149,4 +156,11 @@
          (set! x.2 21)
          (set! x.2 (* x.2 2))
          x.2)))
+
+  (check-42
+    '(module
+       (begin
+         (set! x.2 21)
+         (set! z.3 (* x.2 2))
+         z.3)))
   )
