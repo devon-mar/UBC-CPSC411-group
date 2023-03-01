@@ -67,15 +67,13 @@
     (-> asm-lang-v2/undead? asm-lang-v2/undead?)
     (match p
       [`(module ,info ,tail)
-        (define new
-          (undead-analysis
-            (uncover-locals
-             `(module
-                ()
-                ,(bury-dead-tail tail (info-ref info 'undead-out))))))
-        (if (equal? new p)
-          new
-          (bury-dead-p new))]))
+        (define new-tail (bury-dead-tail tail (info-ref info 'undead-out)))
+        (if (equal? new-tail tail)
+          p
+          (bury-dead-p
+            (undead-analysis
+              (uncover-locals
+               `(module () ,new-tail)))))]))
 
   (bury-dead-p p))
 
