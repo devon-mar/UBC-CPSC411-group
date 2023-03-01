@@ -41,3 +41,4 @@ For versions of the skeletons from prior versions of the course, see the tags.
 - Exercise 4, `assign-homes-opt` ->  assign-homes-opt.rkt
 - Exercise 5, `compile-m2` -> compile-m2.rkt
 - Exercise 5, `compile-m3` ->  compile-m3.rkt
+- Exercise 6, `bury-dead` -> `bury-dead.rkt`
