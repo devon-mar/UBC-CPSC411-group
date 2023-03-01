@@ -1,8 +1,28 @@
 #lang racket
 
 (require
- cpsc411/compiler-lib
- cpsc411/2c-run-time)
+  cpsc411/compiler-lib
+  cpsc411/2c-run-time
+ 
+  "m2/uniquify.rkt"
+  "m2/sequentialize-let.rkt"
+  "m2/normalize-bind.rkt"
+  "m2/select-instructions.rkt"
+  "m2/uncover-locals.rkt"
+  "m2/replace-locations.rkt"
+  "m2/flatten-begins.rkt"
+  "m2/patch-instructions.rkt"
+  "m2/implement-fvars.rkt"
+  "m2/generate-x64.rkt"
+  "m2/check-paren-x64.rkt"
+  "m2/interp-paren-x64.rkt"
+  "m2/check-values-lang.rkt"
+  "m2/interp-values-lang.rkt"
+
+  "m3/undead-analysis.rkt"
+  "m3/conflict-analysis.rkt"
+  "m3/assign-registers.rkt"
+  "m3/assign-homes-opt.rkt")
 
 (provide
  link-paren-x64
@@ -33,42 +53,11 @@
   (error "Unfinished template"))
 
 ;; Stubs; remove or replace with your definitions.
-(define-values (check-values-lang
-                interp-values-lang
-
-                uniquify
-                sequentialize-let
-                normalize-bind
-                select-instructions
-                uncover-locals
-                undead-analysis
-                conflict-analysis
-                assign-registers
-                replace-locations
-                assign-homes-opt
-                optimize-predicates
+(define-values (optimize-predicates
                 expose-basic-blocks
                 resolve-predicates
-                flatten-program
-                patch-instructions
-                implement-fvars
-                generate-x64)
+                flatten-program)
   (values
-   values
-   values
-   values
-   values
-   values
-   values
-   values
-   values
-   values
-   values
-   values
-   values
-   values
-   values
-   values
    values
    values
    values
