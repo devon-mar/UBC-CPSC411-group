@@ -35,8 +35,6 @@ For versions of the skeletons from prior versions of the course, see the tags.
 
 ## Milestone 3
 
-- Exercise 2, `undead-analysis` ->  undead-analysis.rkt
-=======
 - Exercise 1, `undead-analysis` ->  undead-analysis.rkt
 - Exercise 2, `conflict-analysis` ->  conflict-analysis.rkt
 - Exercise 3, `assign-registers` ->  assign-registers.rkt
