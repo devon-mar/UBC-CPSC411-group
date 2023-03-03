@@ -2,6 +2,8 @@
 
 (require cpsc411/langs/v4)
 
+(provide flatten-program)
+
 ;; Milestone 3 Exercise 6
 ;; Compile Block-asm-lang v4 to Para-asm-lang v4
 ;; by flattening basic blocks into labeled instructions.
