@@ -28,6 +28,7 @@
       ['+ "add"]))
 
 
+  ;; paren-x64-v4-p -> string?
   (define (generate-x64-p p)
     (match p
       [`(begin ,s ...)
@@ -36,6 +37,7 @@
           ""
           (map generate-x64-s s))]))
 
+  ;; paren-x64-v4-s -> string?
   (define (generate-x64-s s)
     (match s
       [`(set! ,reg (,binop ,reg ,int32))
@@ -78,7 +80,10 @@
 
   ;; Returns the appropriate x64 jump
   ;; instructions for the relop r.
-  (define (relop->x64-jmp r)
+  ;;
+  ;; paren-x64-v4-relop -> string?
+  (define/contract (relop->x64-jmp r)
+    (-> symbol? string)
     (match r
       ['< "jl"]
       ['<= "jle"]
