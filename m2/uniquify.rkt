@@ -2,16 +2,17 @@
 
 (require
   cpsc411/compiler-lib
-  cpsc411/langs/v3)
+  cpsc411/langs/v4)
 
 (provide uniquify)
 
 ;; Milestone 2 Exercise 1
+;; Milestone 4 Exercise 20
 ;;
-;; Compiles Values-lang v3 to Values-unique-lang v3 by resolving all lexical
+;; Compiles Values-lang v4 to Values-unique-lang v4 by resolving all lexical
 ;; identifiers to abstract locations.
 (define/contract (uniquify p)
-  (-> values-lang-v3? values-unique-lang-v3?)
+  (-> values-lang-v4? values-unique-lang-v4?)
 
   (define/contract (triv? t)
     (-> any/c boolean?)
@@ -99,7 +100,7 @@
 
   (define (check-42 p)
     (check-equal?
-      (interp-values-unique-lang-v3 (uniquify p))
+      (interp-values-unique-lang-v4 (uniquify p))
       42))
 
   ; simple
@@ -140,3 +141,4 @@
                [bar (+ 1 foo)])
            (+ foo bar)))))
   )
+
