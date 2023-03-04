@@ -42,3 +42,10 @@ For versions of the skeletons from prior versions of the course, see the tags.
 - Exercise 5, `compile-m2` ->  m3/compile-m2.rkt
 - Exercise 5, `compile-m3` ->  m3/compile-m3.rkt
 - Exercise 6, `bury-dead` ->  m3/bury-dead.rkt
+
+## Milestone 4
+
+- Exercise 17, `select-instructions` -> m2/select-instructions.rkt
+- Exercise 18, `sequentialize-let` -> m2/sequentialize-let.rkt
+- Exercise 19, `normalize-bind` -> m2/normalize-bind.rkt
+- Exercise 20, `uniquify` -> m2/uniquify.rkt
