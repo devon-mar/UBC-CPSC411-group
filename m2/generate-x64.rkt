@@ -3,6 +3,9 @@
   cpsc411/compiler-lib
   cpsc411/langs/v4)
 
+;; Milestone 2 Exercise 12
+;; Milestone 4 Exercise 1
+;;
 ;; Compile the Paren-x64 v4 program into a valid sequence of x64 instructions,
 ;; represented as a string.
 (define/contract (generate-x64 p)
