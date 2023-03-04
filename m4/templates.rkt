@@ -4,39 +4,6 @@
   cpsc411/compiler-lib
   cpsc411/langs/v4)
 
-(define (asm-lang-v2/locals-template p)
-  (define (asm-lang-v2/locals-template-p p)
-    (match p
-      [`(module ,info ,tail)
-        (void)]))
-
-  (define (asm-lang-v2/locals-template-tail t)
-    (match t
-      [`(halt ,triv)
-        (void)]
-      [`(begin ,effects ... ,tail)
-        (void)]))
-
-  (define (asm-lang-v2/locals-template-effect e)
-    (match e
-      [`(set! ,aloc (,binop ,aloc ,triv))
-        (void)]
-      [`(set! ,aloc ,triv)
-        (void)]
-      [`(begin ,effects ... ,effect)
-        (void)]))
-
-  (define (asm-lang-v2/locals-template-triv t)
-    (match t
-      [(? int64?) (void)]
-      [(? aloc?) (void)]))
-
-  (define (asm-lang-v2/locals-template-binop b)
-    (match b
-      ['* (void)]
-      ['+ (void)]))
-  (void))
-
 (define/contract (paren-x64-v4-template p)
   (-> paren-x64-v4? any/c)
 
@@ -148,5 +115,73 @@
     (match l
       [(? register?) (void)]
       [fvar (void)]))
+
+  (void))
+
+(define/contract (imp-cmf-lang-v4-template p)
+  (-> imp-cmf-lang-v4? any/c)                
+
+
+  (define (imp-cmf-lang-v4-template-p p)
+    (match p
+      [`(module ,tail)
+        (void)]))
+
+  (define (imp-cmf-lang-v4-template-pred p)
+    (match p
+      ['(true)
+       (void)]
+      ['(false)
+       (void)]
+      [`(not ,pred)
+        (void)]
+      [`(begin ,effects ... ,pred)
+        (void)]
+      [`(if ,p1 ,p2 ,p3)
+        (void)]
+      [`(,relop ,triv1 ,triv2)
+        (void)]))
+
+  (define (imp-cmf-lang-v4-template-tail t)
+    (match t
+      [`(begin ,effects ... ,tail)
+        (void)]
+      [`(if ,pred ,t1 ,t2)
+        (void)]
+      [value (void)]))
+
+  (define (imp-cmf-lang-v4-template-value v)
+    (match v
+      [`(,binop ,t1 ,t2)
+        (void)]
+      [triv (void)]))
+
+  (define (imp-cmf-lang-v4-template-effect e)
+    (match e
+      [`(set! ,aloc ,value)
+        (void)]
+      [`(begin ,effects ... ,effect)
+        (void)]
+      [`(if ,pred ,e1 ,e2)
+        (void)]))
+
+  (define (imp-cmf-lang-v4-template-triv t)
+    (match t
+      [(? aloc?) (void)]
+      [(? int64?) (void)]))
+
+  (define (imp-cmf-lang-v4-template-binop b)
+    (match b
+      ['* (void)]
+      ['+ (void)]))
+
+  (define (imp-cmf-lang-v4-template-relop r)
+    (match r
+      ['< (void)]
+      ['<= (void)]
+      ['= (void)]
+      ['>= (void)]
+      ['> (void)]
+      ['!= (void)]))
 
   (void))
