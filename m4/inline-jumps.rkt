@@ -20,11 +20,11 @@
        (append (list label) (get-labels si))]
       ;; For:
       ;; (halt opand)
- 	 	  ;; (set! loc triv)
- 	 	  ;; (set! loc_1 (binop loc_1 opand))
+      ;; (set! loc triv)
+      ;; (set! loc_1 (binop loc_1 opand))
       ;; (jump trg)
- 	 	  ;; (compare loc opand)
- 	 	  ;; (jump-if relop trg)
+      ;; (compare loc opand)
+      ;; (jump-if relop trg)
       [_ '()]))
   
   ;; (Para-Asm-Lang-v4 s) (List-of (Para-Asm-Lang-v4 label)) -> boolean
@@ -35,11 +35,11 @@
       [`(jump ,trg) (and (label? trg) (member trg nextlabels))]
       ;; For:
       ;; (halt opand)
- 	 	  ;; (set! loc triv)
- 	 	  ;; (set! loc_1 (binop loc_1 opand))
- 	 	  ;; (with-label label s)
- 	 	  ;; (compare loc opand)
- 	 	  ;; (jump-if relop trg)
+      ;; (set! loc triv)
+      ;; (set! loc_1 (binop loc_1 opand))
+      ;; (with-label label s)
+      ;; (compare loc opand)
+      ;; (jump-if relop trg)
       [_ #f]))
 
   (match p
@@ -90,13 +90,19 @@
         (jump L.test.1)
         (jump L.test.1)
         (with-label L.test.1 (with-label L.test.3 (halt r9)))
-        (with-label L.test.2 (halt 10))))
+        (with-label L.test.2 (halt 10))
+        (jump L.test.2)
+        (jump L.test.4)
+        (jump L.test.4)
+        (with-label L.test.4 (jump L.test.4))))
     '(begin
       (set! r9 10)
       (jump L.test.1)
       (jump L.test.2)
       (with-label L.test.1 (with-label L.test.3 (halt r9)))
-      (with-label L.test.2 (halt 10))))
+      (with-label L.test.2 (halt 10))
+      (jump L.test.2)
+      (with-label L.test.4 (jump L.test.4))))
   
   ;; preserves jump with label
   (check-equal?
