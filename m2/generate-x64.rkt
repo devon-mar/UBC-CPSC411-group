@@ -3,6 +3,8 @@
   cpsc411/compiler-lib
   cpsc411/langs/v4)
 
+(provide generate-x64)
+
 ;; Milestone 2 Exercise 12
 ;; Milestone 4 Exercise 1
 ;;
@@ -83,7 +85,7 @@
   ;;
   ;; paren-x64-v4-relop -> string?
   (define/contract (relop->x64-jmp r)
-    (-> symbol? string)
+    (-> symbol? string?)
     (match r
       ['< "jl"]
       ['<= "jle"]
