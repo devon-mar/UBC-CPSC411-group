@@ -42,14 +42,14 @@
   (define/contract (replace-locations-pred a p)
     (-> assignments? any/c any/c)
     (match p
- 	 	  [`(true) p]
- 	 	  [`(false) p]
- 	 	  [`(not ,pred) `(not ,(replace-locations-pred a pred))]
- 	 	  [`(begin ,effects ... ,pred)
+      [`(true) p]
+      [`(false) p]
+      [`(not ,pred) `(not ,(replace-locations-pred a pred))]
+      [`(begin ,effects ... ,pred)
        `(begin
          ,@(map (lambda (e) (replace-locations-effect a e)) effects)
          ,(replace-locations-pred a pred))]
- 	 	  [`(if ,ppred ,pred1 ,pred2)
+      [`(if ,ppred ,pred1 ,pred2)
        `(if ,(replace-locations-pred a ppred)
             ,(replace-locations-pred a pred1)
             ,(replace-locations-pred a pred2))]

@@ -111,10 +111,10 @@
   (define (undead-analysis-pred p uo)
     (-> any/c undead-set? (values undead-set-tree? undead-set?))
     (match p
- 	 	  [`(true) (values uo uo)]
- 	 	  [`(false) (values uo uo)]
- 	 	  [`(not ,pred) (undead-analysis-pred pred uo)]
- 	 	  [`(begin ,effects ... ,pred)
+      [`(true) (values uo uo)]
+      [`(false) (values uo uo)]
+      [`(not ,pred) (undead-analysis-pred pred uo)]
+      [`(begin ,effects ... ,pred)
        (define-values (pred-ust pred-ui)
          (undead-analysis-pred pred uo))
        (for/foldr
@@ -125,7 +125,7 @@
            ([(new-ust new-ui)
              (undead-analysis-effect e acc-ui)])
            (values (cons new-ust acc-ust) new-ui)))]
- 	 	  [`(if ,ppred ,pred1 ,pred2)
+      [`(if ,ppred ,pred1 ,pred2)
        (define-values (ut1 ui1) (undead-analysis-pred pred1 uo))
        (define-values (ut2 ui2) (undead-analysis-pred pred2 uo))
        (define-values (utp uip) (undead-analysis-pred ppred (set-union ui1 ui2)))

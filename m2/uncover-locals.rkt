@@ -33,12 +33,12 @@
   (define/contract (uncover-locals-pred p)
     (-> any/c set?)
     (match p
- 	 	  [`(true) (set)]
- 	 	  [`(false) (set)]
- 	 	  [`(not ,pred) (uncover-locals-pred pred)]
- 	 	  [`(begin ,effect ... ,pred)
+      [`(true) (set)]
+      [`(false) (set)]
+      [`(not ,pred) (uncover-locals-pred pred)]
+      [`(begin ,effect ... ,pred)
        (foldl set-union (uncover-locals-pred pred) (map uncover-locals-effect effect))]
- 	 	  [`(if ,ppred ,pred1 ,pred2)
+      [`(if ,ppred ,pred1 ,pred2)
        (set-union
          (uncover-locals-pred ppred)
          (uncover-locals-pred pred1)

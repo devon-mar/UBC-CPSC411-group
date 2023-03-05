@@ -59,15 +59,15 @@
     (match (cons pred ust)
       [(cons `(true) _)
        (void)]
- 	 	  [(cons `(false) _)
+      [(cons `(false) _)
        (void)]
- 	 	  [(cons `(not ,ipred) iust)
+      [(cons `(not ,ipred) iust)
        (conflict-pred ipred iust)]
- 	 	  [(cons `(begin ,effect ... ,tpred) `(,usts ...))
+      [(cons `(begin ,effect ... ,tpred) `(,usts ...))
        (for ([e effect] [u usts])
-        (conflict-effect e u))
+         (conflict-effect e u))
        (conflict-pred tpred (last usts))]
- 	 	  [(cons `(if ,ppred ,pred1 ,pred2) `(,ustp ,ust1 ,ust2))
+      [(cons `(if ,ppred ,pred1 ,pred2) `(,ustp ,ust1 ,ust2))
        (conflict-pred ppred ustp)
        (conflict-pred pred1 ust1)
        (conflict-pred pred2 ust2)]
