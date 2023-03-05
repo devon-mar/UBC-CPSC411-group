@@ -1,5 +1,6 @@
 #lang racket
 (require cpsc411/compiler-lib
+         cpsc411/langs/v4
          "assign-registers.rkt"
          "undead-analysis.rkt"
          "conflict-analysis.rkt"
@@ -7,11 +8,12 @@
          "../m2/uncover-locals.rkt")
 (provide assign-homes-opt)
 
-;; Exercise 4
-;; asm-lang-v2 -> nested-asm-lang-v2
+;; Milestone 3 Exercise 4
+;;
 ;; Replaces each abstract location with a physical location from
 ;; graph coloring algorithm
 (define (assign-homes-opt p)
+  (-> asm-pred-lang-v4? nested-asm-lang-v4?)
   (replace-locations (assign-registers (conflict-analysis (undead-analysis (uncover-locals p))))))
 
 (module+ test
