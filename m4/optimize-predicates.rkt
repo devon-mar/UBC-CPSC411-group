@@ -1,12 +1,14 @@
 #lang racket
 
 (require cpsc411/compiler-lib
-         cpsc411/graph-lib)
+         cpsc411/graph-lib
+         cpsc411/langs/v4)
 (provide optimize-predicates)
 
 ;; Exercise #11
 ;; nested-asm-lang-v4? -> nested-asm-lang-v4?
-(define (optimize-predicates p)
+(define/contract (optimize-predicates p)
+  (-> nested-asm-lang-v4? nested-asm-lang-v4?)
   ;; relop -> procedure
   (define (symbol->relop relop)
     (match relop
@@ -110,55 +112,242 @@
 
 (module+ test
   (require rackunit)
-  (define in1
-    `(module (begin
+  (check-equal?
+    (optimize-predicates `(module (begin
                (set! fv1 1)
                (if (> fv1 0) (halt 1) (halt 2)))))
-  (define out1
     `(module (begin
                (set! fv1 1)
                (halt 1))))
 
-  (define in2
-    `(module (begin
+  (check-equal?
+    (optimize-predicates `(module (begin
                (set! fv1 1)
                (if (< fv1 0) (halt 1) (halt 2)))))
-  (define out2
     `(module (begin
                (set! fv1 1)
                (halt 2))))
 
-  (define in3
-    `(module (begin
+  (check-equal?
+    (optimize-predicates `(module (begin
                (set! fv1 1)
                (if (< fv1 ,(max-int 64)) (halt 1) (halt 2)))))
-  (define out3
     `(module (begin
                (set! fv1 1)
                (halt 1))))
 
-  (define in4
-    `(module (begin
+  (check-equal?
+    (optimize-predicates `(module (begin
                (set! fv1 1)
                (if (= fv1 1) (halt 1) (halt 2)))))
-  (define out4
     `(module (begin
                (set! fv1 1)
                (halt 1))))
 
-  (define in5
-    `(module (begin
+  (check-equal?
+    (optimize-predicates `(module (begin
                (set! fv1 2)
                (set! fv1 (+ fv1 3))
                (if (= fv1 5) (halt 1) (halt 2)))))
-  (define out5
     `(module (begin
                (set! fv1 2)
                (set! fv1 (+ fv1 3))
                (halt 1))))
 
-  (check-equal? (optimize-predicates in1) out1)
-  (check-equal? (optimize-predicates in2) out2)
-  (check-equal? (optimize-predicates in3) out3)
-  (check-equal? (optimize-predicates in4) out4)
-  (check-equal? (optimize-predicates in5) out5))
+  ;; Test >= relop equal
+  (check-equal?
+    (optimize-predicates `(module (begin
+               (set! fv1 1)
+               (if (>= fv1 1) (halt 1) (halt 2)))))
+    `(module (begin
+               (set! fv1 1)
+               (halt 1))))
+  
+  ;; Test >= relop greater than
+  (check-equal?
+    (optimize-predicates `(module (begin
+               (set! fv1 1)
+               (if (>= fv1 1) (halt 1) (halt 2)))))
+    `(module (begin
+               (set! fv1 1)
+               (halt 1))))
+        
+  ;; Test <= relop equal
+  (check-equal?
+    (optimize-predicates `(module (begin
+               (set! fv1 1)
+               (if (<= fv1 1) (halt 1) (halt 2)))))
+    `(module (begin
+               (set! fv1 1)
+               (halt 1))))
+
+  ;; Test <= relop less than
+  (check-equal?
+    (optimize-predicates `(module (begin
+               (set! fv1 0)
+               (if (<= fv1 1) (halt 1) (halt 2)))))
+    `(module (begin
+               (set! fv1 0)
+               (halt 1))))
+
+  ;; Test != relop
+  (check-equal?
+    (optimize-predicates `(module (begin
+               (set! fv1 1)
+               (if (!= fv1 1) (halt 1) (halt 2)))))
+    `(module (begin
+               (set! fv1 1)
+               (halt 2))))
+  
+  ;; Test = relop
+  (check-equal?
+    (optimize-predicates `(module (begin
+               (set! fv1 1)
+               (if (= fv1 1) (halt 1) (halt 2)))))
+    `(module (begin
+               (set! fv1 1)
+               (halt 1))))
+        
+  ;; true
+  (check-equal?
+    (optimize-predicates `(module (begin
+               (set! fv1 1)
+               (if (true) (halt 1) (halt 2)))))
+    `(module (begin
+               (set! fv1 1)
+               (halt 1))))
+
+  ;; false 
+  (check-equal?
+    (optimize-predicates `(module (begin
+               (set! fv1 1)
+               (if (false) (halt 1) (halt 2)))))
+    `(module (begin
+               (set! fv1 1)
+               (halt 2))))
+
+  ;; not false
+  (check-equal?
+    (optimize-predicates `(module (begin
+               (set! fv1 1)
+               (if (not (false)) (halt 1) (halt 2)))))
+    `(module (begin
+               (set! fv1 1)
+               (halt 1))))
+
+  ;; not true
+  (check-equal?
+    (optimize-predicates `(module (begin
+               (set! fv1 1)
+               (if (not (true)) (halt 1) (halt 2)))))
+    `(module (begin
+               (set! fv1 1)
+               (halt 2))))
+
+
+  ;; double not
+  (check-equal?
+    (optimize-predicates `(module (begin
+               (set! fv1 1)
+               (if (not (not (true))) (halt 1) (halt 2)))))
+    `(module (begin
+               (set! fv1 1)
+               (halt 1))))
+  
+  (define if-begin-test 
+    `(module 
+        (begin
+          (set! fv1 1)
+          (if 
+            (begin (set! fv0 1) (set! fv2 2) (< fv0 fv2))
+            (halt 1)
+            (halt 2)))))
+  ;; Begin effects pred
+  (check-equal?
+    (optimize-predicates 
+      if-begin-test)
+    `(module 
+        (begin
+          (set! fv1 1)
+          (begin 
+            (set! fv0 1)
+            (set! fv2 2) 
+            (halt 1)))))
+  (check-equal?
+    (interp-nested-asm-lang-v4 if-begin-test)
+    (interp-nested-asm-lang-v4 (optimize-predicates if-begin-test)))
+  
+
+  ;; check (if pred pred pred)
+  (check-equal?
+    (optimize-predicates `(module (begin
+               (set! fv1 1)
+               (if (if (true) (true) (false)) (halt 1) (halt 2)))))
+    `(module (begin
+               (set! fv1 1)
+               (halt 1))))
+
+  ;; check (if pred pred pred)
+  (check-equal?
+    (optimize-predicates `(module (begin
+               (set! fv1 1)
+               (if (if (true) (> rsp rax) (false)) (halt 1) (halt 2)))))
+    `(module (begin
+               (set! fv1 1)
+               (if (> rsp rax) (halt 1) (halt 2)))))
+
+  ;; check (set! loc (+ loc opand)) is identity
+  (check-equal?
+    (optimize-predicates `(module (begin
+               (set! fv1 1)
+               (set! fv1 (+ fv1 2))
+               (halt fv1))))
+    `(module (begin
+               (set! fv1 1)
+               (set! fv1 (+ fv1 2))
+               (halt fv1))))
+  
+  ;; check nested begin is identity
+  (check-equal?
+    (optimize-predicates 
+      `(module 
+        (begin
+          (begin 
+            (set! fv1 1)
+            (set! fv1 (+ fv1 2)))
+          (halt fv1))))
+    `(module 
+        (begin
+          (begin 
+            (set! fv1 1)
+            (set! fv1 (+ fv1 2)))
+          (halt fv1))))
+
+
+    (check-equal?
+      (optimize-predicates `(module (begin
+               (begin
+                (set! fv1 1)
+                (if (true) (set! fv1 (+ fv1 2)) (set! fv1 0)))
+               (halt fv1))))
+
+      `(module (begin
+               (begin
+                (set! fv1 1)
+                (set! fv1 (+ fv1 2)))
+               (halt fv1))))
+
+      (check-equal?
+      (optimize-predicates `(module (begin
+               (begin
+                (set! fv1 1)
+                (if (false) (set! fv1 (+ fv1 2)) (set! fv1 0)))
+               (halt fv1))))
+
+      `(module (begin
+               (begin
+                (set! fv1 1)
+                (set! fv1 0))
+               (halt fv1))))
+
+)
