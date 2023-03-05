@@ -271,5 +271,19 @@
              (if (true) (set! r8 42) (set! r8 40))
              (set! r8 41)))
          (if (if (true) (false) (true)) (halt 2) (halt r8)))))
+
+  ;; effect/begin multiple where
+  ;; order of effects matters
+  (check-42
+    '(module
+       (begin
+         (begin
+           (set! r8 10)
+           (set! r9 r8)
+           (set! rsi 2)
+           (set! rsi (* rsi 16))
+           (set! r9 (+ r9 rsi)))
+         (set! rcx r9)
+         (halt rcx))))
   )
 
