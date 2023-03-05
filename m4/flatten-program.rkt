@@ -10,7 +10,8 @@
 (define/contract (flatten-program p)
   (-> block-asm-lang-v4? para-asm-lang-v4?)
 
-  ;; (Block-Asm-Lang-v4 effect) -> (Para-Asm-Lang-v4 s)
+  ;; Unused
+  #; 
   (define (flatten-effect e)
     (match e
       [`(set! ,_ ,_) e]
@@ -22,7 +23,7 @@
       [`(halt ,_) (list t)]
       [`(jump ,_) (list t)]
       [`(begin ,effect ... ,tail)
-       (append (map flatten-effect effect) (flatten-tail tail))]
+       (append effect (flatten-tail tail))]
       [`(if (,relop ,loc ,opand) (jump ,trg1) (jump ,trg2))
        `((compare ,loc ,opand)
          (jump-if ,relop ,trg1)
@@ -38,7 +39,7 @@
 
   (match p
     [`(module ,b ...)
-     `(begin ,@(apply append (map flatten-b b)))]))
+     `(begin ,@(append-map flatten-b b))]))
 
 (module+ test
   (require rackunit)
