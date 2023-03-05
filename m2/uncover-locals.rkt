@@ -38,14 +38,14 @@
  	 	  [`(not ,pred) (uncover-locals-pred pred)]
  	 	  [`(begin ,effect ... ,pred)
        (foldl set-union (uncover-locals-pred pred) (map uncover-locals-effect effect))]
-      [`(,relop ,aloc ,triv)
-       #:when(relop? relop)
-       (set-add (uncover-locals-triv triv) aloc)]
  	 	  [`(if ,ppred ,pred1 ,pred2)
        (set-union
          (uncover-locals-pred ppred)
          (uncover-locals-pred pred1)
-         (uncover-locals-pred pred2))]))
+         (uncover-locals-pred pred2))]
+      [`(,relop ,aloc ,triv)
+       #:when(relop? relop)
+       (set-add (uncover-locals-triv triv) aloc)]))
 
   ;; Returns the set of alocs used in e.
   ;;
