@@ -2,7 +2,8 @@
 
 (require
   cpsc411/compiler-lib
-  cpsc411/langs/v4)
+  cpsc411/langs/v4
+  "../utils/compiler-utils.rkt")
 
 (provide uncover-locals)
 
@@ -37,7 +38,9 @@
  	 	  [`(not ,pred) (uncover-locals-pred pred)]
  	 	  [`(begin ,effect ... ,pred)
        (foldl set-union (uncover-locals-pred pred) (map uncover-locals-effect effect))]
-      [`(,_ ,aloc ,triv) (set-add (uncover-locals-triv triv) aloc)]
+      [`(,relop ,aloc ,triv)
+       #:when(relop? relop)
+       (set-add (uncover-locals-triv triv) aloc)]
  	 	  [`(if ,ppred ,pred1 ,pred2)
        (set-union
          (uncover-locals-pred ppred)

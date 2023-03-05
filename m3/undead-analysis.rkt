@@ -2,7 +2,8 @@
 
 (require
   cpsc411/compiler-lib
-  cpsc411/langs/v4)
+  cpsc411/langs/v4
+  "../utils/compiler-utils.rkt")
 
 (provide undead-analysis)
 
@@ -124,13 +125,14 @@
            ([(new-ust new-ui)
              (undead-analysis-effect e acc-ui)])
            (values (cons new-ust acc-ust) new-ui)))]
-      [`(,_ ,aloc ,triv)
-       (values uo (undead-analysis-triv triv (set-add uo aloc)))]
  	 	  [`(if ,ppred ,pred1 ,pred2)
        (define-values (ut1 ui1) (undead-analysis-pred pred1 uo))
        (define-values (ut2 ui2) (undead-analysis-pred pred2 uo))
        (define-values (utp uip) (undead-analysis-pred ppred (set-union ui1 ui2)))
-       (values (list utp ut1 ut2) uip)]))
+       (values (list utp ut1 ut2) uip)]
+      [`(,relop ,aloc ,triv)
+       #:when(relop? relop)
+       (values uo (undead-analysis-triv triv (set-add uo aloc)))]))
 
   ;; Returns uo with t if t is a triv AND t is in uo,
   ;; otherwise returns uo.
