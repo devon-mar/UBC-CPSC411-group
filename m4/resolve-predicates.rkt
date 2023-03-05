@@ -42,8 +42,7 @@
       [`(define ,label ,tail) `(define ,label ,(convert-tail tail))]))
 
   (match p
-    [`(module ,b ...
-        )
+    [`(module ,b ...)
      `(module ,@(map convert-b b))]))
 
 (module+ test
@@ -96,9 +95,40 @@
        (define start (if (< 1 2) (jump A) (jump B)))))
   (define out6 in6)
 
+  ;; Identity function on effect `(set! loc triv) 
+  (define in7
+    '(module (define A (begin (set! fv0 2) (halt fv0)))))
+  (define out7 in7)
+
+  ;; Identity function on effect `(set! loc_1 (+ loc_1 opand))
+  (define in8
+    '(module (define A (begin (set! fv0 2) (set! fv0 (+ fv0 2)) (halt fv0)))))
+  (define out8 in8)
+
+  ;; Identity function on effect `(set! loc_1 (+ loc_1 opand))
+  (define in9
+    '(module (define A (begin (set! fv0 2) (set! fv0 (* fv0 2)) (halt fv0)))))
+  (define out9 in9)
+
+  ;; Identity function on tail (halt opand) 
+  (define in10
+    '(module (define A (halt 3))))
+  (define out10 in10)
+
+  ;; Identity function on tail (jump opand) 
+  (define in11
+    '(module (define A (begin (set! fv0 1) (halt fv0))) (define B (jump A))))
+  (define out11 in11)
+
   (check-equal? (resolve-predicates in1) out1)
   (check-equal? (resolve-predicates in2) out2)
   (check-equal? (resolve-predicates in3) out3)
   (check-equal? (resolve-predicates in4) out4)
   (check-equal? (resolve-predicates in5) out5)
-  (check-equal? (resolve-predicates in6) out6))
+  (check-equal? (resolve-predicates in6) out6)
+  (check-equal? (resolve-predicates in7) out7)
+  (check-equal? (resolve-predicates in8) out8)
+  (check-equal? (resolve-predicates in9) out9)
+  (check-equal? (resolve-predicates in10) out10)
+  (check-equal? (resolve-predicates in11) out11))
+
