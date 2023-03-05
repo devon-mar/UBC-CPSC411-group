@@ -48,7 +48,7 @@
 
 (module+ test
   (require rackunit)
-  ;; b | tail | effect unchanged
+  ;; No preds is identity function
   (define in1
     '(module (define start
                (begin
@@ -94,20 +94,11 @@
   (define in6
     '(module (define A (halt 1)) (define B (halt 2))
        (define start (if (< 1 2) (jump A) (jump B)))))
-  (define out6
-    '(module (define A (halt 1)) (define B (halt 2))
-       (define start (if (< 1 2) (jump A) (jump B)))))
-
-  ;; Check handling not not correctly
-  (define in7
-    '(module (define A (halt 1)) (define B (halt 2))
-       (define start (if (not (not (< 1 2))) (jump A) (jump B)))))
-  (define out7
-    '(module (define A (halt 1)) (define B (halt 2))
-       (define start (if (< 1 2) (jump A) (jump B)))))
+  (define out6 in6)
 
   (check-equal? (resolve-predicates in1) out1)
   (check-equal? (resolve-predicates in2) out2)
   (check-equal? (resolve-predicates in3) out3)
   (check-equal? (resolve-predicates in4) out4)
-  (check-equal? (resolve-predicates in5) out5))
+  (check-equal? (resolve-predicates in5) out5)
+  (check-equal? (resolve-predicates in6) out6))
