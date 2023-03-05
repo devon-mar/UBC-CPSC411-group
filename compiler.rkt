@@ -22,7 +22,9 @@
   "m3/undead-analysis.rkt"
   "m3/conflict-analysis.rkt"
   "m3/assign-registers.rkt"
-  "m3/assign-homes-opt.rkt")
+  "m3/assign-homes-opt.rkt"
+
+  "m4/expose-basic-blocks.rkt")
 
 (provide
  link-paren-x64
@@ -54,11 +56,11 @@
 
 ;; Stubs; remove or replace with your definitions.
 (define-values (optimize-predicates
-                expose-basic-blocks
+                ;expose-basic-blocks
                 resolve-predicates
                 flatten-program)
   (values
-   values
+   ;values
    values
    values
    values))
