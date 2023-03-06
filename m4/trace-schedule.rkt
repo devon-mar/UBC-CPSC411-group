@@ -35,8 +35,9 @@
       [`(begin ,_ ... ,tail)
        (update-graph-tail tail label)]
       [`(if (,_ ,_ ,_) (jump ,_) (jump ,trg2))
-       ;  (when (label? trg1) (add-directed-edge jump-graph label trg1))
-       (when (label? trg2) (set! jump-graph (add-directed-edge jump-graph label trg2)))]))
+       ; Only consider second jump since it is at the end
+       (when (label? trg2) (set! jump-graph (add-directed-edge jump-graph label trg2)))
+       (void)]))
 
   ;; b -> void
   ;; Update the jump-graph with jump information in b
