@@ -4,6 +4,8 @@
   cpsc411/compiler-lib
   cpsc411/langs/v4)
 
+(provide interp-values-lang)
+
 ;; Milestone 4 Exercise 21
 ;;
 ;; Interpret the Values-lang v4 program p as a value. For all p, the value of
