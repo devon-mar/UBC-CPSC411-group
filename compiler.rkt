@@ -23,7 +23,8 @@
   "m3/conflict-analysis.rkt"
   "m3/assign-registers.rkt"
   "m3/assign-homes-opt.rkt"
-  
+
+  "m4/expose-basic-blocks.rkt"
   "m4/resolve-predicates.rkt")
 
 (provide
@@ -57,12 +58,12 @@
 
 ;; Stubs; remove or replace with your definitions.
 (define-values (optimize-predicates
-                expose-basic-blocks
+                ;expose-basic-blocks
                 ;resolve-predicates
                 flatten-program)
   (values
    values
-   values
+   ;values
    ;values
    values))
 

@@ -2,21 +2,26 @@
 
 (require
   cpsc411/compiler-lib
-  cpsc411/langs/v2)
+  cpsc411/langs/v4)
 
 (provide implement-fvars)
 
 ;; Milestone 2 Exercise 11
+;; Milestone 4 Exercise 4
 ;;
-;; Compiles the Paren-x64-fvars v2 to Paren-x64 v2 by reifying fvars into
+;; Compiles the Paren-x64-fvars v4 to Paren-x64 v4 by reifying fvars into
 ;; displacement mode operands. The pass should use
 ;; current-frame-base-pointer-register.
 (define/contract (implement-fvars p)
-  (-> paren-x64-fvars-v2? paren-x64-v2?)
+  (-> paren-x64-fvars-v4? paren-x64-v4?)
 
   (define/contract (loc? l)
     (-> any/c boolean?)
     (or (register? l) (fvar? l)))
+  
+  (define/contract (trg? l)
+    (-> any/c boolean?)
+    (or (register? l) (label? l)))
 
   ;; Return the displacement mode operand for fvar f.
   (define/contract (implement-fvars-fvar f)
@@ -26,7 +31,7 @@
 
   ;; Replace fvars with displacement mode operands in l.
   ;;
-  ;; paren-x64-fvars-v2-loc -> paren-x64-v2-loc
+  ;; paren-x64-fvars-v4-loc -> paren-x64-v4-loc
   (define (implement-fvars-loc l)
     (match l
       [reg #:when (register? reg) reg]
@@ -34,30 +39,33 @@
 
   ;; Replace fvars with displacement mode operands in s.
   ;;
-  ;; paren-x64-fvars-v2-s -> paren-x64-v2-s
+  ;; paren-x64-fvars-v4-s -> paren-x64-v4-s
   (define (implement-fvars-s s)
     (match s
       [`(set! ,_ (,_ ,_ ,int32))
-        #:when (int32? int32)
-        s]
+       #:when (int32? int32)
+       s]
       [`(set! ,reg (,binop ,reg ,loc))
-        `(set! ,reg (,binop ,reg ,(implement-fvars-loc loc)))]
+       `(set! ,reg (,binop ,reg ,(implement-fvars-loc loc)))]
       [`(set! ,fvar ,int32)
-        #:when (and (fvar? fvar) (int32? int32))
-        `(set! ,(implement-fvars-fvar fvar) ,int32)]
-      [`(set! ,fvar ,reg)
-        #:when (and (fvar? fvar) (register? reg))
-        `(set! ,(implement-fvars-fvar fvar) ,reg)]
+       #:when (and (fvar? fvar) (int32? int32))
+       `(set! ,(implement-fvars-fvar fvar) ,int32)]
+      [`(set! ,fvar ,trg)
+       #:when (and (fvar? fvar) (trg? trg))
+       `(set! ,(implement-fvars-fvar fvar) ,trg)]
       [`(set! ,reg ,loc)
-        #:when (and (register? reg) (loc? loc))
-        `(set! ,reg ,(implement-fvars-loc loc))]
-
-      [`(set! ,_ ,_)
-        s]))
+       #:when (and (register? reg) (loc? loc))
+       `(set! ,reg ,(implement-fvars-loc loc))]
+      [`(set! ,_ ,_) s]
+      [`(with-label ,label ,s2)
+       `(with-label ,label ,(implement-fvars-s s2))]
+      [`(jump ,_) s]
+      [`(compare ,_ ,_) s]
+      [`(jump-if ,_ ,_) s]))
 
   ;; Replace fvars with displacement mode operands in p.
   ;;
-  ;; paren-x64-fvars-v2-p -> paren-x64-v2-p
+  ;; paren-x64-fvars-v4-p -> paren-x64-v4-p
   (define (implement-fvars-p p)
     (match p
       [`(begin ,s ...) `(begin ,@(map implement-fvars-s s))]))
@@ -66,6 +74,8 @@
 
 (module+ test
   (require rackunit)
+  (check-equal? (implement-fvars '(begin)) '(begin))
+  (check-equal? (implement-fvars '(begin (set! rax 0))) '(begin (set! rax 0)))
 
   (check-match
     (implement-fvars
@@ -93,4 +103,25 @@
        (set! rax rsi))
   (and
     (equal? rbp (current-frame-base-pointer-register))
-    (equal? val1 (add1 (max-int 32))))))
+    (equal? val1 (add1 (max-int 32)))))
+  
+  ; control flow statements
+  (check-equal?
+    (implement-fvars
+      '(begin
+        (with-label L.$!!@#*main.2 (with-label L.test.3 (set! fv0 L.$!!@#*main.2)))
+        (jump rax)
+        (jump L.test.4)
+        (compare rax rbx)
+        (jump-if <= L.test!!.5)))
+    `(begin
+      (with-label
+        L.$!!@#*main.2
+        (with-label
+          L.test.3
+          (set! (,(current-frame-base-pointer-register) - 0) L.$!!@#*main.2)))
+      (jump rax)
+      (jump L.test.4)
+      (compare rax rbx)
+      (jump-if <= L.test!!.5)))
+  )
