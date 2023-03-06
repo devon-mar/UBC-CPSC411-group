@@ -77,8 +77,35 @@
       [`(let ([,xs ,vs] ...) ,value)
         (define new-alocs (set-alocs-let alocs xs))
         `(let ,(uniquify-let-decl new-alocs alocs xs vs) ,(uniquify-value new-alocs value))]
+      [`(if ,pred ,v1 ,v2)
+        `(if
+           ,(uniquify-pred alocs pred)
+           ,(uniquify-value alocs v1)
+           ,(uniquify-value alocs v2))]
       [`(,binop ,t1 ,t2)
         `(,binop ,(uniquify-triv alocs t1) ,(uniquify-triv alocs t2))]))
+
+  (define/contract (uniquify-pred alocs p)
+    (-> dict? any/c any/c)
+    (match p
+      [`(true)
+        p]
+      [`(false)
+        p]
+      [`(not ,pred)
+        `(not ,(uniquify-pred alocs pred))]
+      [`(let ([,xs ,vs] ...) ,pred)
+        (define new-alocs (set-alocs-let alocs xs))
+        `(let ,(uniquify-let-decl new-alocs alocs xs vs) ,(uniquify-pred new-alocs pred))]
+      [`(if ,p1 ,p2 ,p3)
+        `(if
+           ,(uniquify-pred alocs p1)
+           ,(uniquify-pred alocs p2)
+           ,(uniquify-pred alocs p3))]
+      [`(,relop ,t1 ,t2)
+        `(,relop
+          ,(uniquify-triv alocs t1)
+          ,(uniquify-triv alocs t2))]))
 
   ;; Compiles Values-lang v3 to Values-unique-lang v3 by resolving all lexical
   ;; identifiers to abstract locations.
@@ -113,9 +140,9 @@
   ; nested let
   (check-42
     '(module
-     (let ([x 40])
-       (let ([y 2])
-         (+ x y)))))
+       (let ([x 40])
+         (let ([y 2])
+           (+ x y)))))
 
   ; shadow decl
   ; let in tail of let
@@ -140,5 +167,53 @@
          (let ([foo (+ 1 foo)]
                [bar (+ 1 foo)])
            (+ foo bar)))))
-  )
+
+
+  ;; M3 tests
+
+  (check-42
+    '(module
+	     ;; tail/(let ([x value] ...) tail)
+       (let ([x 10]
+	           ;; pred/(not pred)
+	           ;; pred/(false)
+             [y (if (not (false)) 20 10)]
+	           ;; values/(if pred value value)
+	           ;; pred/(true)
+             [a (if (true) 42 0)]
+             [b 1])
+	       ;; pred/(relop triv triv)
+         (if (= x y)
+           b
+           a))))
+
+  (check-42
+    '(module
+	     ;; pred/(let ([x value] ...) pred)
+       (if (let ([x 2]
+                 [y 4])
+             (< x y))
+         42
+         0)))
+
+  (check-42
+	  ;; tail/value
+    '(module 42))
+
+  (check-42
+    '(module
+	     ;; values/(let ([x value] ...) value)
+       (let ([x (let ([y 40]) (+ y 1))]
+             [y 1])
+	       ;; values/(binop triv triv)
+         (+ x y))))
+
+  (check-42
+    '(module
+       (if (if (true) (false) (true))
+         20
+         42)))
+
+
+	)
 
