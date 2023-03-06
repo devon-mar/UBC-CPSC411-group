@@ -346,4 +346,14 @@
        (set! rax (+ rax 1))
        (with-label L.b.1 (set! rax rax))))
 
+  ;; done label test
+  (check-42
+    `(begin
+       (set! rax 0)
+       (set! rax (+ rax 1))
+       (set! rax (* rax 10))
+       (set! rax (* rax 4))
+       (set! rax (+ rax 2))
+       (jump done)
+       (set! rax (+ rax 2))))
   )
