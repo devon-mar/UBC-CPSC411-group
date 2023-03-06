@@ -7,9 +7,9 @@
 (provide normalize-bind)
 
 ;; Milestone 2 Exercise 3
-;; Milestone 2 Exercise 19
+;; Milestone 4 Exercise 19
 ;;
-;; Compiles Imp-mf-lang v3 to Imp-cmf-lang v3, pushing set! under begin so that
+;; Compiles Imp-mf-lang v4 to Imp-cmf-lang v4, pushing set! under begin so that
 ;; the right-hand-side of each set! is simple value-producing operation.
 ;; This normalizes Imp-mf-lang v3 with respect to the equations
 (define/contract (normalize-bind p)
@@ -34,11 +34,11 @@
       [`(begin ,es ... ,value)
         `(begin
            ,@(map normalize-bind-effect es)
-           (set! ,aloc ,value))]
+           ,(normalize-set aloc value))]
       [`(if ,pred ,vt ,vf)
-       `(if ,pred
-          (set! ,aloc ,vt)
-          (set! ,aloc ,vf))]
+       `(if ,(normalize-bind-pred pred)
+          ,(normalize-set aloc vt)
+          ,(normalize-set aloc vf))]
       [_ `(set! ,aloc ,value)]))
 
 
@@ -46,6 +46,11 @@
   (define (normalize-bind-effect e)
     (match e
       [`(set! ,aloc ,value) (normalize-set aloc value)]
+      [`(if ,pred ,e1 ,e2)
+        `(if
+           ,(normalize-bind-pred pred)
+           ,(normalize-bind-effect e1)
+           ,(normalize-bind-effect e2))]
       [`(begin ,es ..., e)
         `(begin ,@(map normalize-bind-effect es) ,(normalize-bind-effect e))]))
 
@@ -53,6 +58,11 @@
   (define (normalize-bind-tail t)
     (match t
       [`(begin ,es ... ,t) `(begin ,@(map normalize-bind-effect es) ,(normalize-bind-tail t))]
+      [`(if ,pred ,t1 ,t2)
+        `(if
+           ,(normalize-bind-pred pred)
+           ,(normalize-bind-tail t1)
+           ,(normalize-bind-tail t2))]
       [v (normalize-bind-value v)]))
 
   ;; imp-mf-lang-v4-value -> imp-cmf-lang-v4-tail
@@ -69,6 +79,26 @@
     (match p
       [`(module ,tail)
         `(module ,(normalize-bind-tail tail))]))
+
+  (define (normalize-bind-pred p)
+    (match p
+      [`(true)
+        p]
+      [`(false)
+        p]
+      [`(not ,p)
+        `(not ,(normalize-bind-pred p))]
+      [`(begin ,effects ... ,pred)
+        `(begin
+           ,@(map normalize-bind-effect effects)
+           ,(normalize-bind-pred pred))]
+      [`(if ,p1 ,p2 ,p3)
+        `(if
+           ,(normalize-bind-pred p1)
+           ,(normalize-bind-pred p2)
+           ,(normalize-bind-pred p3))]
+      [`(,_ ,_ ,_)
+        p]))
 
   (normalize-bind-p p))
 
@@ -155,4 +185,77 @@
             (set! z.4 (+ 40 2))
             (set! y.4 z.4))
           (set! x.3 y.4))
-        x.3))))
+        x.3)))
+
+  ;; M3 tests
+	(define (check-42 p)
+		(check-equal?
+			(interp-imp-cmf-lang-v4 (normalize-bind p))
+			42))
+
+  (check-42
+	  ;; tail/value
+	  ;; value/triv
+    '(module 42))
+
+	(check-42
+		'(module
+	     ;; pred/(relop triv triv)
+	     ;; pred/(true)
+       (if (true)
+	       ;; pred/(not pred)
+         (if (not (true)) 0 42)
+         ;; pred/(false)
+         (if (false) 1 0))))
+
+  (check-42
+    '(module
+	     ;; value/(if pred value value)
+       (if (begin (set! x.1 (if (true) 20 0)) (= x.1 20))
+         42
+         0)))
+
+  (check-42
+    '(module
+       ;; pred/(if pred pred pred)
+       (if (if (true) (false) (true))
+         0
+         42)))
+
+  (check-42
+    '(module
+	     ;; tail/(begin effect ... tail)
+       (begin
+         (set! x.1 1)
+         (set! x.2 41)
+	       ;; tail/(if pred tail tail)
+	       ;; value/(binop triv triv)
+         (if (false) 40 (+ x.2 x.1)))))
+
+  (check-42
+    '(module
+       (if (true)
+         ;; TODO: is this one even possible? (it's not the one below)...
+         ;; value/(begin effect ... value)
+         (begin
+           (set! x.1 (if (true) (if (true) 40 3) 2))
+           (set! x.2 (begin (set! x.3 (begin (set! x.4 1) x.4)) (+ x.3 1)))
+           (+ x.1 x.2))
+         0)))
+
+  (check-42
+    '(module
+       (begin
+	       ;; effect/(begin effect ... effect)
+         (begin
+           (set!
+             x.1
+             (begin
+               ;; effect/(set! aloc value)
+               (set! x.2 10)
+               (set! x.3 20)
+               (+ x.2 x.3)))
+	         ;; effect/(if pred effect effect)
+           (if (true) (set! x.4 12) (set! x.4 40)))
+         (+ x.1 x.4))))
+  )
