@@ -49,7 +49,8 @@
       (member b '(* +))
       #t))
 
-  (define (check-values-lang-pred env p)
+  (define/contract (check-values-lang-pred env p)
+    (-> generic-set? any/c void?)
     (match p
       [`(true)
         (void)]
@@ -71,7 +72,8 @@
         (check-values-lang-triv env t2)]
       [_ (error "invalid pred " p)]))
 
-  (define (check-values-lang-tail env t)
+  (define/contract (check-values-lang-tail env t)
+    (-> generic-set? any/c void?)
     (match t
       [`(let ([,xs ,vs] ...) ,tail)
         (check-let env xs vs)
@@ -82,7 +84,8 @@
         (check-values-lang-tail env t2)]
       [_ (check-values-lang-value env t)]))
 
-  (define (check-values-lang-value env v)
+  (define/contract (check-values-lang-value env v)
+    (-> generic-set? any/c void?)
     (match v
       [`(let ([,xs ,vs] ...) ,value)
         (check-let env xs vs)
@@ -98,7 +101,8 @@
         (check-values-lang-tail env t2)]
       [_ (check-values-lang-triv env v)]))
 
-  (define (check-values-lang-triv env t)
+  (define/contract (check-values-lang-triv env t)
+    (-> generic-set? any/c void?)
     (match t
       [(? int64?) (void)]
       [(? name?)
