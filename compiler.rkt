@@ -25,7 +25,8 @@
   "m3/assign-homes-opt.rkt"
   
   "m4/optimize-predicates.rkt"
-  "m4/expose-basic-blocks.rkt")
+  "m4/expose-basic-blocks.rkt"
+  "m4/resolve-predicates.rkt")
 
 (provide
  link-paren-x64
@@ -49,7 +50,8 @@
  flatten-program
  patch-instructions
  implement-fvars
- generate-x64)
+ generate-x64
+ resolve-predicates)
 
 ;; Template support macro; feel free to delete
 (define-syntax-rule (.... stx ...)
@@ -58,12 +60,12 @@
 ;; Stubs; remove or replace with your definitions.
 (define-values (;optimize-predicates
                 ;expose-basic-blocks
-                resolve-predicates
+                ;resolve-predicates
                 flatten-program)
-  (;values
+  (values
    ;values
-   values
-   values
+   ;values
+   ;values
    values))
 
 ;; TODO: Fill in.
