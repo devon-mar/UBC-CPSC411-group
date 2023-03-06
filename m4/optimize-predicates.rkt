@@ -43,7 +43,6 @@
      [`(if ,pred ,tail1 ,tail2)
       (convert-if-tail pred (convert-tail tail1 env) (convert-tail tail2 env) env)]))
  ;; pred tail tail dict -> tail
- ;; pred effect effect dict -> effect
  (define (convert-if-tail pred t1 t2 env)
    (match pred
      [`(true) ;; base case
