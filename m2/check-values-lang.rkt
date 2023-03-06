@@ -4,6 +4,8 @@
   cpsc411/compiler-lib
   cpsc411/langs/v4)
 
+(provide check-values-lang)
+
 ;; Milestone 4 Exercise 22
 ;;
 ;; Takes an arbitrary value and either returns it, if it is a valid Values-lang

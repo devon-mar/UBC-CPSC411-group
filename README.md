@@ -47,9 +47,24 @@ For versions of the skeletons from prior versions of the course, see the tags.
 
 - Exercise 1, `generate-x64` ->  m2/generate-x64.rkt
 - Exercise 2, `link-paren-x64` ->  m4/link-paren-x64.rkt
+- Exercise 3, `interp-paren-x64` ->  m2/interp-paren-x64.rkt
+- Exercise 4, `implement-fvars` ->  m2/implement-fvars.rkt
+- Exercise 5, `patch-instructions` ->  m2/patch-instructions.rkt
+- Exercise 6, `flatten-program` ->  m4/flatten-program.rkt
+- Exercise 7, `inline-jumps` -> m4/inline-jumps.rkt
+- Exercise 8, `trace-schedule` -> m4/trace-schedule.rkt
+- Exercise 9, `resolve-predicates` -> m4/resolve-predicates.rkt
 - Exercise 10, `expose-basic-blocks` -> m4/expose-basic-blocks.rkt
+- Exercise 11, `optimize-predicates` -> m4/optimize-predicates.rkt
+- Exercise 12, `replace-locations` -> m2/replace-locations.rkt
+- Exercise 13, `assign-registers` -> m3/replace-locations.rkt
+- Exercise 14, `conflict-analysis` -> m3/conflict-analysis.rkt
+- Exercise 15, `undead-analysis` -> m3/undead-analysis.rkt
+- Exercise 16, `uncover-locals` -> m2/uncover-locals.rkt
 - Exercise 17, `select-instructions` -> m2/select-instructions.rkt
 - Exercise 18, `sequentialize-let` -> m2/sequentialize-let.rkt
 - Exercise 19, `normalize-bind` -> m2/normalize-bind.rkt
 - Exercise 20, `uniquify` -> m2/uniquify.rkt
+- Exercise 21, `interp-values-lang` -> m2/interp-values-lang.rkt
+- Exercise 22, `check-values-lang` -> m2/check-values-lang.rkt
 
