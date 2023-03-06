@@ -25,6 +25,7 @@
   "m3/assign-homes-opt.rkt"
 
   "m4/link-paren-x64.rkt"
+  "m4/interp-paren-x64.rkt"
   "m4/optimize-predicates.rkt"
   "m4/expose-basic-blocks.rkt"
   "m4/resolve-predicates.rkt")
@@ -68,29 +69,6 @@
    ;values
    ;values
    values))
-
-;; Exercise 3
-;; paren-x64-rt-v4 -> int64
-(define (interp-paren-x64 p)
-
-  ;; dict-of(loc -> int64) Natural (listof statement) statement -> int64
-  ;; Runs statement `s`, which is expected to be the `pc`th instruction of
-  ;; `los`, modifying the environment and incrementing the program counter,
-  ;; before executing the next instruction in `los`.
-  (define (eval-statement env pc los s)
-    (....
-     (eval-program (.... env) (.... (add1 pc)) los)))
-
-  ;; dict-of(loc -> int64) Natural (listof statements) -> int64
-  ;; Runs the program represented by `los` starting from instruction number
-  ;; indicated by the program counter `pc`, represented as a natural number.
-  ;; Program is finished when `pc` reaches the final instruction of `los`.
-  (define (eval-program env pc los)
-    (if (= pc (length los))
-        (dict-ref env 'rax)
-        (eval-statement env pc los (list-ref los pc))))
-
-  (TODO "Redesign and implement interp-paren-x64 for Exercise 3."))
 
 (module+ test
   (require
