@@ -42,3 +42,7 @@ For versions of the skeletons from prior versions of the course, see the tags.
 - Exercise 5, `compile-m2` ->  m3/compile-m2.rkt
 - Exercise 5, `compile-m3` ->  m3/compile-m3.rkt
 - Exercise 6, `bury-dead` ->  m3/bury-dead.rkt
+
+## Milestone 4
+
+- Exercise 2, `link-paren-x64` ->  m4/link-paren-x64.rkt

@@ -22,7 +22,8 @@
   "m3/undead-analysis.rkt"
   "m3/conflict-analysis.rkt"
   "m3/assign-registers.rkt"
-  "m3/assign-homes-opt.rkt")
+  "m3/assign-homes-opt.rkt"
+  "m4/link-paren-x64.rkt")
 
 (provide
  link-paren-x64
@@ -62,12 +63,6 @@
    values
    values
    values))
-
-;; TODO: Fill in.
-;; You'll want to merge milestone-3 code in
-
-(define (link-paren-x64 p)
-  (TODO "Design and implement link-paren-x64 for Exercise 2."))
 
 ;; Exercise 3
 ;; paren-x64-rt-v4 -> int64
