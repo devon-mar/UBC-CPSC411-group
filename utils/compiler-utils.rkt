@@ -8,3 +8,11 @@
 ;; any -> boolean
 (define (relop? r)
   (and (member r '(< <= = >= > !=)) #t))
+
+(module+ test
+  (require rackunit)
+  (for ([r '(< <= = >= > !=)])
+    (check-true (relop? r)))
+  (for ([n (list 1 'a '(<) '+ =)])
+    (check-false (relop? n)))
+  )
