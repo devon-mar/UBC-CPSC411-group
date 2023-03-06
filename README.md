@@ -66,5 +66,5 @@ For versions of the skeletons from prior versions of the course, see the tags.
 - Exercise 19, `normalize-bind` -> m2/normalize-bind.rkt
 - Exercise 20, `uniquify` -> m2/uniquify.rkt
 - Exercise 21, `interp-values-lang` -> m2/interp-values-lang.rkt
-- Exercise 21, `check-values-lang` -> m2/check-values-lang.rkt
+- Exercise 22, `check-values-lang` -> m2/check-values-lang.rkt
 
