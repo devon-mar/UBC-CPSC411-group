@@ -2,111 +2,191 @@
 
 (require
   cpsc411/compiler-lib
-  cpsc411/langs/v2
-  cpsc411/langs/v3)
+  cpsc411/langs/v4)
 
 (provide select-instructions)
 
-;; MIlestone 2 Exercise 4
+;; Milestone 4 Exercise 17
 ;;
-;; Compiles Imp-cmf-lang v3 to Asm-lang v2, selecting appropriate sequences of
-;; abstract assembly instructions to implement the operations of the source
-;; language.
+;; Compiles Imp-cmf-lang v4 to Asm-pred-lang v4,
+;; selecting appropriate sequences of abstract assembly instructions to
+;; implement the operations of the source language.
 (define/contract (select-instructions p)
-  (-> imp-cmf-lang-v3? asm-lang-v2?)
+  (-> imp-cmf-lang-v4? asm-pred-lang-v4?)
 
-  (define (triv? t)
-    (-> any/c boolean?)
-    (or (name? t) (int64? t)))
 
-  ;; Selects an appropriate asm-lang-v2 instruction
-  ;; to implement the imp-cmf-lang-v3 instruction in e.
-  ;;
-  ;; imp-cmf-lang-v3 effect -> asm-lang-v2 effect
-  (define (select-instructions-effect e)
-    (match e
-      ;; Modified template: Split set! case into two
-      ;; cases based on the type of value.
+  (define (select-instructions-p p)
+    (match p
+      [`(module ,tail)
+       `(module
+          ()
+          ,(select-instructions-tail tail))]))
 
-      ;; optimization: We don't need to introduce a temp here
-      ;; since asm-lang-v2 has (set! aloc_1 (binop aloc_1 triv)).
-      ;; Therefore, if aloc and triv1 is the same, we don't have
-      ;; to do anything.
-      [`(set! ,aloc1 (,_ ,aloc2 ,_))
-        ;; This is to remove unused variable warning.
-        ;; Also makes it a bit more obvious what we're doing here.
-        #:when (equal? aloc1 aloc2)
-        e]
-      ;; modified template - added a new case
-      ;; We don't need to introduce a tmp if op1 is an aloc.
-      ;; We can just add another set!
-      [`(set! ,aloc (,binop ,op1 ,op2))
+  (define (select-instructions-pred p)
+    (match p
+      ['(true)
+       p]
+      ['(false)
+       p]
+      [`(not ,pred)
+        `(not ,(select-instructions-pred pred))]
+      [`(begin ,effects ... ,pred)
         `(begin
-          (set! ,aloc ,op1)
-          (set! ,aloc (,binop ,aloc ,op2)))]
-      [`(set! ,aloc ,value)
-        (select-instructions-value
-          value
-          (lambda (triv) `(set! ,aloc ,triv)))]
-      ;; removed extra e since we assume input is valid
-      [`(begin ,es ...)
-        `(begin
-           ,@(map select-instructions-effect es))]))
+           ,@(map select-instructions-effect effects)
+           ,(select-instructions-pred pred))]
+      [`(if ,p1 ,p2 ,p3)
+        `(if
+           ,(select-instructions-pred p1)
+           ,(select-instructions-pred p2)
+           ,(select-instructions-pred p3))]
+      [`(,relop ,triv1 ,triv2)
+        (select-instructions-triv
+          triv1
+          (lambda (aloc) `(,relop ,aloc ,triv2)))]))
 
-  ;; Selects an appropriate asm-lang-v2 instruction
-  ;; to implement the imp-cmf-lang-v3 instruction in t.
-  ;;
-  ;; imp-cmf-lang-v3 tail -> asm-lang-v2 tail
   (define (select-instructions-tail t)
     (match t
-      [`(begin ,es ... ,tail)
-        `(begin
-          ,@(map select-instructions-effect es)
+      [`(begin ,effects ... ,tail)
+       `(begin
+          ,@(map select-instructions-effect effects)
           ,(select-instructions-tail tail))]
-      [v
+      [`(if ,pred ,t1 ,t2)
+       `(if
+          ,(select-instructions-pred pred)
+          ,(select-instructions-tail t1)
+          ,(select-instructions-tail t2))]
+      ;; value
+      [_
         (select-instructions-value
-          v
+          t
           (lambda (triv) `(halt ,triv)))]))
 
   ;; If v is a binop, introduces a begin with the result of
-  ;; (f triv) as the last statement, triv being some
-  ;; temporary aloc which holds the result of the binop.
+  ;; (f triv) as the last statement, triv being some temporary
+  ;; aloc which holds the result of the binop.
   ;; Otherwise returns (f v).
   ;;
   ;; v: imp-cmf-lang-v3 value
-  ;; f: (triv? -> asm-lang-v2 tail or effect)
+  ;; f: (triv? -> asm-pred-lang-v3 tail or effect)
+  ;; -> asm-pred-lang-v3 tail or effect
   (define (select-instructions-value v f)
     (match v
-      [triv
-       #:when (triv? triv)
-       (f v)]
-      ;; modified template to add new case
       [`(,binop ,t1 ,t2)
         (define tmp (fresh "tmp"))
         `(begin
            (set! ,tmp ,t1)
            (set! ,tmp (,binop ,tmp ,t2))
-           ,(f tmp))]))
+           ,(f tmp))]
+      ;; triv
+      [_ (f v)]))
 
-  (define (select-instructions-p p)
-    (match p
-      [`(module ,tail)
-        `(module () ,(select-instructions-tail tail))]))
+  (define (select-instructions-effect e)
+    (match e
+      [`(set! ,aloc ,value)
+        (select-instructions-value
+          value
+          (lambda (t) `(set! ,aloc ,t)))]
+      ;; modified template - removed extra e since we assume input is valid
+      [`(begin ,effects ...)
+        `(begin
+           ,@(map select-instructions-effect effects))]
+      [`(if ,pred ,e1 ,e2)
+        `(if
+           ,(select-instructions-pred pred)
+           ,(select-instructions-effect e1)
+           ,(select-instructions-effect e2))]))
+
+  ;; If t is an int64, introduces a temp aloc
+  ;; with t's value and calls f with the temp variable.
+  ;; Otherwise (f t) if t is already an aloc.
+  ;;
+  ;; t: triv?
+  ;; f: (aloc? -> pred)
+  ;; -> pred
+  (define (select-instructions-triv t f)
+    (match t
+      [(? aloc?) (f t)]
+      [(? int64?)
+       (define tmp (fresh "tmp"))
+       `(begin
+          (set! ,tmp ,t)
+          ,(f tmp))]))
+
+  ;; not used
+  #;
+  (define (select-instructions-binop b)
+    (match b
+      ['* (void)]
+      ['+ (void)]))
+
+  ;; not used
+  #;
+  (define (select-instructions-relop r)
+    (match r
+      ['< (void)]
+      ['<= (void)]
+      ['= (void)]
+      ['>= (void)]
+      ['> (void)]
+      ['!= (void)]))
 
   (select-instructions-p p))
 
 (module+ test
   (require rackunit)
 
-  ;; Interp the output of select-instructions on i
-  ;; and check that 42 is returned.
-  (define (check-42 i)
-    (-> asm-lang-v2? integer?)
+  (define (check-42 p)
     (check-equal?
-      (interp-asm-lang-v2 (select-instructions i))
+      (interp-asm-pred-lang-v4 (select-instructions p))
       42))
 
+  ;; basic
+  (check-42 '(module 42))
+  (check-42 '(module (+ 40 2)))
+  (check-42 '(module (* 21 2)))
+  
+  ;; relop with 2 int64s
+  (check-42
+    '(module
+       (if (= 1 1)
+         42
+         0)))
 
+  ;; relop with int64, triv
+  (check-42
+    '(module
+       (begin
+         (set! x.1 1)
+         (if (= 1 x.1)
+           42
+           0))))
+
+  ;; relop with triv, int64
+  ;; (no changes needed)
+  (check-42
+    '(module
+       (begin
+         (set! x.1 1)
+         (if (= x.1 1)
+           42
+           0))))
+
+  ;; lots of ifs
+	(check-42
+		'(module
+       (begin
+         (if
+           (begin
+             (set! x.2 10)
+             (> x.2 1))
+           (set! x.1 42)
+           (set! x.1 2))
+         (if
+           (if (false) (true) (false))
+           0
+           (if (not (true)) 0 x.1)))))
+
+  ;; M2 tests
   ; simple
   (check-42 '(module 42))
 
@@ -135,21 +215,8 @@
              (set! x.1 (+ x.1 x.2))))
          x.1)))
 
+
   ;; nothing to change here
-  (check-equal?
-    (select-instructions
-      '(module
-         (begin
-           (set! x.2 21)
-           (set! x.2 (* x.2 2))
-           x.2)))
-    '(module
-       ()
-       (begin
-         (set! x.2 21)
-         (set! x.2 (* x.2 2))
-         (halt x.2))))
-  ;; same as above but just run it through check-42
   (check-42
     '(module
        (begin
