@@ -106,7 +106,7 @@
     (-> any/c dict?)
     (match p
       [`(begin ,s ...)
-        (for/fold ([acc '()])
+        (for/fold ([acc `(,(cons 'done (length s)))])
                   ([s s]
                    [i (in-naturals)])
         (labels->addrs-s acc i s))]))
@@ -140,6 +140,22 @@
        (jump-if != 0)
        (jump 4)
        (set! rsi 5)
+       (set! rax 42)))
+
+  ;; Done label
+  (check-equal?
+    (link-paren-x64
+      '(begin
+         (set! r15 1)
+         (set! r8 2)
+         (jump done)
+         (set! r8 3)
+         (set! rax 42)))
+    '(begin
+       (set! r15 1)
+       (set! r8 2)
+       (jump 5)
+       (set! r8 3)
        (set! rax 42)))
 
   )
