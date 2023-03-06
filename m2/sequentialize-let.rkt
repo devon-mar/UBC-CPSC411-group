@@ -27,6 +27,7 @@
   (define (aloc-value->set a v)
     `(set! ,a ,(sequentialize-let-value v)))
 
+  ;; values-unique-lang-v4-pred -> imp-mf-lang-v4-pred
   (define (sequentialize-let-pred p)
     (match p
       [`(true)
@@ -49,6 +50,7 @@
            ,(sequentialize-let-tail t1)
            ,(sequentialize-let-tail t2))]))
   
+  ;; values-unique-lang-v4-tail -> imp-mf-lang-v4-tail
   (define (sequentialize-let-tail t)
     (match t
       [`(if ,pred ,t1 ,t2)
