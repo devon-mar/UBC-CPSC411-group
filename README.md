@@ -45,6 +45,8 @@ For versions of the skeletons from prior versions of the course, see the tags.
 
 ## Milestone 4
 
+- Exercise 1, `generate-x64` ->  m2/generate-x64.rkt
+- Exercise 10, `expose-basic-blocks` -> m4/expose-basic-blocks.rkt
 - Exercise 17, `select-instructions` -> m2/select-instructions.rkt
 - Exercise 18, `sequentialize-let` -> m2/sequentialize-let.rkt
 - Exercise 19, `normalize-bind` -> m2/normalize-bind.rkt

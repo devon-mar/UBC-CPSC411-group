@@ -2,7 +2,8 @@
 
 (require
   cpsc411/compiler-lib
-  cpsc411/langs/v4)
+  cpsc411/langs/v4
+  "../utils/gen-utils.rkt")
 
 (provide patch-instructions)
 
@@ -14,364 +15,153 @@
 (define/contract (patch-instructions p)
   (-> para-asm-lang-v4? paren-x64-fvars-v4?)
 
+  ;; for convenience...
   (define tmp0 (car (current-patch-instructions-registers)))
+  (define tmp1 (cadr (current-patch-instructions-registers)))
 
-  ;; Return true if i is an int64 but not an int32.
-  (define/contract (big-int? i)
+  ;; Returns true if i is an int64 but not an int32
+  (define (big-int? i)
     (-> any/c boolean?)
-    (and (int64? i)
-         (not (int32? i))))
-
-  (define (patch-instructions-p p)
-    (match p
-      [`(begin ,s ...)
-        `(begin
-           ,@(append-map patch-instructions-s s))]))
-
-  ;; Returns a list of equivalent instructions in paren-x64-fvars-v4
-  ;; to s.
-  ;;
-  ;; para-asm-lang-v4-s -> (listof paren-x64-fvars-v4-s)
-  (define/contract (patch-instructions-s s)
-    (-> any/c list?)
-    (match s
-      [`(halt ,opand)
-        `((set! ,(current-return-value-register) ,opand)
-          (jump done))]
-      ;; Loc must be a register. Otherwise we need a temp.
-      ;; Supported opands: int32/reg/fvar
-      [`(set! ,loc (,binop ,loc ,opand))
-        (use-tmp
-          loc
-          (list register?)
-          (current-patch-instructions-registers)
-          (lambda (r registers)
-            (use-tmp
-              opand
-              (list int32? register? fvar?)
-              registers
-              (lambda (op _)
-                `((set! ,r (,binop ,r ,op))
-                  ;; TODO: this part... is there a better way??
-                  ,@(if (equal? loc r)
-                      '()
-                      ;; move it back
-                      `((set! ,loc ,r))))))))]
-      ;; Combinations -> Supported by paren-x64-fvars
-      ;; reg / int32  -> Y
-      ;; reg / int64  -> N
-      ;; reg / label  -> N
-      ;; reg / reg    -> Y
-      ;; reg / fvar   -> Y
-      ;; fvar / int32 -> Y
-      ;; fvar / int64 -> N
-      ;; fvar / label -> Y
-      ;; fvar / reg   -> Y
-      ;; fvar / fvar  -> N
-      [`(set! ,loc ,triv)
-        (if (or (big-int? triv)
-                (and (register? loc) (label? triv))
-                (and (fvar? loc) (fvar? triv)))
-          `((set! ,tmp0 ,triv)
-            (set! ,loc ,tmp0))
-          (list s))]
-      [`(jump ,trg)
-        ;; paren-x64-fvars-v4 only supports reg/label
-        ;; para-asm-lang-v4 suports label/reg/fvar
-        (use-tmp
-          trg
-          (list register? label?)
-          (current-patch-instructions-registers)
-          (lambda (reg/label _)
-            `((jump ,reg/label))))]
-      [`(with-label ,label ,s)
-        (define ss (patch-instructions-s s))
-        `((with-label ,label ,(car ss))
-          ,@(cdr ss))]
-      [`(compare ,loc ,opand)
-        (use-tmp
-          loc
-          ;; first param must be a reg in paren-x64-fvars-v4
-          (list register?)
-          (current-patch-instructions-registers)
-          (lambda (r registers)
-            (use-tmp
-              opand
-              (list int64? register?)
-              registers
-              (lambda (opand _)
-                `((compare ,r ,opand))))))]
-      ;; trg must be a label in paren-x64-fvars-v4
-      [`(jump-if ,relop ,trg)
-        (if (label? trg)
-          (list s)
-          (let ([tmp-label (fresh-label)])
-            `((jump-if ,(invert-relop relop) ,tmp-label)
-              ;; paren-x64-fvars-v4 jump only supports a label or reg
-              ;; so we send it thorugh patch-instructions-s
-              ,@(patch-instructions-s `(jump ,trg))
-              ;; need some noop
-              (with-label ,tmp-label (set! ,tmp0 ,tmp0)))))]))
-
-
-  ;; not used
-  #;
-  (define (patch-instructions-triv t)
-    (match t
-      [(? label?) (void)]
-      [opand opand]))
-
-  ;; Returns true if any procs return #t when passed v.
-  (define/contract (satisfies-any v procs)
-    (-> any/c (listof (-> any/c boolean?)) boolean?)
-    (if (empty? procs)
-      #t
-      (if ((car procs) v)
-        (satisfies-any v (cdr procs))
-        #f)))
-
-  ;; If v does not satisfy any of the procedures in procs,
-  ;; move v into a tmp from registers and pass that temp to f.
-  ;; Otherwise call (f v registers).
-  ;; f: v | register? -> (listof s)
-  ;; -> (listof s)
-  (define/contract (use-tmp v procs registers f)
-    (-> any/c (listof (-> any/c boolean?)) (listof register?) (-> any/c (listof register?) list?)
-        list?)
-    (if (satisfies-any v procs)
-      (f v registers)
-      `((set! ,(car registers) ,v)
-        ,@(f (car registers) (cdr registers)))))
-                  
-  ;; Returns the opposite of relop
-  ;;
+    (and (int64? i) (not (int32? i))))
+  
   ;; relop -> relop
-  (define (invert-relop op)
-    (match op
+  ;; Flip the relop to make the comparison opposite
+  (define (flip-relop r)
+    (match r
       ['< '>=]
       ['<= '>]
       ['= '!=]
       ['>= '<]
       ['> '<=]
       ['!= '=]))
+  
+  ;; (any ... -> (List-of Paren-x64-fvars-v4-s)) (cons (any -> boolean) any) ...
+  ;; -> (List-of Paren-x64-fvars-v4-s)
+  ;;
+  ;; Take a function that takes in parameters to create list of Paren-x64-fvars 's'
+  ;; and a pair of checks and values for those parameters.
+  ;; If the check is true, the value is replaced by a temp register as input to the function,
+  ;; and if false, the value inputted as is.
+  ;; 
+  ;; Returns list of all additional 'set!' created to assign the temp registers
+  ;; and all of the patched 's' created by the function
+  ;;
+  (define (patch-set fn . cvs)
+    (define cpir (current-patch-instructions-registers))
+    (define-values (ls params _)
+      (for/fold ([ls '()] [params '()] [tmps cpir]) ([cv cvs])
+        (define check (car cv))
+        (define value (cdr cv))
+        (if (check value)
+            (values (append-e ls `(set! ,(first tmps) ,value))
+                    (append-e params (first tmps))
+                    (rest tmps))
+            (values ls (append-e params value) tmps))))
+    (append ls (apply fn params)))
+
+  ;; para-asm-lang-v4-s -> (list paren-x64-fvars-v4-s ...)
+  (define (patch-instructions-s e)
+    (match e
+      [`(halt ,opand)
+       `((set! ,(current-return-value-register) ,opand) (jump done))]
+      [`(set! ,loc (,binop ,loc ,triv))
+       (cond
+         [(register? loc)
+          ;; Paren-x64-fvars does not support (set! reg (binop reg int64))
+          (patch-set
+            (lambda (t) `((set! ,loc (,binop ,loc ,t))))
+            (cons big-int? triv))]
+         [(fvar? loc)
+          ;; Paren-x64-fvars does not support (set! fvar (binop fvar _))
+          ;; Additional patch for (set! reg (binop reg int64))
+          (patch-set
+            (lambda (l t) `((set! ,l (,binop ,l ,t)) (set! ,loc ,l)))
+            (cons (lambda (_) #t) loc)
+            (cons big-int? triv))])]
+      [`(set! ,loc ,triv)
+       ;; Paren-x64-fvars does not support (set! fvar int64|fvar)
+       (define (requires-move? t)
+         (and (fvar? loc)
+              (or (big-int? t)
+                  (fvar? t))))
+       (patch-set
+         (lambda (t) `((set! ,loc ,t)))
+         (cons requires-move? triv))]
+      [`(jump ,trg)
+       ;; Paren-x64-fvars does not support (jump fvar)
+       (patch-set
+        (lambda (t) `((jump ,t)))
+        (cons fvar? trg))]
+      [`(with-label ,label ,s)
+       (define s-list (patch-instructions-s s))
+       `((with-label ,label ,(first s-list)) ,@(rest s-list))]
+      [`(compare ,loc ,opand)
+       ;; Paren-x64-fvars does not support (compare fvar _)
+       ;; or (compare _ fvar)
+       (patch-set 
+         (lambda (l o) `((compare ,l ,o)))
+         (cons fvar? loc)
+         (cons fvar? opand))]
+      [`(jump-if ,relop ,trg)
+       ;; Paren-x64-fvars does not support (jump-if _ loc)
+       ;; Additional patch for (jump fvar)
+       (if (label? trg)
+           (list e)
+           (let ([tmp-label (fresh-label)])
+             `((jump-if ,(flip-relop relop) ,tmp-label)
+               ,@(patch-set
+                  (lambda (t) `((jump ,t)))
+                  (cons fvar? trg))
+               (with-label ,tmp-label (set! ,tmp0 ,tmp0)))))]))
+
+  ;; paren-asm-lang-v4-p -> paren-x64-fvars-v4-p
+  (define (patch-instructions-p p)
+    (match p
+      [`(begin ,s ...)
+        `(begin
+           ,@(append-map patch-instructions-s s))]))
 
   (patch-instructions-p p))
+
 
 (module+ test
   (require rackunit)
 
-  (define big-int (add1 (max-int 32)))
+  (define large-int (add1 (max-int 32)))
 
   ;; Returns true if p returns the answer
   ;; to life.
-  (define (check-42 p)
+  (define (check-answer-to-life p)
     (check-equal?
       (interp-paren-x64-fvars-v4 (patch-instructions p))
       42))
 
-  (check-42
-     ;; (halt opand/int64)
-    '(begin (halt 42)))
-
-  ;; halt not in tail position
-  (check-42
-    '(begin
-       (halt 42)
-       (halt 10)))
-
-  (check-42
-    '(begin
-       ;; (set! loc/reg triv/opand/int64)
-       (set! rsi 42)
-       ;; (halt opand/loc/reg)
-       (halt rsi)))
-
-  (check-42
-    '(begin
-       ;; (set! loc/fvar triv/opand/int64)
-       (set! fv1 42)
-       ;; (halt opand/loc/fvar)
-       (halt fv1)))
-
-  (check-42
-    '(begin
-       (set! rsi 0)
-       ;; (set! loc/reg triv/label)
-       (set! r9 L.a.1)
-       ;; (jump trg/loc/reg)
-       (jump r9)
-       (halt 1)
-       ;; (with-label label s)
-       ;; (set! loc_1/reg (binop loc_1 opand/int32))
-       (with-label L.a.1 (set! rsi 42))
-       ;; (set! loc/reg triv/opand/loc/reg)
-       (set! r12 rsi)
-       (halt r12)))
-
-  (check-42
-    '(begin
-       (set! rsi 0)
-       ;; (set! loc/fvar triv/label)
-       (set! fv1 L.a.1)
-       ;; (jump trg/loc/fvar)
-       (jump fv1)
-       (halt 1)
-       (with-label L.a.1 (set! rsi 42))
-       (halt rsi)))
-
-  (check-42
-    '(begin
-      (set! fv1 42)
-      ;; (set! loc/reg triv/opand/loc/fvar)
-      (set! rsi fv1)
-      ;; (set! loc/fvar triv/opand/loc/reg)
-      (set! fv2 rsi)
-      ;; (set! loc/fvar triv/opand/loc/fvar)
-      (set! fv3 fv2)
-      (halt fv3)))
-
-  (check-42
-    `(begin
-       (set! r12 0)
-       ;; (set! loc_1/reg (binop loc_1 opand/int64))
-       (set! r12 (+ r12 ,big-int))
-       (set! r9 ,big-int)
-       ;; (compare loc/reg opand/loc/reg)
-       (compare r9 r12)
-       ;; (jump-if relop trg/label)
-       (jump-if = L.a.1)
-       (halt 1)
-       (with-label L.a.1 (halt 42))))
-
-  (check-42
-    `(begin
-       (set! fv1 2)
-       (set! r12 3)
-       (set! r9 7)
-       ;; (set! loc_1/reg (binop loc_1 opand/loc/reg))
-       (set! r12 (* r12 r9))
-       ;; (set! loc_1/reg (binop loc_1 opand/loc/fvar))
-       (set! r12 (* r12 fv1))
-       (halt r12)))
-
-  (check-42
-    `(begin
-       (set! fv1 2)
-       ;; (set! loc_1/fvar (binop loc_1 opand/int64))
-       (set! fv1 (+ fv1 ,big-int))
-       (set! r9 ,big-int)
-       ;; (compare loc/fvar opand/loc/reg)
-       (compare fv1 r9)
-       (jump-if > L.a.1)
-       (halt 1)
-       (with-label L.a.1 (halt 42))))
-
-  (check-42
-    `(begin
-       (set! fv1 1)
-       (set! rsi 1)
-       ;; (set! loc_1/fvar (binop loc_1 opand/loc/reg))
-       (set! fv1 (+ fv1 rsi))
-       (set! fv2 40)
-       ;; (set! loc_1/fvar (binop loc_1 opand/loc/fvar))
-       (set! fv1 (+ fv1 fv2))
-       (halt fv1)))
-
-  (check-42
-    `(begin
-       ;; (jump trg/label)
-       (jump L.a.1)
-       (halt 1)
-       (with-label L.a.1 (halt 42))))
-
-  ;; TODO
-  (check-42
-    `(begin
-       (set! fv2 2)
-       (set! r9 1)
-       (set! fv1 2)
-       (set! fv3 L.a.1)
-       (set! r12 L.b.1) ;; TODO
-       ;; (compare loc/reg opand/loc/fvar)
-       (compare fv1 r9)
-       ;; (jump-if relop trg/loc/fvar)
-       (jump-if > fv3) ;; TODO
-       (halt 1)
-       ;; (compare loc/fvar opand/loc/fvar)
-       (with-label L.a.1 (compare fv2 fv1))
-       ;; (jump-if relop trg/loc/reg)
-       (jump-if = r12)
-       (halt 2)
-       (with-label L.b.1 (halt 42))))
-
-  ;; Use jump-if with all relops with trg being a register
-  (check-42
-    `(begin
-       (set! r9 42)
-       ;; =
-       (compare r9 42)
-       (set! rsi L.a.1)
-       (jump-if = rsi)
-       (halt 1)
-       ;; <
-       (with-label L.a.1 (compare r9 100))
-       (set! rsi L.b.1)
-       (jump-if < rsi)
-       (halt 1)
-       ;; <=
-       (with-label L.b.1 (compare r9 42))
-       (set! rsi L.c.1)
-       (jump-if <= rsi)
-       (halt 1)
-       ;; >=
-       (with-label L.c.1 (compare r9 42))
-       (set! rsi L.d.1)
-       (jump-if >= rsi)
-       (halt 1)
-       ;; >
-       (with-label L.d.1 (compare r9 41))
-       (set! rsi L.e.1)
-       (jump-if > rsi)
-       (halt 1)
-       ;; !=
-       (with-label L.e.1 (compare r9 42))
-       (set! rsi L.f.1)
-       (jump-if != rsi)
-       (halt 42)
-       (with-label L.f.1 (halt 0))))
-
-  ;; (compare loc/reg opand/int64) -- doesn't work due to bug @258
-  ;; (compare loc/fvar opand/int64) -- same as above
-
-
-  ;; M2 tests
-  (define large-int (add1 (max-int 32)))
   ;; return from immediate
-  (check-42
+  (check-answer-to-life
     '(begin (halt 42)))
 
 
   ;; return from register rbx
-  (check-42
+  (check-answer-to-life
     '(begin
        (set! rbx 42)
        (halt rbx)))
 
   ;; return from rax
-  (check-42
+  (check-answer-to-life
     '(begin
        (set! rax 42)
        (halt rax)))
 
   ;; binop, dest register, src imm
-  (check-42
+  (check-answer-to-life
    '(begin
       (set! r9 40)
       (set! r9 (+ r9 2))
       (halt r9)))
 
   ;; halt from fvar
-  (check-42
+  (check-answer-to-life
     '(begin
        (set! fv1 42)
        (halt fv1)))
@@ -379,36 +169,277 @@
   ;; binop with fvar as dest, imm src
   ;; This shouldn't work with interp-paren-x64-fvars-v2
   ;; '(begin (set! fv2 40) (set! fv2 (+ fv2 2)) (set! rax fv2))
-  (check-42
+  (check-answer-to-life
     '(begin
        (set! fv2 40)
        (set! fv2 (+ fv2 2))
        (halt fv2)))
+  ;; the interpreter allows us to add
+  ;; when the dest is a fvar...
+  ;; so we add a check-match
+  (check-match
+    (patch-instructions
+      '(begin
+         (set! fv2 40)
+         (set! fv2 (+ fv2 2))
+         (halt fv2)))
+    `(begin
+       (set! fv2 40)
+       (set! ,tmp fv2)
+       (set! ,tmp (+ ,tmp 2))
+       (set! fv2 ,tmp)
+       (set! ,rax fv2)
+       (jump done))
+    (and
+      (member tmp (current-patch-instructions-registers))
+      (eq? rax (current-return-value-register))))
 
   ;; imm64 to fvar move
-  (check-42
+  (check-answer-to-life
     `(begin
        (set! fv2 ,large-int)
        (halt 42)))
+  ;; the interpreter doesn't seem to catch errors with the above case...
+  ;; so we also use a check-match
+  (check-match
+    (patch-instructions
+      `(begin
+         (set! fv2 ,large-int)
+         (halt 42)))
+    `(begin
+       (set! ,tmp ,val)
+       (set! fv2 ,tmp)
+       (set! ,rax 42)
+       (jump done))
+    (and
+      (member tmp (current-patch-instructions-registers))
+      (eq? rax (current-return-value-register))
+      (eq? val large-int)))
 
   ;; fvar to fvar move
-  (check-42
+  (check-answer-to-life
     `(begin
        (set! fv1 10)
        (set! fv2 fv1)
        (halt 42)))
+  ;; again need a check-match
+  (check-match
+    (patch-instructions
+      `(begin
+         (set! fv1 10)
+         (set! fv2 fv1)
+         (halt 42)))
+    `(begin
+       (set! fv1 10)
+       (set! ,tmp fv1)
+       (set! fv2 ,tmp)
+       (set! ,rax 42)
+       (jump done))
+    (and
+      (member tmp (current-patch-instructions-registers))
+      (eq? rax (current-return-value-register))))
+
 
   ;; add imm64 to reg
-  (check-42
+  (check-answer-to-life
     `(begin
        (set! rsi 0)
        (set! rsi (+ rsi ,large-int))
        (halt 42)))
+  (check-match
+    (patch-instructions
+      `(begin
+         (set! rsi 0)
+         (set! rsi (+ rsi ,large-int))
+         (halt 42)))
+    `(begin
+       (set! rsi 0)
+       (set! ,tmp ,val)
+       (set! rsi (+ rsi ,tmp))
+       (set! ,rax 42)
+       (jump done))
+    (and
+      (member tmp (current-patch-instructions-registers))
+      (eq? rax (current-return-value-register))))
 
   ;; add imm64 to fvar
-  (check-42
+  (check-answer-to-life
     `(begin
        (set! fv0 0)
        (set! fv0 (+ fv0 ,large-int))
        (halt 42)))
+  (check-match
+    (patch-instructions
+      `(begin
+         (set! fv0 0)
+         (set! fv0 (+ fv0 ,large-int))
+         (halt 42)))
+    `(begin
+       (set! fv0 0)
+       (set! ,tmp1 fv0)
+       (set! ,tmp0 ,val)
+       (set! ,tmp1 (+ ,tmp1 ,tmp0))
+       (set! fv0 ,tmp1)
+       (set! ,rax 42)
+       (jump done))
+    (and
+      (member tmp0 (current-patch-instructions-registers))
+      (member tmp1 (current-patch-instructions-registers))
+      (not (eq? tmp0 tmp1))
+      (eq? rax (current-return-value-register))))
+
+  ;; any -> boolean
+  ;; check if r is a register in current-patch-instructions-registers
+  (define (patch-register? r)
+    (and (member r (current-patch-instructions-registers)) #t))
+
+  ;; halt - in different places
+  (check-equal?
+    (patch-instructions
+      '(begin
+        (set! fv0 9)
+        (set! rdx L.test.3)
+        (jump rdx)
+        (with-label L.test.1 (with-label L.test.2 (halt rdx)))
+        (with-label L.test.3 (halt 10))
+        (halt fv0)))
+    '(begin
+      (set! fv0 9)
+      (set! rdx L.test.3)
+      (jump rdx)
+      (with-label L.test.1 (with-label L.test.2 (set! rax rdx)))
+      (jump done)
+      (with-label L.test.3 (set! rax 10))
+      (jump done)
+      (set! rax fv0)
+      (jump done)))
+
+  ;; jump w/ reg & label -- no patch
+  (check-equal?
+    (patch-instructions
+      '(begin
+        (set! r9 0)
+        (with-label L.!!test.1 (jump r9))
+        (jump L.!!test.1)
+        (halt rbx)))
+    '(begin
+        (set! r9 0)
+        (with-label L.!!test.1 (jump r9))
+        (jump L.!!test.1)
+        (set! rax rbx)
+        (jump done)))
+  
+  ;; jump w/ fvar -- patch
+  (check-match
+    (patch-instructions
+      '(begin
+        (set! fv0 L.!!test.1)
+        (with-label L.!!test.1 (jump fv0))
+        (halt rbx)))
+    `(begin
+        (set! fv0 L.!!test.1)
+        (with-label L.!!test.1 (set! ,tmp0 fv0))
+        (jump ,tmp0)
+        (set! rax rbx)
+        (jump done))
+    (patch-register? tmp0))
+
+  ;; with-label
+  (check-match
+    (patch-instructions
+      '(begin
+        (set! fv1 9)
+        (with-label L.test.0 (set! rdx 0))
+        (with-label L.test.1 (set! fv0 fv1))
+        (with-label L.test.2 (halt fv0))))
+    `(begin
+      (set! fv1 9)
+      (with-label L.test.0 (set! rdx 0))
+      (with-label L.test.1 (set! ,tmp0 fv1))
+      (set! fv0 ,tmp0)
+      (with-label L.test.2 (set! rax fv0))
+      (jump done))
+    (patch-register? tmp0))
+  
+  ;; compare with reg -- no patch
+  (check-equal?
+    (patch-instructions
+      '(begin
+        (set! r13 9)
+        (set! r14 10)
+        (compare r14 0)
+        (compare r13 r14)))
+    `(begin
+      (set! r13 9)
+      (set! r14 10)
+      (compare r14 0)
+      (compare r13 r14)))
+  
+  ;; compare with fvar -- patched
+  (check-match
+    (patch-instructions
+      '(begin
+        (set! r13 9)
+        (set! fv1 7)
+        (set! fv2 3)
+        (compare fv1 fv2)
+        (compare fv1 r13)))
+    `(begin
+      (set! r13 9)
+      (set! fv1 7)
+      (set! fv2 3)
+      (set! ,tmp0 fv1)
+      (set! ,tmp1 fv2)
+      (compare ,tmp0 ,tmp1)
+      (set! ,tmp2 fv1)
+      (compare ,tmp2 r13))
+    (and (andmap patch-register? (list tmp0 tmp1 tmp2))
+         (not (equal? tmp0 tmp1))))
+
+  ;; jump-if with label - no patch
+  (check-equal?
+    (patch-instructions
+      '(begin
+        (set! rcx 0)
+        (compare rcx 1)
+        (jump-if = done)
+        (compare rcx 3)
+        (jump-if >= done)
+        (halt 5)))
+    '(begin
+      (set! rcx 0)
+      (compare rcx 1)
+      (jump-if = done)
+      (compare rcx 3)
+      (jump-if >= done)
+      (set! rax 5)
+      (jump done)))
+
+  ;; jump-if with reg & fvar -- patched
+  (check-match
+    (patch-instructions
+      '(begin
+        (set! rcx done)
+        (set! fv0 done)
+        (compare rcx 1)
+        (jump-if < rcx)
+        (compare rcx 2)
+        (jump-if != fv0)
+        (set! rbx 0)))
+    `(begin
+      (set! rcx done)
+      (set! fv0 done)
+      (compare rcx 1)
+      (jump-if >= ,tmpl0)
+      (jump rcx)
+      (with-label ,tmpl0 (set! ,t0 ,t0))
+      (compare rcx 2)
+      (jump-if = ,tmpl1)
+      (set! ,t1 fv0)
+      (jump ,t1)
+      (with-label ,tmpl1 (set! ,t2 ,t2))
+      (set! rbx 0))
+    (and (andmap label? (list tmpl0 tmpl1))
+         (not (equal? tmpl0 tmpl1))
+         (andmap patch-register? (list t0 t1 t2))))
   )
