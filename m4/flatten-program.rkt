@@ -4,7 +4,7 @@
 
 (provide flatten-program)
 
-;; Milestone 3 Exercise 6
+;; Milestone 4 Exercise 6
 ;; Compile Block-asm-lang v4 to Para-asm-lang v4
 ;; by flattening basic blocks into labeled instructions.
 (define/contract (flatten-program p)
