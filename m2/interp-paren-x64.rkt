@@ -141,7 +141,7 @@
     (match relop
       ['< <]
       ['<= <=]
-      ['= equal?]
+      ['= =]
       ['>= >=]
       ['> >]
       ;; TODO: Is there a built in function??
