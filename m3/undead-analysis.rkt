@@ -2,22 +2,23 @@
 
 (require
   cpsc411/compiler-lib
-  cpsc411/langs/v2
-  cpsc411/langs/v2-reg-alloc)
+  cpsc411/langs/v4
+  "../utils/compiler-utils.rkt")
 
 (provide undead-analysis)
 
 ;; Milestone 3 - Exercise 1
+;; Milestone 4 - Exercise 15
 
 ;; Performs undeadness analysis, decorating the program with undead-set tree.
 ;; Only the info field of the program is modified.
 (define (undead-analysis p)
-  (-> asm-lang-v2/locals? asm-lang-v2/undead?)
+  (-> asm-pred-lang-v4/locals? asm-pred-lang-v4/undead?)
 
   ;; Performs undeadness analysis, decorating the program with undead-set tree.
   ;; Only the info field of the program is modified.
   (define (undead-analysis-p p)
-    (-> asm-lang-v2/locals? asm-lang-v2/undead?)
+    (-> asm-pred-lang-v4/locals? asm-pred-lang-v4/undead?)
     (match p
       [`(module ,info ,tail)
         `(module
@@ -55,14 +56,19 @@
               (undead-analysis-effect e acc-ui)])
             (values
               (cons new-ust acc-ust)
-              new-ui)))]))
+              new-ui)))]
+      [`(if ,pred ,tail1 ,tail2)
+       (define-values (ut1 ui1) (undead-analysis-tail tail1 uo))
+       (define-values (ut2 ui2) (undead-analysis-tail tail2 uo))
+       (define-values (utp uip) (undead-analysis-pred pred (set-union ui1 ui2)))
+       (values (list utp ut1 ut2) uip)]))
 
   ;; Computes the undead-in set for instruction e
   ;; given the undead-out set for e.
   ;;
   ;; effect undead-set? -> (values undead-set-tree? undead-set?)
   (define (undead-analysis-effect e uo)
-    (-> any/c undead-set? undead-set-tree?
+    (-> any/c undead-set?
         (values undead-set-tree? undead-set?))
 
     (match e
@@ -93,7 +99,40 @@
               (undead-analysis-effect e acc-ui)])
             (values
               (cons new-ust acc-ust)
-              new-ui)))]))
+              new-ui)))]
+      [`(if ,pred ,effect1 ,effect2)
+       (define-values (ut1 ui1) (undead-analysis-effect effect1 uo))
+       (define-values (ut2 ui2) (undead-analysis-effect effect2 uo))
+       (define-values (utp uip) (undead-analysis-pred pred (set-union ui1 ui2)))
+       (values (list utp ut1 ut2) uip)]))
+  
+  ;; Computes undead set tree and undead-in set for pred p
+  ;; given undead-out set for p
+  (define (undead-analysis-pred p uo)
+    (-> any/c undead-set? (values undead-set-tree? undead-set?))
+    (match p
+      [`(true) (values uo uo)]
+      [`(false) (values uo uo)]
+      [`(not ,pred) (undead-analysis-pred pred uo)]
+      [`(begin ,effects ... ,pred)
+       (define-values (pred-ust pred-ui)
+         (undead-analysis-pred pred uo))
+       (for/foldr
+         ([acc-ust (list pred-ust)]
+          [acc-ui pred-ui])
+         ([e effects])
+         (let-values
+           ([(new-ust new-ui)
+             (undead-analysis-effect e acc-ui)])
+           (values (cons new-ust acc-ust) new-ui)))]
+      [`(if ,ppred ,pred1 ,pred2)
+       (define-values (ut1 ui1) (undead-analysis-pred pred1 uo))
+       (define-values (ut2 ui2) (undead-analysis-pred pred2 uo))
+       (define-values (utp uip) (undead-analysis-pred ppred (set-union ui1 ui2)))
+       (values (list utp ut1 ut2) uip)]
+      [`(,relop ,aloc ,triv)
+       #:when(relop? relop)
+       (values uo (undead-analysis-triv triv (set-add uo aloc)))]))
 
   ;; Returns uo with t if t is a triv AND t is in uo,
   ;; otherwise returns uo.
@@ -165,10 +204,10 @@
         (check-equal?
           (length info)
           2)
-        (check-true
-          (ust-equal?
-            (info-ref info 'undead-out)
-            want)
+        (check
+          ust-equal?
+          (info-ref info 'undead-out)
+          want
           "undead-out not equal")
         ;; Should remain unchanged
         (check-equal? tail2 tail)]))
@@ -309,4 +348,78 @@
       (t.6 z.5)
       (z.5)
       ()))
-)
+
+  ;; if in tail
+  (check-ust
+    '(v.0 x.1 y.2 z.3 i.1 a.1 b.1 c.1)
+    '(begin
+      (set! v.0 4)
+      (set! x.1 5)
+      (set! y.2 6)
+      (set! z.3 7)
+      (if (begin (set! i.1 10) (not (= y.2 5)))
+          (begin (set! a.1 i.1) (set! a.1 (* a.1 9)) (halt v.0))
+          (begin (set! b.1 x.1) (set! c.1 b.1) (halt 10))))
+    '((v.0)
+      (x.1 v.0)
+      (x.1 y.2 v.0)
+      (x.1 y.2 v.0)
+      (((x.1 i.1 v.0 y.2) (x.1 i.1 v.0))
+       ((v.0 a.1) (v.0) ())
+       ((b.1) () ()))))
+
+  ;; if in effect
+  (check-ust
+    '(u.1 v.1 x.1 y.1 z.1 i.1 a.1 b.1 c.1 d.1)
+    '(begin
+      (set! u.1 4)
+      (set! v.1 4)
+      (set! x.1 5)
+      (if (not (false)) (set! v.1 9) (set! a.1 u.1))
+      (set! y.1 6)
+      (set! z.1 7)
+      (if (begin (set! i.1 10) (< y.1 5))
+          (begin (set! a.1 i.1) (set! u.1 9) (set! a.1 (* a.1 9)) (set! v.1 9))
+          (begin (set! b.1 x.1) (set! c.1 b.1) (set! u.1 10)))
+      (set! d.1 u.1)
+      (halt v.1))
+    '((u.1)
+      (v.1 u.1)
+      (v.1 x.1 u.1)
+      ((v.1 x.1 u.1) (v.1 x.1) (v.1 x.1))
+      (v.1 x.1 y.1)
+      (v.1 x.1 y.1)
+      (((i.1 v.1 x.1 y.1) (i.1 v.1 x.1))
+       ((a.1) (u.1 a.1) (u.1) (v.1 u.1))
+       ((v.1 b.1) (v.1) (v.1 u.1)))
+      (v.1)
+      ()))
+
+  ;; if in pred
+  (check-ust
+    '(u.1 v.1 x.1 y.1 z.1 i.1 a.1 b.1 c.1)
+    '(begin
+      (set! u.1 4)
+      (set! v.1 4)
+      (set! x.1 5)
+      (set! y.1 6)
+      (set! z.1 7)
+      (if (begin
+            (set! i.1 0)
+            (if (true)
+                (begin (set! a.1 i.1) (set! u.1 9) (set! a.1 (* a.1 9)) (< v.1 9))
+                (begin (set! b.1 x.1) (set! c.1 b.1) (= c.1 10))))
+          (halt u.1)
+          (halt z.1)))
+    '((u.1)
+      (v.1 u.1)
+      (v.1 u.1 x.1)
+      (v.1 u.1 x.1)
+      (z.1 v.1 u.1 x.1)
+      (((z.1 v.1 i.1 u.1 x.1)
+        ((z.1 v.1 i.1 u.1 x.1)
+         ((z.1 v.1 a.1) (u.1 z.1 v.1 a.1) (u.1 z.1 v.1) (u.1 z.1))
+         ((u.1 z.1 b.1) (u.1 z.1 c.1) (u.1 z.1))))
+       ()
+       ())))
+  )
