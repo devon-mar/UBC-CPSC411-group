@@ -41,7 +41,7 @@
          ,@new-effects
          ,(convert-tail tail new-env))]
      [`(if ,pred ,tail1 ,tail2)
-      (convert-if-tail pred (convert-tail tail1 env) (convert-tail tail2 env) env)]))
+      (convert-if-tail pred tail1 tail2 env)]))
  ;; pred tail tail dict -> tail
  (define (convert-if-tail pred t1 t2 env)
    (match pred
