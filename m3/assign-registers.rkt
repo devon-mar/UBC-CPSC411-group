@@ -4,8 +4,10 @@
          cpsc411/graph-lib)
 (provide assign-registers)
 
-;; Exercise #3
-;; asm-lang-v2/conflicts -> asm-lang-v2/assignments
+;; Milestone 3 Exercise #3
+;; Milestone 4 Exercise 13
+;;
+;; asm-pred-lang-v4/conflicts -> asm-pred-lang-v4/assignments
 ;; Assign register or frame location to each local variable
 ;; Assumes current-assignable-registers parameter to be set
 (define (assign-registers p)
@@ -74,8 +76,7 @@
 
 (module+ test
   (require rackunit
-           cpsc411/langs/v2
-           cpsc411/langs/v2-reg-alloc)
+           cpsc411/langs/v4)
 
   (define t1
     '(module ((locals (x.1)) (conflicts ((x.1 ()))))
@@ -107,16 +108,16 @@
                (set! z.5 (+ z.5 t.6))
                (halt z.5))))
 
-  (check-equal? (interp-asm-lang-v2/assignments (assign-registers t1))
-                (interp-asm-lang-v2/conflicts t1))
-  (check-equal? (interp-asm-lang-v2/assignments
+  (check-equal? (interp-asm-pred-lang-v4/assignments (assign-registers t1))
+                (interp-asm-pred-lang-v4/conflicts t1))
+  (check-equal? (interp-asm-pred-lang-v4/assignments
                  (parameterize ([current-assignable-registers '()]) (assign-registers t1)))
-                (interp-asm-lang-v2/conflicts t1))
-  (check-equal? (interp-asm-lang-v2/assignments
+                (interp-asm-pred-lang-v4/conflicts t1))
+  (check-equal? (interp-asm-pred-lang-v4/assignments
                  (parameterize ([current-assignable-registers '(r9)]) (assign-registers t1)))
-                (interp-asm-lang-v2/conflicts t1))
-  (check-equal? (interp-asm-lang-v2/assignments (assign-registers t2))
-                (interp-asm-lang-v2/conflicts t2))
+                (interp-asm-pred-lang-v4/conflicts t1))
+  (check-equal? (interp-asm-pred-lang-v4/assignments (assign-registers t2))
+                (interp-asm-pred-lang-v4/conflicts t2))
 
   (check-equal? (assign-registers '(module ((locals (x.1)) (conflicts ((x.1 ()))))
                                            (begin
