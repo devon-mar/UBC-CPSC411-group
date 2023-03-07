@@ -12,9 +12,9 @@ branch is pushed.
 
 For versions of the skeletons from prior versions of the course, see the tags.
 
-# Exercise Locations
+## Exercise Locations
 
-## Milestone 2
+### Milestone 2
 
 | Exercise | Pass                    | File                         |
 |----------|-------------------------|------------------------------|
@@ -35,7 +35,7 @@ For versions of the skeletons from prior versions of the course, see the tags.
 | 17       | `check-values-lang`    |  `m2/check-values-lang.rkt`   |
 | 18       | `interp-values-lang`   |  `m2/interp-values-lang.rkt`  |
 
-## Milestone 3
+### Milestone 3
 
 | Exercise | Pass                | File                       |
 |----------|---------------------|----------------------------|
@@ -47,7 +47,7 @@ For versions of the skeletons from prior versions of the course, see the tags.
 | 5        | `compile-m3`        | `m3/compile-m3.rkt`        |
 | 6        | `bury-dead`         | `m3/bury-dead.rkt`         |
 
-## Milestone 4
+### Milestone 4
 
 | Exercise | Pass                  | File                         |
 |----------|-----------------------|------------------------------|
@@ -63,7 +63,7 @@ For versions of the skeletons from prior versions of the course, see the tags.
 | 10       | `expose-basic-blocks` | `m4/expose-basic-blocks.rkt` |
 | 11       | `optimize-predicates` | `m4/optimize-predicates.rkt` |
 | 12       | `replace-locations`   | `m2/replace-locations.rkt`   |
-| 13       | `assign-registers`    | `m3/replace-locations.rkt`   |
+| 13       | `assign-registers`    | `m3/assign-registers.rkt`    |
 | 14       | `conflict-analysis`   | `m3/conflict-analysis.rkt`   |
 | 15       | `undead-analysis`     | `m3/undead-analysis.rkt`     |
 | 16       | `uncover-locals`      | `m2/uncover-locals.rkt`      |
@@ -73,3 +73,21 @@ For versions of the skeletons from prior versions of the course, see the tags.
 | 20       | `uniquify`            | `m2/uniquify.rkt`            |
 | 21       | `interp-values-lang`  | `m2/interp-values-lang.rkt`  |
 | 22       | `check-values-lang`   | `m2/check-values-lang.rkt`   |
+
+### Milestone 5
+
+| Exercise | Pass                         | File                                |
+|----------|------------------------------|-------------------------------------|
+| 1        | `check-values-lang`          | `m5/check-values-lang.rkt`          |
+| 2        | `uniquify`                   | `m2/uniquify.rkt`                   |
+| 3        | `sequentialize-let`          | `m2/sequentialize-let.rkt`          |
+| 4        | `normalize-bind`             | `m2/normalize-bind.rkt`             |
+| 5        | `impose-calling-conventions` | `m5/impose-calling-conventions.rkt` |
+| 6        | `select-instructions`        | `m2/select-instructions.rkt`        |
+| 7        | `uncover-locals`             | `m2/uncover-locals.rkt`             |
+| 8        | `undead-analysis`            | `m3/undead-analysis.rkt`            |
+| 9        | `conflict-analysis`          | `m3/conflict-analysis.rkt`          |
+| 10       | `assign-registers`           | `m3/assign-registers.rkt`           |
+| 11       | `replace-locations`          | `m2/replace-locations.rkt`          |
+| 12       | `optimize-predicates`        | `m4/optimize-predicates.rkt`        |
+| 13       | `expose-basic-blocks`        | `m4/expose-basic-blocks.rkt`        |
