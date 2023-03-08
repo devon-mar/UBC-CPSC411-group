@@ -188,7 +188,7 @@
         x.3)))
 
   ;; M3 tests
-	(define (check-42 p)
+	(define-check (check-42 p)
 		(check-equal?
 			(interp-imp-cmf-lang-v4 (normalize-bind p))
 			42))

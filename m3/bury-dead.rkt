@@ -4,7 +4,7 @@
   cpsc411/compiler-lib
   cpsc411/langs/v2-reg-alloc
   "undead-analysis.rkt"
-  "m2/uncover-locals.rkt")
+  "../m2/uncover-locals.rkt")
 
 
 ;; Milestone 3 - Exercise 6 
@@ -80,10 +80,7 @@
 (module+ test
   (require rackunit)
 
-  ;; 1. Create a asm-lang-v2/undead? program using locals, ust, and p.
-  ;; 2. Checks that the output of bury-dead
-  ;; 3. Checks that the output program returns 42 when ran.
-  (define (check-42 in want)
+  (define-check (check-42 in want)
     (define have (bury-dead in))
 
     (check-equal?

@@ -1,7 +1,7 @@
 #lang racket
 
 (require
-  cpsc411/langs/v2
+  cpsc411/langs/v4
 
   "replace-locations.rkt"
   "assign-fvars.rkt"
@@ -13,7 +13,7 @@
 ;; Compiles Asm-lang v2 to Nested-asm-lang v2,
 ;; replacing each abstract location with a physical location.
 (define/contract (assign-homes p)
-  (-> asm-lang-v2? nested-asm-lang-v2?)
+  (-> asm-pred-lang-v4? nested-asm-lang-v4?)
 
   (replace-locations (assign-fvars (uncover-locals p))))
 
@@ -21,9 +21,9 @@
   (require rackunit)
 
 
-  (define (check-42 p)
+  (define-check (check-42 p)
     (check-equal?
-      (interp-nested-asm-lang-v2 (assign-homes p))
+      (interp-nested-asm-lang-v4 (assign-homes p))
       42))
 
   ; simple
