@@ -15,6 +15,8 @@
 
   (define blocks (box '()))
 
+  ;; Don't need this - make-begin in cpsc411lib
+  ;;
   ;; If tail is not a begin, introduce a begin
   ;; with effect and tail. Otherwise add effect
   ;; as the first effect in tail.
@@ -22,10 +24,17 @@
   ;; A begin will always be returned.
   ;;
   ;; block-pred-lang-v4-effect block-pred-lang-v4-tail -> block-pred-lang-v4-tail
+  #;
   (define (cons-effect-tail effect tail)
     (match tail
       [`(begin ,_ ... ,_)
         ;; TODO is this faster than just using ` with @??
+        ;; ` is statically compiled to cons
+        ;; so it may not be slower.
+        #;
+        `(begin
+           ,effect
+           ,@tail)
         (cons
           'begin
           (cons
@@ -109,9 +118,9 @@
   (define (expose-basic-blocks-effect e tail)
     (match e
       [`(set! ,_ (,_ ,_ ,_))
-        (cons-effect-tail e tail)]
+        (make-begin (list e) tail)]
       [`(set! ,_ ,_)
-        (cons-effect-tail e tail)]
+        (make-begin (list e) tail)]
       [`(begin ,effects ... ,effect)
         (for/foldr ([acc-tail (expose-basic-blocks-effect effect tail)])
                    ([e effects])
