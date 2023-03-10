@@ -76,7 +76,7 @@
            ,(sequentialize-let-tail t2))]
       [`(call ,_ ,_ ...) t]
       ;; value
-      [_ t]))
+      [_ (sequentialize-let-value t)]))
 
   ;; values-unique-lang-v5-value -> imp-lang-v5-value
   (define (sequentialize-let-value v)
