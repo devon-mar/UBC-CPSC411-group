@@ -4,6 +4,8 @@
   cpsc411/compiler-lib
   cpsc411/langs/v5)
 
+(provide impose-calling-conventions)
+
 ;; Milestone 5 Exercise 5
 ;;
 ;; Compiles Proc-imp-cmf-lang v5 to Imp-cmf-lang v5 by imposing calling
