@@ -36,7 +36,7 @@
 (module+ test
   (require rackunit)
 
-  (define (check-42 p want)
+  (define-check (check-42 p want)
     (define out (flatten-begins p))
     (check-equal? out want)
     (check-equal?

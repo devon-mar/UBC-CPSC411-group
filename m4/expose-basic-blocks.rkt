@@ -158,7 +158,7 @@
 (module+ test
   (require rackunit)
 
-  (define (check-42 p)
+  (define-check (check-42 p)
     (check-equal?
       (interp-block-pred-lang-v4 (expose-basic-blocks p))
       42))

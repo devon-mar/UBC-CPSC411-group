@@ -125,7 +125,7 @@
   (require
    rackunit)
 
-  (define (check-42 p)
+  (define-check (check-42 p)
     (check-equal?
       (interp-values-unique-lang-v4 (uniquify p))
       42))

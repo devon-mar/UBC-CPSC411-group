@@ -126,7 +126,7 @@
 (module+ test
 	(require rackunit)
 
-  (define (check-42 p)
+  (define-check (check-42 p)
     (define result (interp-values-lang p))
     (check-equal? result 42)
     (check-equal? result (interp-values-lang-v4 p)))

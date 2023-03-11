@@ -135,7 +135,7 @@
 (module+ test
   (require rackunit)
 
-  (define (check-42 p)
+  (define-check (check-42 p)
     (check-equal?
       (interp-asm-pred-lang-v4 (select-instructions p))
       42))

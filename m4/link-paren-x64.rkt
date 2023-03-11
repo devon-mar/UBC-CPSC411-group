@@ -118,7 +118,7 @@
 
   ;; interp-paren-x64-rt-v4 doesn't seem to exist right now...
   #;
-  (define (check-42 p)
+  (define-check (check-42 p)
     (check-equal?
       (interp-paren-x64-rt-v4 (link-paren-x64 p))
       42))

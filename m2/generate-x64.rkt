@@ -125,7 +125,7 @@
       wrap-x64-run-time
       wrap-x64-boilerplate))
 
-  (define (check-42 p)
+  (define-check (check-42 p)
     (check-equal?
       (execute p)
       42))

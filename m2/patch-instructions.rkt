@@ -131,37 +131,37 @@
 
   ;; Returns true if p returns the answer
   ;; to life.
-  (define (check-answer-to-life p)
+  (define-check (check-42 p)
     (check-equal?
       (interp-paren-x64-fvars-v4 (patch-instructions p))
       42))
 
   ;; return from immediate
-  (check-answer-to-life
+  (check-42
     '(begin (halt 42)))
 
 
   ;; return from register rbx
-  (check-answer-to-life
+  (check-42
     '(begin
        (set! rbx 42)
        (halt rbx)))
 
   ;; return from rax
-  (check-answer-to-life
+  (check-42
     '(begin
        (set! rax 42)
        (halt rax)))
 
   ;; binop, dest register, src imm
-  (check-answer-to-life
+  (check-42
    '(begin
       (set! r9 40)
       (set! r9 (+ r9 2))
       (halt r9)))
 
   ;; halt from fvar
-  (check-answer-to-life
+  (check-42
     '(begin
        (set! fv1 42)
        (halt fv1)))
@@ -169,7 +169,7 @@
   ;; binop with fvar as dest, imm src
   ;; This shouldn't work with interp-paren-x64-fvars-v2
   ;; '(begin (set! fv2 40) (set! fv2 (+ fv2 2)) (set! rax fv2))
-  (check-answer-to-life
+  (check-42
     '(begin
        (set! fv2 40)
        (set! fv2 (+ fv2 2))
@@ -195,7 +195,7 @@
       (eq? rax (current-return-value-register))))
 
   ;; imm64 to fvar move
-  (check-answer-to-life
+  (check-42
     `(begin
        (set! fv2 ,large-int)
        (halt 42)))
@@ -217,7 +217,7 @@
       (eq? val large-int)))
 
   ;; fvar to fvar move
-  (check-answer-to-life
+  (check-42
     `(begin
        (set! fv1 10)
        (set! fv2 fv1)
@@ -241,7 +241,7 @@
 
 
   ;; add imm64 to reg
-  (check-answer-to-life
+  (check-42
     `(begin
        (set! rsi 0)
        (set! rsi (+ rsi ,large-int))
@@ -263,7 +263,7 @@
       (eq? rax (current-return-value-register))))
 
   ;; add imm64 to fvar
-  (check-answer-to-life
+  (check-42
     `(begin
        (set! fv0 0)
        (set! fv0 (+ fv0 ,large-int))
