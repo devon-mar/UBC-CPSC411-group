@@ -7,7 +7,7 @@
 (provide select-instructions)
 
 ;; Milestone 4 Exercise 17
-;; Milestone 5 Exercise 4
+;; Milestone 5 Exercise 5
 ;;
 ;; Compiles Imp-cmf-lang v5 to Asm-pred-lang v5,
 ;; selecting appropriate sequences of abstract assembly instructions to
