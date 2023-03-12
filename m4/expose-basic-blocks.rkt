@@ -2,16 +2,17 @@
 
 (require
   cpsc411/compiler-lib
-  cpsc411/langs/v4)
+  cpsc411/langs/v5)
 
 (provide expose-basic-blocks)
 
 ;; Milestone 4 Exercise 10
+;; Milestone 5 Exercise 13
 ;;
-;; Compile the Nested-asm-lang v4 to Block-pred-lang v4, eliminating all
+;; Compile the nested-asm-lang-v5 to block-pred-lang-v5, eliminating all
 ;; nested expressions by generating fresh basic blocks and jumps.
 (define/contract (expose-basic-blocks p)
-  (-> nested-asm-lang-v4? block-pred-lang-v4?)
+  (-> nested-asm-lang-v5? block-pred-lang-v5?)
 
   (define blocks (box '()))
 
@@ -23,7 +24,7 @@
   ;;
   ;; A begin will always be returned.
   ;;
-  ;; block-pred-lang-v4-effect block-pred-lang-v4-tail -> block-pred-lang-v4-tail
+  ;; block-pred-lang-v5-effect block-pred-lang-v5-tail -> block-pred-lang-v5-tail
   #;
   (define (cons-effect-tail effect tail)
     (match tail
@@ -44,12 +45,12 @@
 
 
   ;; Adds a basic block with the the label (fresh-label label) and
-  ;; tail to the mutable state. Returns a block-pred-lang-v4 jump
+  ;; tail to the mutable state. Returns a block-pred-lang-v5 jump
   ;; instruction to the new label.
   ;;
   ;; label: symbol
-  ;; tail: block-pred-lang-v4-tail
-  ;; -> block-pred-lang-v4-tail
+  ;; tail: block-pred-lang-v5-tail
+  ;; -> block-pred-lang-v5-tail
   (define/contract (add-block! label tail)
     (-> symbol? any/c any/c)
     (define actual-label (fresh-label label))
@@ -62,14 +63,28 @@
 
   (define (expose-basic-blocks-p p)
     (match p
-      [`(module ,tail)
+      [`(module ,block-list ... ,tail)
         `(module
            (define
              ,(fresh-label 'main)
              ,(expose-basic-blocks-tail tail))
+           ,@(expose-basic-blocks-asm-lang-block-list block-list)
            ,@(unbox blocks))]))
 
-  ;; nested-asm-lang-v4-pred nested-asm-lang-v4-tail nested-asm-lang-v4-tail -> block-pred-lang-v4-tail
+
+  ;; Note: By Piazza @137 @92, we may assume labels in the provided program  will not be generated
+  ;; by fresh-labels and so we do not need to reinvoke fresh-label.
+  ;; ((define label nested-asm-lang-v5-tail) ...) -> ((define label block-pred-lang-v5-tail) ...)
+  (define (expose-basic-blocks-asm-lang-block block)
+    (match block
+      [`(define ,label ,tail)
+        `(define ,label ,(expose-basic-blocks-tail tail))]))
+
+  ;; ((define label nested-asm-lang-v5-tail) ...) -> ((define label block-pred-lang-v5-tail) ...)
+  (define (expose-basic-blocks-asm-lang-block-list block-list)
+    (map expose-basic-blocks-asm-lang-block block-list))
+
+  ;; nested-asm-lang-v5-pred nested-asm-lang-v5-tail nested-asm-lang-v5-tail -> block-pred-lang-v5-tail
   (define (expose-basic-blocks-pred p tail1 tail2)
     (match p
       [`(true)
@@ -99,10 +114,13 @@
            ,tail1
            ,tail2)]))
 
-  ;; nested-asm-lang-v4-tail -> block-pred-lang-v4-tail
+  ;; nested-asm-lang-v5-tail -> block-pred-lang-v5-tail
   (define (expose-basic-blocks-tail t)
     (match t
       [`(halt ,_triv)
+        t]
+      [`(jump ,trg)
+        ;; As stated in note above and By Piazza @137 @92, we assume trg label will be fresh and unused
         t]
       [`(begin ,effects ... ,tail)
         (expose-basic-blocks-effects
@@ -114,7 +132,7 @@
           (add-block! 't (expose-basic-blocks-tail t1))
           (add-block! 'f (expose-basic-blocks-tail t2)))]))
 
-  ;; nested-asm-lang-v4-effect nested-asm-lang-v4-tail -> block-pred-lang-v4-tail
+  ;; nested-asm-lang-v5-effect nested-asm-lang-v5-tail -> block-pred-lang-v5-tail
   (define (expose-basic-blocks-effect e tail)
     (match e
       [`(set! ,_ (,_ ,_ ,_))
@@ -136,8 +154,8 @@
             'ef
             (expose-basic-blocks-effect e2 jump-join)))]))
 
-  ;; (listof nested-asm-lang-v4-effect) nested-asm-lang-v4-tail
-  ;; -> block-pred-lang-v4-tail
+  ;; (listof nested-asm-lang-v5-effect) nested-asm-lang-v5-tail
+  ;; -> block-pred-lang-v5-tail
   (define (expose-basic-blocks-effects effects tail)
     (match effects
       ['() tail]
@@ -169,7 +187,7 @@
 
   (define-check (check-42 p)
     (check-equal?
-      (interp-block-pred-lang-v4 (expose-basic-blocks p))
+      (interp-block-pred-lang-v5 (expose-basic-blocks p))
       42))
 
   ;; single halt
@@ -294,5 +312,71 @@
            (set! r9 (+ r9 rsi)))
          (set! rcx r9)
          (halt rcx))))
-  )
+
+  ;; Check blocks are placed correct order. Tail is evaluated first
+  (check-42
+    '(module (define L.main.1 (halt 2)) (halt 42)))
+
+  ;; Check correct handling of multiple blocks defined in p with jumps
+  (check-42
+    '(module
+      (define L.first.1
+        (begin 
+          (set! rax 42)
+          (jump L.second.1)))
+      (define L.second.1
+        (begin
+          (set! rsp rax)
+          (halt rsp)))
+      (jump L.first.1)))
+    
+  ;; Block ordering doesn't matter
+  (check-42
+    '(module
+      (define L.second.1
+          (begin
+            (set! rsp rax)
+            (halt rsp)))
+      (define L.first.1
+        (begin 
+          (set! rax 42)
+          (jump L.second.1)))
+      (jump L.first.1)))
+
+
+  ;; Pred with jump as tail
+  (check-42
+    '(module
+      (define L.second.1
+            (halt 42))
+      (define L.first.1
+        (begin 
+          (halt 2)))
+      (if (true) (jump L.second.1) (jump L.first.1))))
+
+  ;; pred with complex tail blocks
+  (check-42
+    '(module
+      (define L.haltrax.1
+            (halt rax))
+      (if (true) (begin (set! rax 42) (jump L.haltrax.1)) (begin (set! rax 2) (jump L.haltrax.1)))))
+
+  ;; Ensure nested blocks inside asm-lang blocks are unboxed
+  (check-42
+    '(module
+      (define L.haltrax.1
+        (halt rax))
+      (define L.nested.1
+        (if (true) (begin (set! rax 42) (jump L.haltrax.1)) (begin (set! rax 2) (jump L.haltrax.1))))
+      (jump L.nested.1)))
+      
+  ;; Case where jump trg is loc and set! loc label
+  (check-42
+    '(module
+      (define L.haltrax.1
+        (halt rax))
+      (begin
+        (set! rax 42)
+        (set! rsp L.haltrax.1)
+        (jump rsp)))))
 
