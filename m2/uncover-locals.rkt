@@ -37,7 +37,7 @@
            ,@(map uncover-locals-proc labels infos tails)
            ,tail)]))
 
-  ;; asm-pred-lang-v5-pred -> asm-pred-lang-v5/locals-pred
+  ;; asm-pred-lang-v5-pred -> set
   (define/contract (uncover-locals-pred p)
     (-> any/c set?)
     (match p
@@ -56,7 +56,7 @@
           (uncover-locals-loc l)
           (uncover-locals-opand o))]))
 
-  ;; asm-pred-lang-v5-tail -> asm-pred-lang-v5/locals-tail
+  ;; asm-pred-lang-v5-tail -> set
   (define/contract (uncover-locals-tail t)
     (-> any/c set?)
     (match t
@@ -75,7 +75,7 @@
           (uncover-locals-tail t1)
           (uncover-locals-tail t2))]))
 
-  ;; asm-pred-lang-v5-effect -> asm-pred-lang-v5/locals-effect
+  ;; asm-pred-lang-v5-effect -> set
   (define (uncover-locals-effect e)
     (match e
       [`(set! ,loc ,triv)
@@ -98,7 +98,7 @@
           (uncover-locals-effect e1)
           (uncover-locals-effect e2))]))
 
-  ;; asm-pred-lang-v5-opand -> asm-pred-lang-v5/locals-opand
+  ;; asm-pred-lang-v5-opand -> set
   (define/contract (uncover-locals-opand o)
     (-> any/c set?)
     (match o
@@ -106,14 +106,14 @@
       ;; loc
       [_ (uncover-locals-loc o)]))
 
-  ;; asm-pred-lang-v5-triv -> asm-pred-lang-v5/locals-triv
+  ;; asm-pred-lang-v5-triv -> set
   (define/contract (uncover-locals-triv t)
     (-> any/c set?)
     (match t
       [(? label?) (set)]
       [_ (uncover-locals-opand t)]))
 
-  ;; asm-pred-lang-v5-loc -> asm-pred-lang-v5/locals-loc
+  ;; asm-pred-lang-v5-loc -> set
   (define/contract (uncover-locals-loc l)
     (-> any/c set?)
     (match l
@@ -121,7 +121,7 @@
       ;; rloc
       [_ (set)]))
 
-  ;; asm-pred-lang-v5-trg -> asm-pred-lang-v5/locals-trg
+  ;; asm-pred-lang-v5-trg -> set
   (define/contract (uncover-locals-trg t)
     (-> any/c set?)
     (match t
