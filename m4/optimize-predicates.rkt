@@ -2,14 +2,15 @@
 
 (require cpsc411/compiler-lib
          cpsc411/graph-lib
-         cpsc411/langs/v4)
+         cpsc411/langs/v5)
 (provide optimize-predicates)
 
-;; Exercise #11
-;; nested-asm-lang-v4? -> nested-asm-lang-v4?
+;; Exercise #13
+;; nested-asm-lang-v5? -> nested-asm-lang-v5?
 (define/contract
  (optimize-predicates p)
- (-> nested-asm-lang-v4? nested-asm-lang-v4?)
+ (-> nested-asm-lang-v5? nested-asm-lang-v5?)
+
  ;; relop -> procedure
  (define (symbol->relop relop)
    (match relop
@@ -19,16 +20,19 @@
      [`> >]
      [`= =]
      [`!= (lambda (x y) (not (= x y)))]))
+
  ;; binop -> procedure
  (define (binop->procedure binop)
    (match binop
      [`+ +]
      [`* *]))
+
  ;; triv dict -> triv
  (define (convert-triv triv env)
    (match triv
      [(? integer?) triv]
      [(? symbol?) (if (dict-has-key? env triv) (dict-ref env triv) triv)]))
+
  ;; tail dict -> tail
  (define (convert-tail t env)
    (match t
@@ -42,6 +46,7 @@
          ,(convert-tail tail new-env))]
      [`(if ,pred ,tail1 ,tail2)
       (convert-if-tail pred tail1 tail2 env)]))
+
  ;; pred tail tail dict -> tail
  (define (convert-if-tail pred t1 t2 env)
    (match pred
@@ -68,9 +73,9 @@
                        (convert-if-tail pred1 t1 t2 env)
                        (convert-if-tail pred2 t1 t2 env)
                        env)]))
+
  ;; pred effect effect dict -> effect
  (define (convert-if-effect pred e1 e2 env)
-
    (match pred
      [`(true) ;; base case
       (match-define-values (new-effect1 _) (convert-effect e1 env))
@@ -95,6 +100,7 @@
                          (convert-if-effect pred1 e1 e2 env)
                          (convert-if-effect pred2 e1 e2 env)
                          env)]))
+
  ;; relop triv triv tail tail -> tail
  ;; relop triv triv effect effect -> effect
  (define (convert-relop relop a1 a2 tail1 tail2)
@@ -103,11 +109,13 @@
          (if ((symbol->relop relop) a1 a2) tail1 tail2)
          `(if (,relop ,a1 ,a2) ,tail1 ,tail2)))
    (abstract-relop relop))
+
  ;; (effect ...) dict -> (values (effect ...) dict)
  (define (convert-effect-list effect-list env)
    (for/fold ([new-effect-list '()] [intermediate-env env]) ([e effect-list])
      (define-values (new-effect new-env) (convert-effect e intermediate-env))
      (values (append new-effect-list (list new-effect)) new-env)))
+
  ;; effect dict -> (values effect dict)
  (define (convert-effect e env)
    (match e
@@ -122,17 +130,23 @@
                  ,@new-effects)
               new-env)]
      [`(if ,pred ,effect1 ,effect2) (values (convert-if-effect pred effect1 effect2 env) env)]))
- ;; binop loc triv dict -> symbol | integer
+
+ ;; binop loc triv dict -> symbol
+ ;; binop loc triv dict -> integer
  (define (convert-binop binop loc opand env)
    (define interp-loc (convert-triv loc env))
    (define interp-opand (convert-triv opand env))
    (if (and (integer? interp-loc) (integer? interp-opand))
        ((binop->procedure binop) interp-loc interp-opand)
        (`(,binop ,loc ,opand))))
- (match p
-   [`(module ,tail)
-    (define env '())
-    `(module ,(convert-tail tail env))]))
+
+  ;; p -> p
+  (define (convert-p p)
+    (match p
+      [`(module ,tail)
+        (define env '())
+        `(module ,(convert-tail tail env))]))
+ (convert-p p))
 
 (module+ test
   (require rackunit)
@@ -278,8 +292,8 @@
                              (set! fv0 1)
                              (set! fv2 2)
                              (halt 1)))))
-  (check-equal? (interp-nested-asm-lang-v4 if-begin-test)
-                (interp-nested-asm-lang-v4 (optimize-predicates if-begin-test)))
+  (check-equal? (interp-nested-asm-lang-v5 if-begin-test)
+                (interp-nested-asm-lang-v5 (optimize-predicates if-begin-test)))
 
   ;; check (if pred pred pred)
   (check-equal? (optimize-predicates `(module (begin
