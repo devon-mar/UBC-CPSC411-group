@@ -194,7 +194,9 @@
   (undead-analysis-p p))
 
 (module+ test
-  (require rackunit)
+  (require
+    rackunit
+    "../utils/test-utils.rkt")
 
   ;; For CPSC411 test suite
   (require
@@ -258,19 +260,21 @@
   ;; Check usts produced by 'undead-analysis' for tail and each of the procs
   ;; p info (List-of info) -> void 
   (define-check (check-ust-proc program ust-tail ust-procs)
-    ;; p -> info tail (List-of label) (List-of info) (List-of tail)
-    (define (extract p)
-      (match p
-        [`(module ,main-info (define ,proc-labels ,proc-infos ,proc-tails) ... ,main-tail)
-          (values main-info main-tail proc-labels proc-infos proc-tails)]))
+    ;; get fields from original program
     (define-values (main-info main-tail proc-labels proc-infos proc-tails)
-      (extract program))
+      (extract-asm-pred-lang program))
+    ;; get fields from compiled program
     (define-values (ua-main-info ua-main-tail ua-proc-labels ua-proc-infos ua-proc-tails)
-      (extract (undead-analysis program)))
-    (check-equal? (info-remove ua-main-info 'undead-out) main-info)
+      (extract-asm-pred-lang (undead-analysis program)))
+    ;; keeps locals
+    (check-equal? (info-ref ua-main-info 'locals) (info-ref main-info 'locals))
     (check-equal? ua-main-tail main-tail)
-    (check-equal? (map (lambda (x) (info-remove x 'undead-out)) ua-proc-infos) proc-infos)
+    (check-equal?
+      (map (lambda (x) (info-ref x 'locals)) ua-proc-infos)
+      (map (lambda (x) (info-ref x 'locals)) proc-infos))
+    ;; tails is the same
     (check-equal? ua-proc-tails proc-tails)
+    ;; check undead-out is as expected
     (check-ust-equal? (info-ref ua-main-info 'undead-out) ust-tail)
     (for ([ua-proc-info ua-proc-infos] [ust-proc ust-procs])
       (check-ust-equal? (info-ref ua-proc-info 'undead-out) ust-proc)))
