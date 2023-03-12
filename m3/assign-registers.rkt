@@ -85,9 +85,18 @@
     (define conflicts (info-ref info 'conflicts))
     (info-set info 'assignment (generate-assignment local-list conflicts)))
 
+  ;; label info tail -> proc
+  ;; proc ::= (define label info tail)
+  ;; Takes label info tail for proc and create proc with assignments in info
+  (define (assign-registers-proc label info tail)
+    `(define ,label ,(convert-info info) ,tail))
+
   (match p
-    [`(module ,info ,tail)
-     `(module ,(convert-info info) ,tail)]))
+    [`(module ,info (define ,labels ,infos ,tails) ... ,tail)
+     `(module
+       ,(convert-info info)
+       ,@(map assign-registers-proc labels infos tails)
+       ,tail)]))
 
 (module+ test
   (require rackunit
@@ -189,4 +198,38 @@
     (and (= (length assignment) 2)
          (equal? (dict-ref assignment 'x.2) '(fv3))
          (equal? (dict-ref assignment 'x.1) '(fv1))))
+  
+  ;; assignment in procedures
+  (check-match
+    (assign-registers
+      '(module ((locals (x.1 x.2))
+                (conflicts ((x.1 (x.2 r15)) (x.2 (x.1)) (r15 (x.1)))))
+          (define L.test.1 ((locals (x.2 x.3)) (conflicts ((x.2 ()) (x.3 ())))) (halt 1))
+          (define L.test.2 ((locals (x.1 x.3)) (conflicts ((x.1 (x.3)) (x.3 (x.1))))) (halt 2))
+          (define L.test.3 ((locals ()) (conflicts ())) (halt 3))
+          (halt 0)))
+    `(module ((locals (x.1 x.2))
+              (conflicts ((x.1 (x.2 r15)) (x.2 (x.1)) (r15 (x.1))))
+              (assignment ,assignment))
+        (define L.test.1 ((locals (x.2 x.3))
+                          (conflicts ((x.2 ()) (x.3 ())))
+                          (assignment ,assignment1))
+          (halt 1))
+        (define L.test.2 ((locals (x.1 x.3))
+                          (conflicts ((x.1 (x.3)) (x.3 (x.1))))
+                          (assignment ,assignment2))
+          (halt 2))
+        (define L.test.3 ((locals ()) (conflicts ()) (assignment ,assignment3))
+          (halt 3))
+        (halt 0))
+    (and (= (length assignment) 2)
+         (equal? (dict-ref assignment 'x.1) '(r14))
+         (equal? (dict-ref assignment 'x.2) '(r15))
+         (= (length assignment1) 2)
+         (equal? (dict-ref assignment1 'x.2) '(r15))
+         (equal? (dict-ref assignment1 'x.3) '(r15))
+         (= (length assignment2) 2)
+         (equal? (dict-ref assignment2 'x.1) '(r14))
+         (equal? (dict-ref assignment2 'x.3) '(r15))
+         (= (length assignment3) 0)))
   )
