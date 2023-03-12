@@ -147,7 +147,7 @@
   (define-binary-check (check-graph? actual expected)
     (graph-equals? actual expected))
 
-  ;; Check that a program + undead-out compiles into a program + conflicts
+  ;; Check that a program and undead-out compiles into a program w/ conflicts
   ;; by compiling with conflict-analysis
   ;; asm-pred-lang-v5/locals undead-set-tree/rloc conflicts -> void
   (define-check (check-conflict program undead-out conflicts-tail)
@@ -158,9 +158,9 @@
           conflicts-tail
           '())]))
   
-  ;; Check that a program with procs + undead-out compiles into
-  ;; a program with procs + conflicts by compiling with conflict-analysis
-  ;; p conflicts (List-of conflicts) -> void
+  ;; Check that a program w/ procs & undead-out compiles into
+  ;; a program w/ procs & conflicts by compiling with conflict-analysis
+  ;; asm-pred-lang-v5/undead conflicts (List-of conflicts) -> void
   (define-check (check-conflict-proc program conflicts-tail conflicts-procs)
     ;; get fields from original program
     (define-values (main-info main-tail proc-labels proc-infos proc-tails)
