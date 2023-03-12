@@ -74,7 +74,7 @@
        (values (list utp ut1 ut2) uip)]
       [`(jump ,trg ,loc ...)
        (values
-         uo
+         loc
          (set-union (undead-analysis-trg trg uo) loc))]))
 
   ;; Computes the undead-in set for instruction e
@@ -530,11 +530,13 @@
         (set! x.1 1)
         (set! rsi 9)
         (set! fv0 22)
-        (jump done x.1 rsi fv0)))
+        (set! fv1 done)
+        (jump fv1 x.1 rsi fv0)))
     '((x.1)
       (x.1 rsi)
       (x.1 rsi fv0)
-      ())
+      (x.1 rsi fv0 fv1)
+      (x.1 rsi fv0))
     (list))
 
   ;; complex jumps & procs
@@ -566,7 +568,7 @@
       (rcx fv0 u.1 r8)
       (rcx fv0 r13 u.1 r8)
       ((rcx fv0 r13 u.1)
-       ((rdx fv0) (rdx fv0 fv2) ())
-       ((r14 r13 u.1 rcx) (r14 r13 fv1 u.1) (r14 r13 fv1 fv2 u.1) ())))
-    (list '((r13 rdi) (r13) ()) '((x.1) (x.1 rdx) (x.1 rdx fv0) ())))
+       ((rdx fv0) (rdx fv0 fv2) (rdx fv0 fv2))
+       ((r14 r13 u.1 rcx) (r14 r13 fv1 u.1) (r14 r13 fv1 fv2 u.1) (r13 fv1 fv2 u.1))))
+    (list '((r13 rdi) (r13) ()) '((x.1) (x.1 rdx) (x.1 rdx fv0) (x.1 rdx fv0))))
   )
