@@ -29,8 +29,7 @@
   (define (conflict-analysis-proc label info tail)
     (set! conflict-graph (new-graph (info-ref info 'locals)))
     (conflict-tail tail (info-ref info 'undead-out))
-    (define newinfo
-      (info-remove (info-set info 'conflicts conflict-graph) 'undead-out))
+    (define newinfo (info-set info 'conflicts conflict-graph))
     `(define ,label ,newinfo ,tail))
 
   ;; Updates conflict graph for the locs in the tail
@@ -96,8 +95,7 @@
     [`(module ,info (define ,labels ,infos ,tails) ... ,tail)
      (set! conflict-graph (new-graph (info-ref info 'locals)))
      (conflict-tail tail (info-ref info 'undead-out))
-     (define newinfo
-       (info-remove (info-set info 'conflicts conflict-graph) 'undead-out))
+     (define newinfo (info-set info 'conflicts conflict-graph))
      `(module ,newinfo ,@(map conflict-analysis-proc labels infos tails) ,tail)]))
 
 ;; graph graph -> boolean
