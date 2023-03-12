@@ -97,11 +97,11 @@
        `((with-label ,label ,(first s-list)) ,@(rest s-list))]
       [`(compare ,loc ,opand)
        ;; Paren-x64-fvars does not support (compare fvar _)
-       ;; or (compare _ fvar)
+       ;; or (compare _ fvar/int64)
        (patch-set 
          (lambda (l o) `((compare ,l ,o)))
          (cons fvar? loc)
-         (cons fvar? opand))]
+         (cons (lambda (o) (or (fvar? o) (big-int? o))) opand))]
       [`(jump-if ,relop ,trg)
        ;; Paren-x64-fvars does not support (jump-if _ loc)
        ;; Additional patch for (jump fvar)
@@ -374,7 +374,28 @@
       (set! r14 10)
       (compare r14 0)
       (compare r13 r14)))
-  
+
+  ;; compare with int64 -- patched
+  (check-match
+    (patch-instructions
+      `(begin
+        (set! r13 9)
+        (set! fv1 7)
+        (compare fv1 ,large-int)
+        (compare r13 ,large-int)))
+    `(begin
+      (set! r13 9)
+      (set! fv1 7)
+      (set! ,tmp0 fv1)
+      (set! ,tmp1 ,val1)
+      (compare ,tmp0 ,tmp1)
+      (set! ,tmp2 ,val2)
+      (compare r13 ,tmp2))
+    (and (andmap patch-register? (list tmp0 tmp1 tmp2))
+         (not (equal? tmp0 tmp1))
+         (equal? val1 large-int)
+         (equal? val2 large-int)))
+
   ;; compare with fvar -- patched
   (check-match
     (patch-instructions
