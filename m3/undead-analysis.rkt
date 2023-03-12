@@ -2,25 +2,26 @@
 
 (require
   cpsc411/compiler-lib
-  cpsc411/langs/v4
+  cpsc411/langs/v5
   "../utils/compiler-utils.rkt")
 
 (provide undead-analysis)
 
 ;; Milestone 3 - Exercise 1
 ;; Milestone 4 - Exercise 15
+;; Milestone 5 - Exercise 8
 
 ;; Performs undeadness analysis, decorating the program with undead-set tree.
 ;; Only the info field of the program is modified.
-(define (undead-analysis p)
-  (-> asm-pred-lang-v4/locals? asm-pred-lang-v4/undead?)
+(define/contract (undead-analysis p)
+  (-> asm-pred-lang-v5/locals? asm-pred-lang-v5/undead?)
 
   ;; Performs undeadness analysis, decorating the program with undead-set tree.
   ;; Only the info field of the program is modified.
   (define (undead-analysis-p p)
-    (-> asm-pred-lang-v4/locals? asm-pred-lang-v4/undead?)
+    (-> asm-pred-lang-v5/locals? asm-pred-lang-v5/undead?)
     (match p
-      [`(module ,info ,tail)
+      [`(module ,info (define ,labels ,infos ,tails) ... ,tail)
         `(module
           ,(info-set
              info
@@ -28,15 +29,24 @@
              (let-values
                ([(ust _) (undead-analysis-tail tail '())])
                ust))
+          ,@(map undead-analysis-proc labels infos tails)
           ,tail)]))
+
+  ;; Performs undead analysis and adds undead-set tree to info of proc
+  ;; proc ::= (define label info tail)
+  ;;
+  ;; label info tail -> proc
+  (define (undead-analysis-proc label info tail)
+    (define-values (ust _) (undead-analysis-tail tail '()))
+    `(define ,label ,(info-set info 'undead-out ust) ,tail))
 
   ;; Computes the undead-in set for instruction t
   ;; given the undead-out set for t.
   ;;
-  ;; tail undead-set? -> (values undead-set-tree? undead-set?)
+  ;; tail undead-set/rloc? -> (values undead-set-tree/rloc? undead-set/rloc?)
   (define (undead-analysis-tail t uo)
-    (-> any/c undead-set? 
-        (values undead-set-tree? undead-set?))
+    (-> any/c undead-set/rloc? 
+        (values undead-set-tree/rloc? undead-set/rloc?))
 
     (match t
       [`(halt ,triv)
@@ -61,32 +71,36 @@
        (define-values (ut1 ui1) (undead-analysis-tail tail1 uo))
        (define-values (ut2 ui2) (undead-analysis-tail tail2 uo))
        (define-values (utp uip) (undead-analysis-pred pred (set-union ui1 ui2)))
-       (values (list utp ut1 ut2) uip)]))
+       (values (list utp ut1 ut2) uip)]
+      [`(jump ,trg ,loc ...)
+       (values
+         uo
+         (set-union (undead-analysis-trg trg uo) loc))]))
 
   ;; Computes the undead-in set for instruction e
   ;; given the undead-out set for e.
   ;;
-  ;; effect undead-set? -> (values undead-set-tree? undead-set?)
+  ;; effect undead-set/rloc? -> (values undead-set-tree/rloc? undead-set/rloc?)
   (define (undead-analysis-effect e uo)
-    (-> any/c undead-set?
-        (values undead-set-tree? undead-set?))
+    (-> any/c undead-set/rloc?
+        (values undead-set-tree/rloc? undead-set/rloc?))
 
     (match e
-      [`(set! ,aloc (,_binop ,aloc ,triv))
-        ;; 1. define aloc -> set-remove
-        ;; 2. reference aloc -> set-add
-        ;; 3. reference triv -> undead-analysis-triv
+      [`(set! ,loc (,_binop ,loc ,opand))
+        ;; 1. define loc -> set-remove
+        ;; 2. reference loc -> set-add
+        ;; 3. reference opand -> undead-analysis-opand
+        (values
+          uo
+          (undead-analysis-opand
+            opand
+            (set-add uo loc)))]
+      [`(set! ,loc ,triv)
         (values
           uo
           (undead-analysis-triv
             triv
-            (set-add uo aloc)))]
-      [`(set! ,aloc ,triv)
-        (values
-          uo
-          (undead-analysis-triv
-            triv
-            (set-remove uo aloc)))]
+            (set-remove uo loc)))]
       ;; NOTE: Removed 'tail' effect
       ;; since we assume valid input
       [`(begin ,effects ...)
@@ -109,7 +123,7 @@
   ;; Computes undead set tree and undead-in set for pred p
   ;; given undead-out set for p
   (define (undead-analysis-pred p uo)
-    (-> any/c undead-set? (values undead-set-tree? undead-set?))
+    (-> any/c undead-set/rloc? (values undead-set-tree/rloc? undead-set/rloc?))
     (match p
       [`(true) (values uo uo)]
       [`(false) (values uo uo)]
@@ -130,21 +144,46 @@
        (define-values (ut2 ui2) (undead-analysis-pred pred2 uo))
        (define-values (utp uip) (undead-analysis-pred ppred (set-union ui1 ui2)))
        (values (list utp ut1 ut2) uip)]
-      [`(,relop ,aloc ,triv)
+      [`(,relop ,loc ,triv)
        #:when(relop? relop)
-       (values uo (undead-analysis-triv triv (set-add uo aloc)))]))
+       (values uo (undead-analysis-triv triv (set-add uo loc)))]))
 
-  ;; Returns uo with t if t is a triv AND t is in uo,
+  ;; Return true if l is loc, false otherwise
+  (define (loc? l)
+    (or (aloc? l) (register? l) (fvar? l)))
+
+  ;; Returns uo with o if o is a loc,
+  ;; otherwise returns uo.
+  ;;
+  ;; o: opand
+  ;; uo: undead-set/rloc?
+  (define (undead-analysis-opand o uo)
+    (-> any/c undead-set/rloc? undead-set/rloc?)
+    (match o
+      [(? int64?) uo]
+      [(? loc?) (set-add uo o)]))
+
+  ;; Returns uo with t if t is a loc,
   ;; otherwise returns uo.
   ;;
   ;; t: triv
-  ;; uo: undead-set?
+  ;; uo: undead-set/rloc?
   (define (undead-analysis-triv t uo)
-    (-> any/c undead-set? undead-set?)
+    (-> any/c undead-set/rloc? undead-set/rloc?)
     (match t
-      [(? int64?) uo]
-      [(? aloc?) 
-       (set-add uo t)]))
+      [(? label?) uo]
+      [_ (undead-analysis-opand t uo)]))
+
+  ;; Returns uo with t if t is a loc,
+  ;; otherwise returns uo.
+  ;;
+  ;; t: trg
+  ;; uo: undead-set/rloc?
+  (define (undead-analysis-trg t uo)
+    (-> any/c undead-set/rloc? undead-set/rloc?)
+    (match t
+      [(? label?) uo]
+      [(? loc?) (set-add uo t)]))
 
   ;; Don't need
   #;
@@ -174,43 +213,67 @@
   ;; Quick helper to check that two undead-set-trees 
   ;; are equal.
   (define (ust-equal? have want)
-    (-> undead-set-tree? undead-set-tree? boolean?)
+    (-> undead-set-tree/rloc? undead-set-tree/rloc? boolean?)
     (match (cons have want)
       [(cons '() '()) #t]
       [(cons '() _) #f]
       [(cons _ '()) #f]
       [(cons s1 s2)
-       #:when (aloc? (car s2))
+       #:when (not (list? (car s1)))
        (set-equal? s1 s2)]
       [(cons s1 s2)
-       (andmap ust-equal? s1 s2)]))
+       (and (equal? (length s1) (length s2))
+            (andmap ust-equal? s1 s2))]))
   (check-true (ust-equal? '() '()))
   (check-true (ust-equal? '(x.1) '(x.1)))
   (check-true (ust-equal? '((x.1 x.2) (x.1)) '((x.1 x.2) (x.1))))
   (check-true (ust-equal? '((x.2 x.1) (x.1)) '((x.1 x.2) (x.1))))
   (check-true (ust-equal? '((((x.2 x.1) (x.1)))) '((((x.2 x.1) (x.1))))))
+  
+  ;; Check for ust-equal?
+  ;; ust ust -> void
+  (define-binary-check (check-ust-equal? have want)
+    (ust-equal? have want))
 
   ;; Checks that the ust produced by `undead-analysis` is
   ;; equal to want. Also checks that the rest of the program
   ;; is the same.
   ;;
-  ;; locals: (aloc ...)
+  ;; locals: (loc ...)
   ;; tail: tail
   ;; want: the expected locals
-  (define (check-ust locals tail want)
+  (define-check (check-ust locals tail want)
     (match (undead-analysis `(module ([locals ,locals]) ,tail))
       [`(module ,info ,tail2)
         ;; Should just contain locals and undead-out
         (check-equal?
           (length info)
           2)
-        (check
-          ust-equal?
+        (check-ust-equal?
           (info-ref info 'undead-out)
-          want
-          "undead-out not equal")
+          want)
         ;; Should remain unchanged
         (check-equal? tail2 tail)]))
+  
+  ;; Check usts produced by 'undead-analysis' for tail and each of the procs
+  ;; p info (List-of info) -> void 
+  (define-check (check-ust-proc program ust-tail ust-procs)
+    ;; p -> info tail (List-of label) (List-of info) (List-of tail)
+    (define (extract p)
+      (match p
+        [`(module ,main-info (define ,proc-labels ,proc-infos ,proc-tails) ... ,main-tail)
+          (values main-info main-tail proc-labels proc-infos proc-tails)]))
+    (define-values (main-info main-tail proc-labels proc-infos proc-tails)
+      (extract program))
+    (define-values (ua-main-info ua-main-tail ua-proc-labels ua-proc-infos ua-proc-tails)
+      (extract (undead-analysis program)))
+    (check-equal? (info-remove ua-main-info 'undead-out) main-info)
+    (check-equal? ua-main-tail main-tail)
+    (check-equal? (map (lambda (x) (info-remove x 'undead-out)) ua-proc-infos) proc-infos)
+    (check-equal? ua-proc-tails proc-tails)
+    (check-ust-equal? (info-ref ua-main-info 'undead-out) ust-tail)
+    (for ([ua-proc-info ua-proc-infos] [ust-proc ust-procs])
+      (check-ust-equal? (info-ref ua-proc-info 'undead-out) ust-proc)))
 
   ;; Simple
   (check-ust
@@ -422,4 +485,88 @@
          ((u.1 z.1 b.1) (u.1 z.1 c.1) (u.1 z.1))))
        ()
        ())))
+
+  ;; rlocs
+  (check-ust
+    '(u.1)
+    '(begin
+      (set! r8 9)
+      (set! rcx 9)
+      (set! rdx 7)
+      (set! u.1 99)
+      (set! fv0 rcx)
+      (set! fv1 u.1)
+      (set! rdx (* rdx fv0))
+      (if (< rcx fv1) (set! rcx 2) (set! fv2 9))
+      (if (not (!= fv2 r8)) (halt rdx) (halt fv2)))
+    '((fv2 r8)
+      (fv2 r8 rcx)
+      (rdx fv2 r8 rcx)
+      (rdx fv2 r8 rcx u.1)
+      (rdx fv2 r8 rcx fv0 u.1)
+      (rdx fv2 r8 rcx fv1 fv0)
+      (rdx fv2 r8 rcx fv1)
+      ((rdx fv2 r8) (rdx fv2 r8) (rdx fv2 r8))
+      ((rdx fv2) () ())))
+  
+  ;; proc & jumps base cases
+  (check-ust-proc
+    '(module ((locals ()))
+      (jump done))
+    '()
+    (list))
+  (check-ust-proc
+    '(module ((locals ()))
+      (define L.test.1 ((locals ())) (halt 0))
+      (define L.test.2 ((locals ())) (halt 3))
+      (jump L.test.1))
+    '()
+    (list '() '()))
+  
+  ;; simple jump
+  (check-ust-proc
+    '(module ((locals (x.1)))
+      (begin
+        (set! x.1 1)
+        (set! rsi 9)
+        (set! fv0 22)
+        (jump done x.1 rsi fv0)))
+    '((x.1)
+      (x.1 rsi)
+      (x.1 rsi fv0)
+      ())
+    (list))
+
+  ;; complex jumps & procs
+  (check-ust-proc
+    '(module ((locals (u.1)))
+      (define L.test.1 ((locals ()))
+        (begin (set! r13 10) (set! r9 rdi) (halt r13)))
+      (define L.test.2 ((locals (x.1)))
+        (begin (set! x.1 r13) (set! rdx x.1) (set! fv0 9) (jump x.1 x.1 rdx fv0)))
+      (begin
+        (set! r8 9)
+        (set! rcx 4)
+        (set! fv0 rcx)
+        (set! u.1 10)
+        (set! r13 88)
+        (if (>= r8 17)
+            (begin
+              (set! rdx rcx)
+              (set! fv2 10)
+              (jump L.test.1 rdx fv0 fv2))
+            (begin
+              (set! r14 L.test.2)
+              (set! fv1 rcx)
+              (set! fv2 fv1)
+              (jump r14 r13 fv1 fv2 u.1)))))
+    '((r8)
+      (rcx r8)
+      (rcx fv0 r8)
+      (rcx fv0 u.1 r8)
+      (rcx fv0 r13 u.1 r8)
+      ((rcx fv0 r13 u.1)
+       ((rdx fv0) (rdx fv0 fv2) ())
+       ((r14 r13 u.1 rcx) (r14 r13 fv1 u.1) (r14 r13 fv1 fv2 u.1) ())))
+    (list '((r13 rdi) (r13) ()) '((x.1) (x.1 rdx) (x.1 rdx fv0) ())))
   )
