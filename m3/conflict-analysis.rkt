@@ -3,25 +3,41 @@
 (require
   cpsc411/compiler-lib
   cpsc411/graph-lib
-  cpsc411/langs/v4
+  cpsc411/langs/v5
   "../utils/compiler-utils.rkt")
 
 (provide conflict-analysis)
 
 ;; Milestone 3 Exercise 2
 ;; Milestone 4 Exercise 14
+;; Milestone 5 Exercise 9
 ;;
 ;; Create a conflict graph for the Asm-lang program with the undead-set tree
 (define/contract (conflict-analysis p)
-  (-> asm-pred-lang-v4/undead? asm-pred-lang-v4/conflicts?)
+  (-> asm-pred-lang-v5/undead? asm-pred-lang-v5/conflicts?)
 
-  (define conflict-graph (new-graph))
+  (define conflict-graph (void))
 
-  ;; Updates conflict graph for the alocs in the tail
-  ;; tail undead-set-tree -> void
+  ;; Return true if l is loc, false otherwise
+  (define (loc? l)
+    (or (aloc? l) (register? l) (fvar? l)))
+
+  ;; Performs conflict-analysis and adds conflicts to info of proc
+  ;; proc ::= (define label info tail)
+  ;;
+  ;; label info tail -> proc
+  (define (conflict-analysis-proc label info tail)
+    (set! conflict-graph (new-graph (info-ref info 'locals)))
+    (conflict-tail tail (info-ref info 'undead-out))
+    (define newinfo (info-set info 'conflicts conflict-graph))
+    `(define ,label ,newinfo ,tail))
+
+  ;; Updates conflict graph for the locs in the tail
+  ;; tail undead-set-tree/rloc -> void
   (define (conflict-tail tail ust)
     (match (cons tail ust)
       [(cons `(halt ,_) _) (void)]
+      [(cons `(jump ,trg ,loc ...) _) (void)]
       [(cons `(begin ,effects ... ,tail) `(,usts ...))
        (for ([e effects] [u usts])
          (conflict-effect e u))
@@ -30,21 +46,21 @@
        (conflict-pred pred ustp)
        (conflict-tail tail1 ust1)
        (conflict-tail tail2 ust2)]))
-  
-  ;; Updates conflict graph for the alocs in the effect
-  ;; effect undead-set-tree -> void
+
+  ;; Updates conflict graph for the locs in the effect
+  ;; effect undead-set-tree/rloc -> void
   (define (conflict-effect effect ust)
     (match (cons effect ust)
-      [(cons `(set! ,aloc (,_ ,aloc ,_)) undead-out)
+      [(cons `(set! ,loc (,_ ,loc ,_)) undead-out)
        (for ([u undead-out])
          (unless
-          (equal? aloc u)
-          (set! conflict-graph (add-edge conflict-graph aloc u))))]
-      [(cons `(set! ,aloc ,triv) undead-out)
+           (equal? loc u)
+           (set! conflict-graph (add-edge conflict-graph loc u))))]
+      [(cons `(set! ,loc ,triv) undead-out)
        (for ([u undead-out])
          (unless
-          (or (equal? aloc u) (and (aloc? triv) (equal? triv u)))
-          (set! conflict-graph (add-edge conflict-graph aloc u))))]
+           (or (equal? loc u) (and (loc? triv) (equal? triv u)))
+           (set! conflict-graph (add-edge conflict-graph loc u))))]
       [(cons `(begin ,effects ...) `(,usts ...))
        (for ([e effects] [u usts])
          (conflict-effect e u))]
@@ -53,8 +69,8 @@
        (conflict-effect effect1 ust1)
        (conflict-effect effect2 ust2)]))
 
-  ;; Updates conflict graph for the alocs in the pred
-  ;; pred undead-set-tree -> void
+  ;; Updates conflict graph for the locs in the pred
+  ;; pred undead-set-tree/rloc -> void
   (define (conflict-pred pred ust)
     (match (cons pred ust)
       [(cons `(true) _)
@@ -71,17 +87,15 @@
        (conflict-pred ppred ustp)
        (conflict-pred pred1 ust1)
        (conflict-pred pred2 ust2)]
-      [(cons `(,relop ,_ ,_) _)
-       #:when(relop? relop)
+      [(cons `(,_relop ,_ ,_) _)
        (void)]))
 
   (match p
-    [`(module ,info ,tail)
+    [`(module ,info (define ,labels ,infos ,tails) ... ,tail)
      (set! conflict-graph (new-graph (info-ref info 'locals)))
      (conflict-tail tail (info-ref info 'undead-out))
-     (define newinfo
-       (info-remove (info-set info 'conflicts conflict-graph) 'undead-out))
-     `(module ,newinfo ,tail)]))
+     (define newinfo (info-set info 'conflicts conflict-graph))
+     `(module ,newinfo ,@(map conflict-analysis-proc labels infos tails) ,tail)]))
 
 ;; graph graph -> boolean
 ;; Return true if graph associates each vertex to the same set of vertices
@@ -98,7 +112,9 @@
            (equal? (list->set s1) (list->set s2))))))
 
 (module+ test
-  (require rackunit)
+  (require
+    rackunit
+    "../utils/test-utils.rkt")
 
   ;; graph-equals? tests
   (check-true (graph-equals? '() '()))
@@ -128,22 +144,40 @@
   (define-binary-check (check-graph? actual expected)
     (graph-equals? actual expected))
 
-  ;; Check that a program w/ undead-out compiles into a program w/ conflicts
+  ;; Check that a program and undead-out compiles into a program w/ conflicts
   ;; by compiling with conflict-analysis
-  ;; asm-pred-lang-v4/locals undead-set-tree conflicts -> void
-  (define-check (check-conflict program undead-out conflicts)
-    (define-values (compiled etail)
-      (match program
-        [`(module ,info ,etail)
-          (values
-            (conflict-analysis
-              `(module ,(info-set info 'undead-out undead-out) ,etail))
-            etail)]))
-    (match compiled
-      [`(module ,info ,atail)
-       (check-equal? etail atail)
-       (check-graph? (info-ref info 'conflicts) conflicts)]))
-  
+  ;; asm-pred-lang-v5/locals undead-set-tree/rloc conflicts -> void
+  (define-check (check-conflict program undead-out conflicts-tail)
+    (match program
+      [`(module ,info ,procs ... ,tail)
+        (check-conflict-proc
+          `(module ,(info-set info 'undead-out undead-out) ,@procs ,tail)
+          conflicts-tail
+          '())]))
+
+  ;; Check that a program w/ procs & undead-out compiles into
+  ;; a program w/ procs & conflicts by compiling with conflict-analysis
+  ;; asm-pred-lang-v5/undead conflicts (List-of conflicts) -> void
+  (define-check (check-conflict-proc program conflicts-tail conflicts-procs)
+    ;; get fields from original program
+    (define-values (main-info main-tail proc-labels proc-infos proc-tails)
+      (extract-asm-pred-lang program))
+    ;; get fields from compiled program
+    (define-values (ca-main-info ca-main-tail ca-proc-labels ca-proc-infos ca-proc-tails)
+      (extract-asm-pred-lang (conflict-analysis program)))
+    ;; keeps locals
+    (check-equal? (info-ref ca-main-info 'locals) (info-ref main-info 'locals))
+    (check-equal? ca-main-tail main-tail)
+    (check-equal?
+      (map (lambda (x) (info-ref x 'locals)) ca-proc-infos)
+      (map (lambda (x) (info-ref x 'locals)) proc-infos))
+    ;; tails is the same
+    (check-equal? ca-proc-tails proc-tails)
+    ;; check conflicts is as expected
+    (check-graph? (info-ref ca-main-info 'conflicts) conflicts-tail)
+    (for ([ca-proc-info ca-proc-infos] [conflict-proc conflicts-procs])
+      (check-graph? (info-ref ca-proc-info 'conflicts) conflict-proc)))
+
   ;; conflict-analysis tests
   (check-conflict
     '(module
@@ -190,7 +224,7 @@
       (x.2)
       ())
     '((x.1 ()) (x.2 (x.3)) (x.3 (x.2))))
-  
+
   ; No move optimization for binop
   (check-conflict
     '(module
@@ -273,7 +307,7 @@
        ((x.1 x.2) (x.1) ())
        ((x.3) (x.1) ())))
     '((x.1 (x.2)) (x.2 (x.1)) (x.3 ())))
-  
+
    ; if in effect
   (check-conflict
     '(module
@@ -290,7 +324,7 @@
        ((x.1 x.2) (x.1)))
       ())
     '((x.1 (x.2)) (x.2 (x.1)) (x.3 ())))
-  
+
   ;; if in pred
   (check-conflict
     '(module
@@ -342,4 +376,93 @@
       (x.5 (x.1 x.2 x.3))
       (x.6 ())
       (x.7 (x.1 x.2 x.4))))
+
+  ;; move optimization for rloc
+  (check-conflict
+    '(module
+        ((locals ()))
+        (begin
+          (set! rbx 5)
+          (set! rdx rbx)
+          (set! rsi rbx)
+          (set! fv0 2)
+          (set! fv1 fv0)
+          (set! fv2 fv0)
+          (halt rdx)))
+    '((rbx)
+      (rbx rdx)
+      (rdx)
+      (rdx fv0)
+      (rdx fv0)
+      (rdx)
+      ())
+    '((rsi (rdx)) (rdx (fv2 fv1 fv0 rsi)) (fv0 (rdx)) (fv1 (rdx)) (fv2 (rdx))))
+
+  ;; proc & jumps base cases
+  (check-conflict
+    '(module ((locals ()))
+      (jump done))
+    '()
+    (new-graph))
+  (check-conflict-proc
+    '(module ((locals ()) (undead-out ()))
+      (define L.test.1 ((locals ()) (undead-out ())) (halt 0))
+      (define L.test.2 ((locals ()) (undead-out ())) (halt 3))
+      (jump L.test.1))
+    '()
+    (list (new-graph) (new-graph)))
+
+  ;; complex jumps & procs
+  (check-conflict-proc
+    '(module
+      ((locals (u.1))
+       (undead-out
+         ((r8)
+          (r8 rcx)
+          (r8 rcx fv0)
+          (r8 u.1 rcx fv0)
+          (r8 r13 u.1 rcx fv0)
+          ((r13 u.1 rcx fv0)
+           ((fv0 rdx) (fv2 fv0 rdx) (fv2 fv0 rdx))
+           ((rcx r14 u.1 r13)
+            (r14 u.1 fv1 r13)
+            (r14 u.1 fv2 fv1 r13)
+            (u.1 fv2 fv1 r13))))))
+      (define L.test.1
+        ((locals ())
+         (undead-out ((rdi r13) (r13) ())))
+        (begin (set! r13 10) (set! r9 rdi) (halt r13)))
+      (define L.test.2
+        ((locals (x.1))
+         (undead-out ((x.1) (rdx x.1) (fv0 rdx x.1) (fv0 rdx x.1))))
+        (begin (set! x.1 r13) (set! rdx x.1) (set! fv0 9) (jump x.1 x.1 rdx fv0)))
+      (begin
+        (set! r8 9)
+        (set! rcx 4)
+        (set! fv0 rcx)
+        (set! u.1 10)
+        (set! r13 88)
+        (if (>= r8 17)
+          (begin (set! rdx rcx) (set! fv2 10) (jump L.test.1 rdx fv0 fv2))
+          (begin
+            (set! r14 L.test.2)
+            (set! fv1 rcx)
+            (set! fv2 fv1)
+            (jump r14 r13 fv1 fv2 u.1)))))
+    '((u.1 (r13 fv0 rcx r8 fv2 fv1 r14))
+      (r14 (fv2 fv1 r13 u.1 rcx))
+      (rcx (r13 u.1 r8 r14))
+      (r13 (fv0 rcx u.1 r8 fv2 fv1 r14))
+      (fv1 (r13 u.1 r14))
+      (fv2 (rdx fv0 r13 u.1 r14))
+      (rdx (fv2 fv0))
+      (fv0 (r13 u.1 r8 fv2 rdx))
+      (r8 (r13 u.1 fv0 rcx)))
+    (list
+      '((r13 (r9 rdi))
+        (rdi (r13))
+        (r9 (r13)))
+      '((x.1 (fv0))
+        (fv0 (x.1 rdx))
+        (rdx (fv0)))))
   )
