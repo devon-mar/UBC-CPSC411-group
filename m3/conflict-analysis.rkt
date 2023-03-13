@@ -21,7 +21,7 @@
   ;; Return true if l is loc, false otherwise
   (define (loc? l)
     (or (aloc? l) (register? l) (fvar? l)))
-  
+
   ;; Performs conflict-analysis and adds conflicts to info of proc
   ;; proc ::= (define label info tail)
   ;;
@@ -46,7 +46,7 @@
        (conflict-pred pred ustp)
        (conflict-tail tail1 ust1)
        (conflict-tail tail2 ust2)]))
-  
+
   ;; Updates conflict graph for the locs in the effect
   ;; effect undead-set-tree/rloc -> void
   (define (conflict-effect effect ust)
@@ -87,8 +87,7 @@
        (conflict-pred ppred ustp)
        (conflict-pred pred1 ust1)
        (conflict-pred pred2 ust2)]
-      [(cons `(,relop ,_ ,_) _)
-       #:when(relop? relop)
+      [(cons `(,_relop ,_ ,_) _)
        (void)]))
 
   (match p
@@ -155,7 +154,7 @@
           `(module ,(info-set info 'undead-out undead-out) ,@procs ,tail)
           conflicts-tail
           '())]))
-  
+
   ;; Check that a program w/ procs & undead-out compiles into
   ;; a program w/ procs & conflicts by compiling with conflict-analysis
   ;; asm-pred-lang-v5/undead conflicts (List-of conflicts) -> void
@@ -178,7 +177,7 @@
     (check-graph? (info-ref ca-main-info 'conflicts) conflicts-tail)
     (for ([ca-proc-info ca-proc-infos] [conflict-proc conflicts-procs])
       (check-graph? (info-ref ca-proc-info 'conflicts) conflict-proc)))
-  
+
   ;; conflict-analysis tests
   (check-conflict
     '(module
@@ -225,7 +224,7 @@
       (x.2)
       ())
     '((x.1 ()) (x.2 (x.3)) (x.3 (x.2))))
-  
+
   ; No move optimization for binop
   (check-conflict
     '(module
@@ -308,7 +307,7 @@
        ((x.1 x.2) (x.1) ())
        ((x.3) (x.1) ())))
     '((x.1 (x.2)) (x.2 (x.1)) (x.3 ())))
-  
+
    ; if in effect
   (check-conflict
     '(module
@@ -325,7 +324,7 @@
        ((x.1 x.2) (x.1)))
       ())
     '((x.1 (x.2)) (x.2 (x.1)) (x.3 ())))
-  
+
   ;; if in pred
   (check-conflict
     '(module
@@ -398,7 +397,7 @@
       (rdx)
       ())
     '((rsi (rdx)) (rdx (fv2 fv1 fv0 rsi)) (fv0 (rdx)) (fv1 (rdx)) (fv2 (rdx))))
-  
+
   ;; proc & jumps base cases
   (check-conflict
     '(module ((locals ()))
