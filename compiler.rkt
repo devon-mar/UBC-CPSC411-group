@@ -1,8 +1,8 @@
 #lang racket
 
 (require
- cpsc411/compiler-lib
- cpsc411/2c-run-time
+  cpsc411/compiler-lib
+  cpsc411/2c-run-time
 
   "m2/generate-x64.rkt"
   "m2/implement-fvars.rkt"
@@ -24,7 +24,8 @@
   "m4/resolve-predicates.rkt"
   "m4/flatten-program.rkt"
 
-  "m5/impose-calling-conventions.rkt")
+  "m5/impose-calling-conventions.rkt"
+  "m5/check-values-lang.rkt")
 
 
 (provide
@@ -47,12 +48,6 @@
  patch-instructions
  implement-fvars
  generate-x64)
-
-;; TODO: Fill in.
-;; You'll want to merge milestone-4 code in
-
-;; Stubs; remove or replace with your definitions.
-(define-values (check-values-lang) (values))
 
 (module+ test
   (require
