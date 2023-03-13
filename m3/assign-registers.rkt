@@ -99,8 +99,10 @@
        ,tail)]))
 
 (module+ test
-  (require rackunit
-           cpsc411/langs/v4)
+  (require
+    rackunit
+    cpsc411/langs/v5
+    "../utils/gen-utils.rkt")
 
   (define t1
     '(module ((locals (x.1)) (conflicts ((x.1 ()))))
@@ -132,16 +134,16 @@
                (set! z.5 (+ z.5 t.6))
                (halt z.5))))
 
-  (check-equal? (interp-asm-pred-lang-v4/assignments (assign-registers t1))
-                (interp-asm-pred-lang-v4/conflicts t1))
-  (check-equal? (interp-asm-pred-lang-v4/assignments
+  (check-equal? (interp-asm-pred-lang-v5/assignments (assign-registers t1))
+                (interp-asm-pred-lang-v5/conflicts t1))
+  (check-equal? (interp-asm-pred-lang-v5/assignments
                  (parameterize ([current-assignable-registers '()]) (assign-registers t1)))
-                (interp-asm-pred-lang-v4/conflicts t1))
-  (check-equal? (interp-asm-pred-lang-v4/assignments
+                (interp-asm-pred-lang-v5/conflicts t1))
+  (check-equal? (interp-asm-pred-lang-v5/assignments
                  (parameterize ([current-assignable-registers '(r9)]) (assign-registers t1)))
-                (interp-asm-pred-lang-v4/conflicts t1))
-  (check-equal? (interp-asm-pred-lang-v4/assignments (assign-registers t2))
-                (interp-asm-pred-lang-v4/conflicts t2))
+                (interp-asm-pred-lang-v5/conflicts t1))
+  (check-equal? (interp-asm-pred-lang-v5/assignments (assign-registers t2))
+                (interp-asm-pred-lang-v5/conflicts t2))
 
   (check-equal? (assign-registers '(module ((locals (x.1)) (conflicts ((x.1 ()))))
                                            (begin
@@ -180,9 +182,7 @@
               (conflicts ((x.1 (fv0 r15 x.2)) (r15 (x.1 x.2)) (fv0 (x.1)) (x.2 (r15 x.1))))
               (assignment ,assignment))
       (halt 0))
-    (and (= (length assignment) 2)
-         (equal? (dict-ref assignment 'x.2) '(r13))
-         (equal? (dict-ref assignment 'x.1) '(r14))))
+    (dict-equal? assignment '((x.2 r13) (x.1 r14))))
 
   ;; check does not assign to conflicting fvar
   (check-match
@@ -195,10 +195,8 @@
               (conflicts ((x.1 (fv0 rdx)) (x.2 (fv2)) (rdx (x.1)) (fv0 (x.1)) (fv2 (x.2))))
               (assignment ,assignment))
       (halt 2))
-    (and (= (length assignment) 2)
-         (equal? (dict-ref assignment 'x.2) '(fv3))
-         (equal? (dict-ref assignment 'x.1) '(fv1))))
-  
+    (dict-equal? assignment '((x.2 fv3) (x.1 fv1))))
+
   ;; assignment in procedures
   (check-match
     (assign-registers
@@ -222,14 +220,7 @@
         (define L.test.3 ((locals ()) (conflicts ()) (assignment ,assignment3))
           (halt 3))
         (halt 0))
-    (and (= (length assignment) 2)
-         (equal? (dict-ref assignment 'x.1) '(r14))
-         (equal? (dict-ref assignment 'x.2) '(r15))
-         (= (length assignment1) 2)
-         (equal? (dict-ref assignment1 'x.2) '(r15))
-         (equal? (dict-ref assignment1 'x.3) '(r15))
-         (= (length assignment2) 2)
-         (equal? (dict-ref assignment2 'x.1) '(r14))
-         (equal? (dict-ref assignment2 'x.3) '(r15))
-         (= (length assignment3) 0)))
+    (and (dict-equal? assignment '((x.1 r14) (x.2 r15)))
+         (dict-equal? assignment1 '((x.2 r15) (x.3 r15)))
+         (dict-equal? assignment2 '((x.1 r14) (x.3 r15)))))
   )
