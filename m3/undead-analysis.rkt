@@ -168,7 +168,7 @@
     (-> any/c undead-set/rloc? undead-set/rloc?)
     (match t
       [(? label?) uo]
-      [_ (undead-analysis-opand t uo)]))
+      [opand (undead-analysis-opand opand uo)]))
 
   ;; Returns uo with t if t is a loc,
   ;; otherwise returns uo.
