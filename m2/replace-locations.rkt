@@ -33,12 +33,12 @@
   ;;
   ;; a: assignments?
   ;; t: asm-pred-lang-v5-trg
-  ;; -> nested-asm-lang-v5-trg 
+  ;; -> nested-asm-lang-v5-trg
   (define/contract (replace-locations-trg a t)
     (-> assignments? any/c any/c)
     (match t
       [(? label?) t]
-      [_ (replace-locations-loc a t)]))
+      [loc (replace-locations-loc a loc)]))
 
   ;; Replaces each aloc in l with its assigned physical location from a
   ;;
@@ -48,8 +48,8 @@
   (define/contract (replace-locations-loc a l)
     (-> assignments? (or/c aloc? rloc?) rloc?)
     (match l
-      [(? rloc?) l]
-      [(? aloc?) (assignment-ref a l)]))
+      [(? aloc?) (assignment-ref a l)]
+      [rloc rloc]))
 
   ;; Replaces each aloc in t with its assigned physical location from a.
   ;;
@@ -60,7 +60,7 @@
     (-> assignments? any/c any/c)
     (match t
       [(? label?) t]
-      [_ (replace-locations-opand a t)]))
+      [opand (replace-locations-opand a opand)]))
 
   ;; Replaces each aloc in o with its assigned physical location from a.
   ;;
@@ -71,7 +71,7 @@
     (-> assignments? any/c any/c)
     (match o
       [(? int64?) o]
-      [_ (replace-locations-loc a o)]))
+      [loc (replace-locations-loc a loc)]))
 
   ;; Replaces each aloc in p with its assigned physical location from a.
   ;;
@@ -93,7 +93,6 @@
             ,(replace-locations-pred a pred1)
             ,(replace-locations-pred a pred2))]
       [`(,relop ,loc ,opand)
-       #:when(relop? relop)
        `(,relop ,(replace-locations-loc a loc) ,(replace-locations-opand a opand))]))
 
   ;; Replaces each aloc in e with its assigned physical location from a.
@@ -198,7 +197,7 @@
             (set! rax 42)))
         (halt rax))))
 
-  ;; replace in ifs 
+  ;; replace in ifs
   (check-equal?
     (replace-locations
       '(module
@@ -320,7 +319,7 @@
         (set! fv0 99)
         (set! rdx L.test.3)
         (jump rax))))
-  
+
   ;; replace in procedures
   (check-equal?
     (replace-locations
