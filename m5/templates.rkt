@@ -343,9 +343,9 @@
 
   (define (asm-pred-lang-v5-template-effect e)
     (match e
-      [`(set! ,loc ,triv)
-        (void)]
       [`(set! ,loc (,binop ,loc ,opand))
+        (void)]
+      [`(set! ,loc ,triv)
         (void)]
       [`(begin ,es ... ,e)
         (void)]
