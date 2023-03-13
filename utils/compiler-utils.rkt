@@ -23,4 +23,12 @@
     (check-true (relop? r)))
   (for ([n (list 1 'a '(<) '+ =)])
     (check-false (relop? n)))
+
+  (check-true (undead-set/rloc? '()))
+  (check-false (undead-set/rloc? '(L.test.1)))
+  (check-false (undead-set/rloc? '(x.1 (x.2))))
+  (check-true (undead-set/rloc? '(x.1)))
+  (check-true (undead-set/rloc? '(r14)))
+  (check-true (undead-set/rloc? '(fv0)))
+  (check-true (undead-set/rloc? '(x.1 y.2 r14 rax rbp fv2 fv13)))
   )

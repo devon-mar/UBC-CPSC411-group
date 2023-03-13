@@ -10,7 +10,7 @@
 ;; Milestone 3 - Exercise 1
 ;; Milestone 4 - Exercise 15
 ;; Milestone 5 - Exercise 8
-
+;;
 ;; Performs undeadness analysis, decorating the program with undead-set tree.
 ;; Only the info field of the program is modified.
 (define/contract (undead-analysis p)
@@ -18,7 +18,7 @@
 
   ;; Performs undeadness analysis, decorating the program with undead-set tree.
   ;; Only the info field of the program is modified.
-  (define (undead-analysis-p p)
+  (define/contract (undead-analysis-p p)
     (-> asm-pred-lang-v5/locals? asm-pred-lang-v5/undead?)
     (match p
       [`(module ,info (define ,labels ,infos ,tails) ... ,tail)
@@ -36,7 +36,8 @@
   ;; proc ::= (define label info tail)
   ;;
   ;; label info tail -> proc
-  (define (undead-analysis-proc label info tail)
+  (define/contract (undead-analysis-proc label info tail)
+    (-> label? info? any/c any/c)
     (define-values (ust _) (undead-analysis-tail tail '()))
     `(define ,label ,(info-set info 'undead-out ust) ,tail))
 
@@ -44,8 +45,8 @@
   ;; given the undead-out set for t.
   ;;
   ;; tail undead-set/rloc? -> (values undead-set-tree/rloc? undead-set/rloc?)
-  (define (undead-analysis-tail t uo)
-    (-> any/c undead-set/rloc? 
+  (define/contract (undead-analysis-tail t uo)
+    (-> any/c undead-set/rloc?
         (values undead-set-tree/rloc? undead-set/rloc?))
 
     (match t
@@ -81,7 +82,7 @@
   ;; given the undead-out set for e.
   ;;
   ;; effect undead-set/rloc? -> (values undead-set-tree/rloc? undead-set/rloc?)
-  (define (undead-analysis-effect e uo)
+  (define/contract (undead-analysis-effect e uo)
     (-> any/c undead-set/rloc?
         (values undead-set-tree/rloc? undead-set/rloc?))
 
@@ -119,10 +120,10 @@
        (define-values (ut2 ui2) (undead-analysis-effect effect2 uo))
        (define-values (utp uip) (undead-analysis-pred pred (set-union ui1 ui2)))
        (values (list utp ut1 ut2) uip)]))
-  
+
   ;; Computes undead set tree and undead-in set for pred p
   ;; given undead-out set for p
-  (define (undead-analysis-pred p uo)
+  (define/contract (undead-analysis-pred p uo)
     (-> any/c undead-set/rloc? (values undead-set-tree/rloc? undead-set/rloc?))
     (match p
       [`(true) (values uo uo)]
@@ -144,31 +145,26 @@
        (define-values (ut2 ui2) (undead-analysis-pred pred2 uo))
        (define-values (utp uip) (undead-analysis-pred ppred (set-union ui1 ui2)))
        (values (list utp ut1 ut2) uip)]
-      [`(,relop ,loc ,triv)
-       #:when(relop? relop)
-       (values uo (undead-analysis-triv triv (set-add uo loc)))]))
-
-  ;; Return true if l is loc, false otherwise
-  (define (loc? l)
-    (or (aloc? l) (register? l) (fvar? l)))
+      [`(,relop ,loc ,opand)
+       (values uo (undead-analysis-opand opand (set-add uo loc)))]))
 
   ;; Returns uo with o if o is a loc,
   ;; otherwise returns uo.
   ;;
   ;; o: opand
   ;; uo: undead-set/rloc?
-  (define (undead-analysis-opand o uo)
+  (define/contract (undead-analysis-opand o uo)
     (-> any/c undead-set/rloc? undead-set/rloc?)
     (match o
       [(? int64?) uo]
-      [(? loc?) (set-add uo o)]))
+      [loc (set-add uo loc)]))
 
   ;; Returns uo with t if t is a loc,
   ;; otherwise returns uo.
   ;;
   ;; t: triv
   ;; uo: undead-set/rloc?
-  (define (undead-analysis-triv t uo)
+  (define/contract (undead-analysis-triv t uo)
     (-> any/c undead-set/rloc? undead-set/rloc?)
     (match t
       [(? label?) uo]
@@ -179,11 +175,11 @@
   ;;
   ;; t: trg
   ;; uo: undead-set/rloc?
-  (define (undead-analysis-trg t uo)
+  (define/contract (undead-analysis-trg t uo)
     (-> any/c undead-set/rloc? undead-set/rloc?)
     (match t
       [(? label?) uo]
-      [(? loc?) (set-add uo t)]))
+      [loc (set-add uo loc)]))
 
   ;; Don't need
   #;
@@ -203,8 +199,8 @@
    rackunit/text-ui
    cpsc411/test-suite/public/v2-reg-alloc)
 
-  (define (set-equal? s1 s2)
-    (-> set? set? boolean?)
+  (define/contract (set-equal? s1 s2)
+    (-> list? list? boolean?)
     (empty? (set-symmetric-difference s1 s2)))
 
   (check-true (set-equal? '(1 2) '(1 2)))
@@ -212,9 +208,9 @@
   (check-false (set-equal? '(2 1 3) '(1 2)))
   (check-false (set-equal? '(2 1) '(1 2 3)))
 
-  ;; Quick helper to check that two undead-set-trees 
+  ;; Quick helper to check that two undead-set-trees
   ;; are equal.
-  (define (ust-equal? have want)
+  (define/contract (ust-equal? have want)
     (-> undead-set-tree/rloc? undead-set-tree/rloc? boolean?)
     (match (cons have want)
       [(cons '() '()) #t]
@@ -231,7 +227,7 @@
   (check-true (ust-equal? '((x.1 x.2) (x.1)) '((x.1 x.2) (x.1))))
   (check-true (ust-equal? '((x.2 x.1) (x.1)) '((x.1 x.2) (x.1))))
   (check-true (ust-equal? '((((x.2 x.1) (x.1)))) '((((x.2 x.1) (x.1))))))
-  
+
   ;; Check for ust-equal?
   ;; ust ust -> void
   (define-binary-check (check-ust-equal? have want)
@@ -256,9 +252,9 @@
           want)
         ;; Should remain unchanged
         (check-equal? tail2 tail)]))
-  
+
   ;; Check usts produced by 'undead-analysis' for tail and each of the procs
-  ;; p info (List-of info) -> void 
+  ;; p info (List-of info) -> void
   (define-check (check-ust-proc program ust-tail ust-procs)
     ;; get fields from original program
     (define-values (main-info main-tail proc-labels proc-infos proc-tails)
@@ -512,7 +508,7 @@
       (rdx fv2 r8 rcx fv1)
       ((rdx fv2 r8) (rdx fv2 r8) (rdx fv2 r8))
       ((rdx fv2) () ())))
-  
+
   ;; proc & jumps base cases
   (check-ust-proc
     '(module ((locals ()))
@@ -526,7 +522,7 @@
       (jump L.test.1))
     '()
     (list '() '()))
-  
+
   ;; simple jump
   (check-ust-proc
     '(module ((locals (x.1)))
