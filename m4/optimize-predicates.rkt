@@ -124,8 +124,14 @@
  (define (convert-effect e env)
    (match e
      [`(set! ,loc_1 (,binop ,loc_1 ,opand))
+      (define binop-evaluation (convert-binop binop loc_1 opand env))
+      (define new-dict
+        (if
+          (integer? binop-evaluation)
+          (dict-set env loc_1 binop-evaluation)
+          env))
       (values `(set! ,loc_1 (,binop ,loc_1 ,opand))
-              (dict-set env loc_1 (convert-binop binop loc_1 opand env)))]
+              new-dict)]
      [`(set! ,loc ,triv) (values `(set! ,loc ,triv) (dict-set env loc (convert-triv triv env)))]
      [`(begin
          ,effects ...)
