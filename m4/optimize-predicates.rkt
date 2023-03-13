@@ -5,7 +5,7 @@
          cpsc411/langs/v5)
 (provide optimize-predicates)
 
-;; Exercise #13
+;; Exercise #12
 ;; nested-asm-lang-v5? -> nested-asm-lang-v5?
 (define/contract
  (optimize-predicates p)
@@ -36,7 +36,10 @@
  ;; tail dict -> tail
  (define (convert-tail t env)
    (match t
-     [`(halt ,triv) `(halt ,triv)]
+     [`(halt ,triv)
+        t]
+     [`(jump ,trg)
+        t]
      [`(begin
          ,effects ...
          ,tail)
@@ -140,12 +143,23 @@
        ((binop->procedure binop) interp-loc interp-opand)
        (`(,binop ,loc ,opand))))
 
+  ;; (define label tail) -> (define label tail)
+  (define (convert-block block)
+    (match block
+      [`(define ,label ,tail)
+        (define env '())
+        `(define ,label ,(convert-tail tail env))]))
+
+  ;; ((define label tail) ...)
+  (define (convert-block-list block-list)
+    (map convert-block block-list))
+
   ;; p -> p
   (define (convert-p p)
     (match p
-      [`(module ,tail)
+      [`(module ,block-list ... ,tail)
         (define env '())
-        `(module ,(convert-tail tail env))]))
+        `(module ,@(convert-block-list block-list),(convert-tail tail env))]))
  (convert-p p))
 
 (module+ test
@@ -354,4 +368,52 @@
                            (begin
                              (set! fv1 1)
                              (set! fv1 0))
-                           (halt fv1)))))
+                           (halt fv1))))
+
+  ;; Optimize predicate in block and jump in tail      
+  (check-equal?
+    (optimize-predicates 
+    `(module 
+      (define L.block.1 (if (true) (halt 42) (halt 2)))
+        (jump L.block.1)))
+    `(module 
+      (define L.block.1 (halt 42))
+        (jump L.block.1)))
+
+  ;; Handle jump in block
+  (check-equal?
+      (optimize-predicates 
+      `(module 
+        (define L.block.2 (jump L.block.1))
+        (define L.block.1 (if (true) (halt 42) (halt 2)))
+          (jump L.block.2)))
+      `(module 
+        (define L.block.2 (jump L.block.1))
+        (define L.block.1 (halt 42))
+          (jump L.block.2)))
+
+  ;; (set! loc label) place label into location and jump
+  (check-equal?
+    (optimize-predicates 
+    `(module 
+      (define L.block.1 (if (true) (halt 42) (halt 2)))
+        (begin
+          (set! rax L.block.1)
+          (jump rax))))
+    `(module 
+      (define L.block.1 (halt 42))
+        (begin
+          (set! rax L.block.1)
+          (jump rax))))
+
+  ;; Handle relops inside of jump
+  (check-equal?
+    (optimize-predicates 
+    `(module 
+      (define L.block.1 (begin (set! rax 5) (if (= rax 5) (halt 42) (halt 2))))
+        (jump L.block.1)))
+    `(module 
+      (define L.block.1 (begin (set! rax 5) (halt 42)))
+        (jump L.block.1))))
+
+        
