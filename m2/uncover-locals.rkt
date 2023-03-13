@@ -78,14 +78,14 @@
   ;; asm-pred-lang-v5-effect -> set
   (define (uncover-locals-effect e)
     (match e
-      [`(set! ,loc ,triv)
-        (set-union
-          (uncover-locals-loc loc)
-          (uncover-locals-triv triv))]
       [`(set! ,loc (,_ ,loc ,opand))
         (set-union
           (uncover-locals-loc loc)
           (uncover-locals-opand opand))]
+      [`(set! ,loc ,triv)
+        (set-union
+          (uncover-locals-loc loc)
+          (uncover-locals-triv triv))]
       ;; modified template - removed tail effect
       [`(begin ,es ...) 
         (foldl
@@ -126,7 +126,7 @@
     (-> any/c set?)
     (match t
       [(? label?)
-       (void)]
+       (set)]
       ;; loc
       [_ (uncover-locals-loc t)]))
 
@@ -348,4 +348,46 @@
       (equal? bar-tail m5-tail-2)
       (equal? (list->set (info-ref foo-info 'locals)) m5-locals-1)
       (equal? (list->set (info-ref bar-info 'locals)) m5-locals-2)
-      (equal? (list->set (info-ref info 'locals)) m5-locals-1))))
+      (equal? (list->set (info-ref info 'locals)) m5-locals-1)))
+
+  (define fbp (current-frame-base-pointer-register))
+  (check-match
+    (uncover-locals
+      `(module
+         ()
+         (define L.foo.1 () (halt 42))
+         (define L.bar.1 () (halt 2))
+         (begin
+           (set! a.1 1)
+           (set! b.1 2)
+           (set! rax 10)
+           (set! rax (* rax a.1))
+           (set! a.1 (+ a.1 1))
+           (set! a.1 (+ a.1 b.1))
+           (set! x.1 L.bar.1)
+           (if
+             (if (true) (false) (false))
+             (jump L.foo.1 ,fbp)
+             (jump x.1 ,fbp)))))
+    `(module
+       ,info
+       (define L.foo.1 ,foo-info (halt 42))
+       (define L.bar.1 ,bar-info (halt 2))
+       (begin
+         (set! a.1 1)
+         (set! b.1 2)
+         (set! rax 10)
+         (set! rax (* rax a.1))
+         (set! a.1 (+ a.1 1))
+         (set! a.1 (+ a.1 b.1))
+         (set! x.1 L.bar.1)
+         (if
+           (if (true) (false) (false))
+           (jump L.foo.1 ,fbp1)
+           (jump x.1 ,fbp1))))
+    (and (equal? fbp1 fbp)
+         (set-empty? (info-ref foo-info 'locals))
+         (set-empty? (info-ref bar-info 'locals))
+         (set=? (info-ref info 'locals) '(a.1 b.1 x.1))))
+
+  )
