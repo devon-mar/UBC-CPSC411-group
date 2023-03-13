@@ -5,7 +5,8 @@
          cpsc411/langs/v5)
 (provide optimize-predicates)
 
-;; Exercise #12
+;; Milestone 4 Exercise 11
+;; Milestone 5 Exercise 12
 ;; nested-asm-lang-v5? -> nested-asm-lang-v5?
 (define/contract
  (optimize-predicates p)
