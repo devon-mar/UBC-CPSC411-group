@@ -14,7 +14,8 @@
 (define/contract (impose-calling-conventions p)
   (-> proc-imp-cmf-lang-v5? imp-cmf-lang-v5?)
 
-  ;; Maps each paramameter to a loc.
+  ;; Maps each paramameter to a loc. All frame variable locs (if any) will be
+  ;; at the end of the list.
   ;;
   ;; (listof proc-imp-cmf-lang-v5-aloc) -> (dict proc-imp-cmf-lang-v5-aloc -> imp-cmf-lang-v5-loc)
   (define/contract (params->locs p)
@@ -50,9 +51,11 @@
     `(define
        ,label
        ,(make-begin
-          (reverse (map (lambda (p) `(set! ,p ,(dict-ref locs p))) params))
+          (map (lambda (p) `(set! ,p ,(dict-ref locs p))) params)
           (impose-calling-conventions-tail tail))))
 
+  ;;
+  ;; All frame varibale locs (if any) will be at the end of the list.
   ;;
   ;; cnt: nubmer of args
   ;; -> (listof imp-cmf-lang-v5-loc)
@@ -211,8 +214,8 @@
     `(module
        (define L.foo.1
          (begin
-           (set! y.1 ,(second (current-parameter-registers)))
            (set! x.1 ,(first (current-parameter-registers)))
+           (set! y.1 ,(second (current-parameter-registers)))
            (+ x.1 y.1)))
        (begin
          (set! ,(second (current-parameter-registers)) 2)
@@ -246,16 +249,16 @@
     `(module
        (define L.foo.1
          (begin
-           (set! a.9 ,(make-fvar 3))
-           (set! a.8 ,(make-fvar 2))
-           (set! a.7 ,(make-fvar 1))
-           (set! a.6 ,(make-fvar 0))
-           (set! a.5 ,(sixth (current-parameter-registers)))
-           (set! a.4 ,(fifth (current-parameter-registers)))
-           (set! a.3 ,(fourth (current-parameter-registers)))
-           (set! a.2 ,(third (current-parameter-registers)))
-           (set! a.1 ,(second (current-parameter-registers)))
            (set! a.0 ,(first (current-parameter-registers)))
+           (set! a.1 ,(second (current-parameter-registers)))
+           (set! a.2 ,(third (current-parameter-registers)))
+           (set! a.3 ,(fourth (current-parameter-registers)))
+           (set! a.4 ,(fifth (current-parameter-registers)))
+           (set! a.5 ,(sixth (current-parameter-registers)))
+           (set! a.6 ,(make-fvar 0))
+           (set! a.7 ,(make-fvar 1))
+           (set! a.8 ,(make-fvar 2))
+           (set! a.9 ,(make-fvar 3))
            (set! a.0 (+ a.0 a.1))
            (set! a.0 (+ a.0 a.2))
            (set! a.0 (+ a.0 a.3))
