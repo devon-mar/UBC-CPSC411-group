@@ -86,13 +86,18 @@
          (values
            (append labels (list l))
            (dict-set ldict l b))))
-     (set! jump-graph (new-graph labels))
-     (for ([b bs]) (update-graph-b b))
-     (define order (get-order (first labels) (rest labels)))
-     (define new-bs
-      (for/list ([l order])
-        (dict-ref label-dict l)))
-     `(module ,@new-bs)]))
+     (if (equal? (length labels) (dict-count label-dict))
+         (let ()
+           (set! jump-graph (new-graph labels))
+           (for ([b bs]) (update-graph-b b))
+           (unless (dict-has-key? label-dict 'done)
+                   (set! jump-graph (remove-vertex jump-graph 'done)))
+           (define order (get-order (first labels) (rest labels)))
+           (define new-bs
+             (for/list ([l order])
+               (dict-ref label-dict l)))
+           `(module ,@new-bs))
+         p)]))
 
 (module+ test
   (require rackunit)
@@ -100,6 +105,35 @@
   (check-equal?
     (trace-schedule '(module (define L.test.1 (halt 0))))
     '(module (define L.test.1 (halt 0))))
+  
+  ;; duplicate label - invalid, do not change
+  (check-equal?
+    (trace-schedule '(module (define L.test.1 (jump L.test.1)) (define L.test.1 (halt 0))))
+    '(module (define L.test.1 (jump L.test.1)) (define L.test.1 (halt 0))))
+  
+  ;; reorder - jump to done
+  (check-equal?
+    (trace-schedule
+      '(module
+        (define L.test.1 (jump L.test.3))
+        (define L.test.2 (begin (set! rax 10) (jump done)))
+        (define L.test.3 (jump L.test.2))))
+    '(module
+        (define L.test.1 (jump L.test.3))
+        (define L.test.3 (jump L.test.2))
+        (define L.test.2 (begin (set! rax 10) (jump done)))))
+  
+  ;; define done
+  (check-equal?
+    (trace-schedule
+      '(module
+        (define L.test.1 (jump L.test.3))
+        (define done (begin (set! rax 10) (halt 0)))
+        (define L.test.3 (jump done))))
+    '(module
+        (define L.test.1 (jump L.test.3))
+        (define L.test.3 (jump done))
+        (define done (begin (set! rax 10) (halt 0)))))
   
   ;; no reordering for first label
   (check-equal?
