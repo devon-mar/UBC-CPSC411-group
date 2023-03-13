@@ -2,89 +2,52 @@
 
 (require
   cpsc411/compiler-lib
-  cpsc411/langs/v4)
+  cpsc411/langs/v5)
 
 (provide uniquify)
 
 ;; Milestone 2 Exercise 1
 ;; Milestone 4 Exercise 20
+;; Milestone 5 Exercise 2
 ;;
-;; Compiles Values-lang v4 to Values-unique-lang v4 by resolving all lexical
+;; Compiles Values-lang v5 to Values-unique-lang v5 by resolving all lexical
 ;; identifiers to abstract locations.
 (define/contract (uniquify p)
-  (-> values-lang-v4? values-unique-lang-v4?)
+  (-> values-lang-v5? values-unique-lang-v5?)
 
-  (define/contract (triv? t)
-    (-> any/c boolean?)
-    (or (name? t) (int64? t)))
+  ;; tail: values-lang-v5-tail
+  ;; -> values-unique-lang-v5-tail
+  (define/contract (uniquify-define alocs name params tail)
+    (-> dict? name? (listof name?) any/c any/c)
+    (define new-alocs (foldl (lambda (x acc) (dict-set acc x (fresh x))) alocs params))
+    `(define
+       ,(dict-ref alocs name)
+       (lambda
+         ,(map (lambda (p) (dict-ref new-alocs p)) params)
+         ,(uniquify-tail new-alocs tail))))
 
-  ;; Alocates an aloc for every name in xs, returning the allocations.
-  ;; Uses alocs as the base.
-  ;;
-  ;; alocs: mapping of lexical identifier to name
-  ;; xs: list of names that need a lexical identifier assigned
-  ;; -> mapping of lexical identifier to name
-  (define/contract (set-alocs-let alocs xs)
-    (-> dict? (listof name?) dict?)
-    (foldl
-      (lambda (x acc) (dict-set acc x (fresh x)))
-      alocs
-      xs))
+  ;; Replace all xs with alocs. The new name->aloc mappings will be passed
+  ;; as the first arg to f. The second arg to f will be body.
+  ;; The value of (f new-alocs body) will be used as the body in the returned let.
+  (define/contract (uniquify-let alocs xs vs f body)
+    (-> dict? (listof name?) (listof any/c) (-> dict? any/c any/c) any/c any/c)
+    (define new-alocs (foldl (lambda (x acc) (dict-set acc x (fresh x))) alocs xs))
+    `(let
+       ,(map (lambda (x v) `[,(dict-ref new-alocs x) ,(uniquify-value alocs v)]) xs vs)
+       ,(f new-alocs body)))
+    
 
-  ;; Reaplce all [xs vs] declarations
-  ;; using the mappings in new-alocs.
-  ;; Alocs is used for the values.
-  ;;
-  ;; new-alocs: mapping of lexical identifier to aloc for the xs.
-  ;; alocs: mapping of lexical identifier to aloc for vs.
-  ;; xs: list of name
-  ;; vs: list of values corresponding to each x in xs
-  ;; -> list of bindings to go in a let
-  (define/contract (uniquify-let-decl new-alocs alocs xs vs)
-    (-> dict? dict? (listof name?) (listof any/c) (listof (cons/c aloc? any/c)))
-    (map (lambda (x v) `[,(dict-ref new-alocs x) ,(uniquify-value alocs v)]) xs vs))
-
-  ;; Resolves all lexical identifiers in a tail to alocs.
-  ;;
-  ;; alocs: mapping of name to aloc
-  ;; dict? values-lang-v3-tail -> values-unique-lang-v3-tail
-  (define/contract (uniquify-tail alocs t)
+  ;; dict(name?, aloc?) values-lang-v5-p -> values-unique-lang-v5-p
+  (define (uniquify-p alocs p)
     (-> dict? any/c any/c)
-    (match t
-      [`(let ([,xs ,vs] ...) ,tail)
-        (define new-alocs (set-alocs-let alocs xs))
-        `(let ,(uniquify-let-decl new-alocs alocs xs vs) ,(uniquify-tail new-alocs tail))]
-      [v (uniquify-value alocs v)]))
+    (match p
+      [`(module (define ,x1s (lambda (,x2s ...) ,tails)) ... ,tail)
+        (define new-alocs (foldl (lambda (x acc) (dict-set acc x (fresh-label x))) alocs x1s))
+        `(module
+           ,@(map (lambda (name x2s tail) (uniquify-define new-alocs name x2s tail)) x1s x2s tails)
+           ,(uniquify-tail new-alocs tail))]))
 
-  ;; Resolves all lexical identifiers in a triv to alocs.
-  ;;
-  ;; values-lang-v3-triv -> values-unique-lang-v3-triv.
-  (define/contract (uniquify-triv alocs t)
-    (-> dict? any/c any/c)
-    (match t
-      [int64 #:when (int64? int64) int64]
-      [x #:when (name? x) (dict-ref alocs x)]))
-
-  ;; Resolves all lexical identifiers in a value to alocs.
-  ;;
-  ;; alocs: mapping of name to aloc
-  ;;
-  ;; dict? values-lang-v3-value -> values-unique-lang-v3-value
-  (define/contract (uniquify-value alocs v)
-    (-> dict? any/c any/c)
-    (match v
-      [triv #:when (triv? triv) (uniquify-triv alocs triv)]
-      [`(let ([,xs ,vs] ...) ,value)
-        (define new-alocs (set-alocs-let alocs xs))
-        `(let ,(uniquify-let-decl new-alocs alocs xs vs) ,(uniquify-value new-alocs value))]
-      [`(if ,pred ,v1 ,v2)
-        `(if
-           ,(uniquify-pred alocs pred)
-           ,(uniquify-value alocs v1)
-           ,(uniquify-value alocs v2))]
-      [`(,binop ,t1 ,t2)
-        `(,binop ,(uniquify-triv alocs t1) ,(uniquify-triv alocs t2))]))
-
+  ;; dict(name?, aloc?) values-lang-v5-pred -> values-unique-lang-v5-pred
   (define/contract (uniquify-pred alocs p)
     (-> dict? any/c any/c)
     (match p
@@ -95,8 +58,7 @@
       [`(not ,pred)
         `(not ,(uniquify-pred alocs pred))]
       [`(let ([,xs ,vs] ...) ,pred)
-        (define new-alocs (set-alocs-let alocs xs))
-        `(let ,(uniquify-let-decl new-alocs alocs xs vs) ,(uniquify-pred new-alocs pred))]
+        (uniquify-let alocs xs vs uniquify-pred pred)]
       [`(if ,p1 ,p2 ,p3)
         `(if
            ,(uniquify-pred alocs p1)
@@ -104,20 +66,66 @@
            ,(uniquify-pred alocs p3))]
       [`(,relop ,t1 ,t2)
         `(,relop
-          ,(uniquify-triv alocs t1)
-          ,(uniquify-triv alocs t2))]))
+          ,(uniquify-tail alocs t1)
+          ,(uniquify-tail alocs t2))]))
 
-  ;; Compiles Values-lang v3 to Values-unique-lang v3 by resolving all lexical
-  ;; identifiers to abstract locations.
-  ;;
-  ;; alocs: dict?
-  ;; p: values-lang-v3-p
-  ;; -> values-unique-lang-v3-p
-  (define/contract (uniquify-p alocs p)
+  ;; dict(name?, aloc?) values-lang-v5-tail -> values-unique-lang-v5-tail
+  (define/contract (uniquify-tail alocs t)
     (-> dict? any/c any/c)
-    (match p
-      [`(module ,tail)
-        `(module ,(uniquify-tail alocs tail))]))
+    (match t
+      [`(let ([,xs ,vs] ...) ,tail)
+        (uniquify-let alocs xs vs uniquify-tail tail)]
+      [`(if ,p ,t1 ,t2)
+        `(if
+           ,(uniquify-pred alocs p)
+           ,(uniquify-tail alocs t1)
+           ,(uniquify-tail alocs t2))]
+      [`(call ,x ,ts ...)
+        `(call
+           ,(dict-ref alocs x)
+           ,@(map (lambda (t) (uniquify-triv alocs t)) ts))]
+          
+      [_ (uniquify-value alocs t)]))
+
+  ;; dict(name?, aloc?) values-lang-v5-value -> values-unique-lang-v5-value
+  (define/contract (uniquify-value alocs v)
+    (-> dict? any/c any/c)
+    (match v
+      [`(if ,p ,v1 ,v2)
+        `(if
+           ,(uniquify-pred alocs p)
+           ,(uniquify-value alocs v1)
+           ,(uniquify-value alocs v2))]
+      [`(let ([,xs ,vs] ...) ,v)
+        (uniquify-let alocs xs vs uniquify-value v)]
+      [`(,binop ,t1 ,t2)
+        `(,binop
+          ,(uniquify-triv alocs t1)
+          ,(uniquify-triv alocs t2))]
+      [_ (uniquify-triv alocs v)]))
+
+  ;; dict(name?, aloc?) values-lang-v5-triv -> values-unique-lang-v5-triv
+  (define/contract (uniquify-triv alocs t)
+    (-> dict? any/c any/c)
+    (match t
+      [(? int64?) t]
+      [(? name?) (dict-ref alocs t)]))
+
+  #;
+  (define (uniquify-binop b)
+    (match b
+      ['* (void)]
+      ['+ (void)]))
+  
+  #;
+  (define (uniquify-relop r)
+    (match r
+      ['< (void)]
+      ['<= (void)]
+      ['= (void)]
+      ['>= (void)]
+      ['> (void)]
+      ['!= (void)]))
 
   (uniquify-p '() p))
 
@@ -127,9 +135,36 @@
 
   (define-check (check-42 p)
     (check-equal?
-      (interp-values-unique-lang-v4 (uniquify p))
+      (interp-values-unique-lang-v5 (uniquify p))
       42))
 
+  (check-42 '(module 42))
+  (check-42 '(module (define foo (lambda () 42)) (call foo)))
+
+  ;; proc with args
+  (check-42
+    '(module
+       (define add (lambda (x y) (+ x y)))
+       (call add 40 2)))
+
+  ;; proc calling another proc
+  (check-42
+    '(module
+       (define identity (lambda (x) x))
+       (define foo
+         (lambda (x y z)
+           (let ([xy (+ x y)])
+             ;; call "down"
+             (call bar xy z))))
+       (define bar
+         (lambda (x y)
+           (let ([xy (* x y)])
+             ;; call "up'
+             (call identity xy))))
+       (call foo 20 1 2)))
+
+  ;; M4 tests
+  ;; M2 tests
   ; simple
   (check-42 '(module (+ 40 2)))
 
@@ -173,23 +208,23 @@
 
   (check-42
     '(module
-	     ;; tail/(let ([x value] ...) tail)
+       ;; tail/(let ([x value] ...) tail)
        (let ([x 10]
-	           ;; pred/(not pred)
-	           ;; pred/(false)
+             ;; pred/(not pred)
+             ;; pred/(false)
              [y (if (not (false)) 20 10)]
-	           ;; values/(if pred value value)
-	           ;; pred/(true)
+             ;; values/(if pred value value)
+             ;; pred/(true)
              [a (if (true) 42 0)]
              [b 1])
-	       ;; pred/(relop triv triv)
+         ;; pred/(relop triv triv)
          (if (= x y)
            b
            a))))
 
   (check-42
     '(module
-	     ;; pred/(let ([x value] ...) pred)
+       ;; pred/(let ([x value] ...) pred)
        (if (let ([x 2]
                  [y 4])
              (< x y))
@@ -197,15 +232,15 @@
          0)))
 
   (check-42
-	  ;; tail/value
+    ;; tail/value
     '(module 42))
 
   (check-42
     '(module
-	     ;; values/(let ([x value] ...) value)
+       ;; values/(let ([x value] ...) value)
        (let ([x (let ([y 40]) (+ y 1))]
              [y 1])
-	       ;; values/(binop triv triv)
+         ;; values/(binop triv triv)
          (+ x y))))
 
   (check-42
@@ -213,7 +248,4 @@
        (if (if (true) (false) (true))
          20
          42)))
-
-
-	)
-
+  )
