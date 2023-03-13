@@ -147,6 +147,7 @@
   (define (convert-block block)
     (match block
       [`(define ,label ,tail)
+        ;; Begin with clear env since source of jump could be anywhere.
         (define env '())
         `(define ,label ,(convert-tail tail env))]))
 
@@ -397,9 +398,9 @@
     (optimize-predicates 
     `(module 
       (define L.block.1 (if (true) (halt 42) (halt 2)))
-        (begin
-          (set! rax L.block.1)
-          (jump rax))))
+      (begin
+        (set! rax L.block.1)
+        (jump rax))))
     `(module 
       (define L.block.1 (halt 42))
         (begin
