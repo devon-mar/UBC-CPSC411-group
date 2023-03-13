@@ -142,7 +142,7 @@
    (define interp-opand (convert-triv opand env))
    (if (and (integer? interp-loc) (integer? interp-opand))
        ((binop->procedure binop) interp-loc interp-opand)
-       (`(,binop ,loc ,opand))))
+       `(,binop ,loc ,opand)))
 
   ;; (define label tail) -> (define label tail)
   (define (convert-block block)
@@ -416,4 +416,16 @@
         (jump L.block.1)))
     `(module 
       (define L.block.1 (begin (set! rax 5) (halt 42)))
-        (jump L.block.1))))
+        (jump L.block.1)))
+  
+  ;; Binop with unknown values is identity
+  (check-equal?
+    (optimize-predicates 
+    `(module 
+        (begin
+          (set! rax (+ rax 1))
+          (halt rax))))
+    `(module 
+        (begin
+          (set! rax (+ rax 1))
+          (halt rax)))))
