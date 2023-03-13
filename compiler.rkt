@@ -22,7 +22,9 @@
   "m4/optimize-predicates.rkt"
   "m4/expose-basic-blocks.rkt"
   "m4/resolve-predicates.rkt"
-  "m4/flatten-program.rkt")
+  "m4/flatten-program.rkt"
+
+  "m5/impose-calling-conventions.rkt")
 
 
 (provide
@@ -50,11 +52,7 @@
 ;; You'll want to merge milestone-4 code in
 
 ;; Stubs; remove or replace with your definitions.
-(define-values (check-values-lang
-                impose-calling-conventions)
-                
-  (values
-   values))
+(define-values (check-values-lang) (values))
 
 (module+ test
   (require
