@@ -2,30 +2,31 @@
 
 (require
   cpsc411/compiler-lib
-  cpsc411/langs/v5)
+  cpsc411/langs/v6)
 
 (provide sequentialize-let)
 
 ;; Milestone 2 Exercise 2
 ;; Milestone 4 Exercise 18
 ;; Milestone 5 Exercise 3
+;; Milestone 6 Exercise 3
 ;;
-;; Compiles Values-unique-lang v5 to Imp-mf-lang v5 by picking a particular
+;; Compiles Values-unique-lang v6 to Imp-mf-lang v6 by picking a particular
 ;; order to implement let expressions using set!.
 (define/contract (sequentialize-let p)
-  (-> values-unique-lang-v5? imp-mf-lang-v5?)
+  (-> values-unique-lang-v6? imp-mf-lang-v6?)
 
   ;; Sequentialize a procedure with the given label, params and tail.
   ;;
-  ;; tail: values-unique-lang-v5-tail
-  ;; -> imp-mf-lang-v5-proc
+  ;; tail: values-unique-lang-v6-tail
+  ;; -> imp-mf-lang-v6-proc
   (define/contract (sequentialize-let-proc label params tail)
     (-> label? (listof aloc?) any/c any/c)
     `(define
        ,label
        (lambda ,params ,(sequentialize-let-tail tail))))
 
-  ;; values-unique-lang-v5-p -> imp-lang-v5-p
+  ;; values-unique-lang-v6-p -> imp-lang-v6-p
   (define (sequentialize-let-p p)
     (match p
       [`(module (define ,labels (lambda (,alocs ...) ,tails)) ... ,tail)
@@ -42,7 +43,7 @@
     (-> aloc? any/c list?)
     `(set! ,a ,(sequentialize-let-value v)))
 
-  ;; values-unique-lang-v5-pred -> imp-lang-v5-pred
+  ;; values-unique-lang-v6-pred -> imp-lang-v6-pred
   (define (sequentialize-let-pred p)
     (match p
       [`(true)
@@ -62,7 +63,7 @@
            ,(sequentialize-let-pred p3))]
       [`(,_ ,_ ,_) p]))
 
-  ;; values-unique-lang-v5-tail -> imp-lang-v5-tail
+  ;; values-unique-lang-v6-tail -> imp-lang-v6-tail
   (define (sequentialize-let-tail t)
     (match t
       [`(let ([,as ,vs] ...) ,tail)
@@ -78,7 +79,7 @@
       ;; value
       [_ (sequentialize-let-value t)]))
 
-  ;; values-unique-lang-v5-value -> imp-lang-v5-value
+  ;; values-unique-lang-v6-value -> imp-lang-v6-value
   (define (sequentialize-let-value v)
     (match v
       [`(let ([,as ,vs] ...) ,v)
@@ -90,6 +91,7 @@
            ,(sequentialize-let-pred p)
            ,(sequentialize-let-value v1)
            ,(sequentialize-let-value v2))]
+      [`(call ,_ ,_ ...) v]
       [`(,_ ,_ ,_) v]
       ;; triv
       [_ v]))
@@ -117,7 +119,8 @@
   (define (sequentialize-let-binop b)
     (match b
       ['* (void)]
-      ['+ (void)]))
+      ['+ (void)]
+      ['- (void)]))
 
   ;; not used
   #;
@@ -137,7 +140,7 @@
 
   (define-check (check-42 p)
     (check-equal?
-      (interp-values-unique-lang-v5 (sequentialize-let p))
+      (interp-values-unique-lang-v6 (sequentialize-let p))
       42))
 
   ;; new m3 stuff
@@ -212,4 +215,20 @@
              x.1
              z.1)))
        (call L.foo.1 1 2 42)))
+
+  ;; M6 tests
+  ;; minus
+  (check-42 '(module (- -20 -62)))
+
+  ;; call as value
+  (check-42
+    '(module
+      (define L.fact.1
+        (lambda (n.1 acc.1)
+          (if (<= n.1 1)
+              acc.1
+              (let ([n.2 (- n.1 1)]
+                    [acc.2 (* n.1 acc.1)])
+                (let ([r.1 (call L.fact.1 n.2 acc.2)]) r.1)))))
+      (let ([x.1 (call L.fact.1 4 1)]) (+ x.1 18))))
   )
