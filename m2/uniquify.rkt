@@ -2,21 +2,22 @@
 
 (require
   cpsc411/compiler-lib
-  cpsc411/langs/v5)
+  cpsc411/langs/v6)
 
 (provide uniquify)
 
 ;; Milestone 2 Exercise 1
 ;; Milestone 4 Exercise 20
 ;; Milestone 5 Exercise 2
+;; Milestone 6 Exercise 2
 ;;
-;; Compiles Values-lang v5 to Values-unique-lang v5 by resolving all lexical
+;; Compiles Values-lang v6 to Values-unique-lang v6 by resolving all lexical
 ;; identifiers to abstract locations.
 (define/contract (uniquify p)
-  (-> values-lang-v5? values-unique-lang-v5?)
+  (-> values-lang-v6? values-unique-lang-v6?)
 
-  ;; tail: values-lang-v5-tail
-  ;; -> values-unique-lang-v5-tail
+  ;; tail: values-lang-v6-tail
+  ;; -> values-unique-lang-v6-tail
   (define/contract (uniquify-define alocs name params tail)
     (-> dict? name? (listof name?) any/c any/c)
     (define new-alocs (foldl (lambda (x acc) (dict-set acc x (fresh x))) alocs params))
@@ -35,9 +36,8 @@
     `(let
        ,(map (lambda (x v) `[,(dict-ref new-alocs x) ,(uniquify-value alocs v)]) xs vs)
        ,(f new-alocs body)))
-    
 
-  ;; dict(name?, aloc?) values-lang-v5-p -> values-unique-lang-v5-p
+  ;; dict(name?, aloc?) values-lang-v6-p -> values-unique-lang-v6-p
   (define (uniquify-p alocs p)
     (-> dict? any/c any/c)
     (match p
@@ -47,7 +47,7 @@
            ,@(map (lambda (name x2s tail) (uniquify-define new-alocs name x2s tail)) x1s x2s tails)
            ,(uniquify-tail new-alocs tail))]))
 
-  ;; dict(name?, aloc?) values-lang-v5-pred -> values-unique-lang-v5-pred
+  ;; dict(name?, aloc?) values-lang-v6-pred -> values-unique-lang-v6-pred
   (define/contract (uniquify-pred alocs p)
     (-> dict? any/c any/c)
     (match p
@@ -69,7 +69,7 @@
           ,(uniquify-tail alocs t1)
           ,(uniquify-tail alocs t2))]))
 
-  ;; dict(name?, aloc?) values-lang-v5-tail -> values-unique-lang-v5-tail
+  ;; dict(name?, aloc?) values-lang-v6-tail -> values-unique-lang-v6-tail
   (define/contract (uniquify-tail alocs t)
     (-> dict? any/c any/c)
     (match t
@@ -84,10 +84,9 @@
         `(call
            ,(dict-ref alocs x)
            ,@(map (lambda (t) (uniquify-triv alocs t)) ts))]
-          
       [_ (uniquify-value alocs t)]))
 
-  ;; dict(name?, aloc?) values-lang-v5-value -> values-unique-lang-v5-value
+  ;; dict(name?, aloc?) values-lang-v6-value -> values-unique-lang-v6-value
   (define/contract (uniquify-value alocs v)
     (-> dict? any/c any/c)
     (match v
@@ -98,13 +97,17 @@
            ,(uniquify-value alocs v2))]
       [`(let ([,xs ,vs] ...) ,v)
         (uniquify-let alocs xs vs uniquify-value v)]
+      [`(call ,x ,ts ...)
+       `(call
+         ,(dict-ref alocs x)
+         ,@(map (lambda (t) (uniquify-triv alocs t)) ts))]
       [`(,binop ,t1 ,t2)
         `(,binop
           ,(uniquify-triv alocs t1)
           ,(uniquify-triv alocs t2))]
       [_ (uniquify-triv alocs v)]))
 
-  ;; dict(name?, aloc?) values-lang-v5-triv -> values-unique-lang-v5-triv
+  ;; dict(name?, aloc?) values-lang-v6-triv -> values-unique-lang-v6-triv
   (define/contract (uniquify-triv alocs t)
     (-> dict? any/c any/c)
     (match t
@@ -115,8 +118,9 @@
   (define (uniquify-binop b)
     (match b
       ['* (void)]
-      ['+ (void)]))
-  
+      ['+ (void)]
+      ['- (void)]))
+
   #;
   (define (uniquify-relop r)
     (match r
@@ -135,8 +139,10 @@
 
   (define-check (check-42 p)
     (check-equal?
-      (interp-values-unique-lang-v5 (uniquify p))
+      (interp-values-unique-lang-v6 (uniquify p))
       42))
+
+  ;; M5 tests
 
   (check-42 '(module 42))
   (check-42 '(module (define foo (lambda () 42)) (call foo)))
@@ -163,7 +169,6 @@
              (call identity xy))))
        (call foo 20 1 2)))
 
-  ;; M4 tests
   ;; M2 tests
   ; simple
   (check-42 '(module (+ 40 2)))
@@ -204,7 +209,7 @@
            (+ foo bar)))))
 
 
-  ;; M3 tests
+  ;; M4 tests
 
   (check-42
     '(module
@@ -248,4 +253,20 @@
        (if (if (true) (false) (true))
          20
          42)))
+
+  ;; M6 tests
+  ;; minus
+  (check-42 '(module (- -20 -62)))
+
+  ;; call as value
+  (check-42
+    '(module
+      (define fact
+        (lambda (n acc)
+          (if (<= n 1)
+              acc
+              (let ([n (- n 1)]
+                    [acc (* n acc)])
+                (let ([r (call fact n acc)]) r)))))
+      (let ([x (call fact 4 1)]) (+ x 18))))
   )
