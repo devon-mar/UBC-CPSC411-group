@@ -174,3 +174,95 @@
       ['!= (void)]))
 
   (void))
+
+(define/contract (imp-cmf-lang-v6-template p)
+  (-> imp-cmf-lang-v6? any/c)
+
+  (define (imp-cmf-lang-v6-template-p p)
+    (match p
+      [`(module ,info (define ,labels ,infos ,tails) ... ,tail)
+        (void)]))
+
+  (define (imp-cmf-lang-v6-template-pred p)
+    (match p
+      [`(true)
+        (void)]
+      [`(false)
+        (void)]
+      [`(not ,p)
+        (void)]
+      [`(begin ,es ... ,p)
+        (void)]
+      [`(if ,p1 ,p2 ,p3)
+        (void)]
+      [`(,r ,o1 ,o2)
+        (void)]))
+
+  (define (imp-cmf-lang-v6-template-tail t)
+    (match t
+      [`(begin ,es ... ,t)
+        (void)]
+      [`(if ,p ,t1 ,t2)
+        (void)]
+      [`(jump ,trg ,locs ...)
+        (void)]))
+
+  (define (imp-cmf-lang-v6-template-value v)
+    (match v
+      [`(,b ,o1 ,o2)
+        (void)]
+      [triv (void)]))
+
+  (define (imp-cmf-lang-v6-template-effect e)
+    (match e
+      [`(set! ,l ,v)
+        (void)]
+      [`(begin ,es ... ,e)
+        (void)]
+      [`(if ,p ,e1 ,e2)
+        (void)]
+      [`(return-point ,l ,t)
+        (void)]))
+
+  (define (imp-cmf-lang-v6-template-opand o)
+    (match o
+      [(? int64?)
+       (void)]
+      [(? aloc?)
+       (void)]))
+  
+  (define (imp-cmf-lang-v6-template-triv t)
+    (match t
+      [(? label?)
+       (void)]
+      [opand
+        (void)]))
+
+  (define (imp-cmf-lang-v6-template-loc l)
+    (match l
+      [(? aloc?)
+       (void)]
+      [rloc (void)]))
+
+  (define (imp-cmf-lang-v6-template-trg t)
+    (match t
+      [(? label?)
+       (void)]
+      [loc (void)]))
+
+  (define (imp-cmf-lang-v6-template-binop b)
+    (match b
+      ['* (void)]
+      ['+ (void)]
+      ['- (void)]))
+
+  (define (imp-cmf-lang-v6-template-relop r)
+    (match r
+      ['< (void)]
+      ['<= (void)]
+      ['= (void)]
+      ['>= (void)]
+      ['> (void)]
+      ['!= (void)]))
+
+  (void))
