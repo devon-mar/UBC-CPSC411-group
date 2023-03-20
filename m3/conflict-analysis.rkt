@@ -3,18 +3,18 @@
 (require
   cpsc411/compiler-lib
   cpsc411/graph-lib
-  cpsc411/langs/v5
-  "../utils/compiler-utils.rkt")
+  cpsc411/langs/v6)
 
 (provide conflict-analysis)
 
 ;; Milestone 3 Exercise 2
 ;; Milestone 4 Exercise 14
 ;; Milestone 5 Exercise 9
+;; Milestone 6 Exercise 9
 ;;
 ;; Create a conflict graph for the Asm-lang program with the undead-set tree
 (define/contract (conflict-analysis p)
-  (-> asm-pred-lang-v5/undead? asm-pred-lang-v5/conflicts?)
+  (-> asm-pred-lang-v6/undead? asm-pred-lang-v6/conflicts?)
 
   (define conflict-graph (void))
 
@@ -36,8 +36,7 @@
   ;; tail undead-set-tree/rloc -> void
   (define (conflict-tail tail ust)
     (match (cons tail ust)
-      [(cons `(halt ,_) _) (void)]
-      [(cons `(jump ,trg ,loc ...) _) (void)]
+      [(cons `(jump ,_ ,_ ...) _) (void)]
       [(cons `(begin ,effects ... ,tail) `(,usts ...))
        (for ([e effects] [u usts])
          (conflict-effect e u))
@@ -67,7 +66,9 @@
       [(cons `(if ,pred ,effect1 ,effect2) `(,ustp ,ust1 ,ust2))
        (conflict-pred pred ustp)
        (conflict-effect effect1 ust1)
-       (conflict-effect effect2 ust2)]))
+       (conflict-effect effect2 ust2)]
+      [(cons `(return-point ,_ ,tail) `((,_ ...) ,ust))
+       (conflict-tail tail ust)]))
 
   ;; Updates conflict graph for the locs in the pred
   ;; pred undead-set-tree/rloc -> void
@@ -146,7 +147,7 @@
 
   ;; Check that a program and undead-out compiles into a program w/ conflicts
   ;; by compiling with conflict-analysis
-  ;; asm-pred-lang-v5/locals undead-set-tree/rloc conflicts -> void
+  ;; asm-pred-lang-v6/locals undead-set-tree/rloc conflicts -> void
   (define-check (check-conflict program undead-out conflicts-tail)
     (match program
       [`(module ,info ,procs ... ,tail)
@@ -157,7 +158,7 @@
 
   ;; Check that a program w/ procs & undead-out compiles into
   ;; a program w/ procs & conflicts by compiling with conflict-analysis
-  ;; asm-pred-lang-v5/undead conflicts (List-of conflicts) -> void
+  ;; asm-pred-lang-v6/undead conflicts (List-of conflicts) -> void
   (define-check (check-conflict-proc program conflicts-tail conflicts-procs)
     ;; get fields from original program
     (define-values (main-info main-tail proc-labels proc-infos proc-tails)
@@ -167,11 +168,11 @@
       (extract-asm-pred-lang (conflict-analysis program)))
     ;; keeps locals
     (check-equal? (info-ref ca-main-info 'locals) (info-ref main-info 'locals))
-    (check-equal? ca-main-tail main-tail)
     (check-equal?
       (map (lambda (x) (info-ref x 'locals)) ca-proc-infos)
       (map (lambda (x) (info-ref x 'locals)) proc-infos))
     ;; tails is the same
+    (check-equal? ca-main-tail main-tail)
     (check-equal? ca-proc-tails proc-tails)
     ;; check conflicts is as expected
     (check-graph? (info-ref ca-main-info 'conflicts) conflicts-tail)
@@ -181,29 +182,31 @@
   ;; conflict-analysis tests
   (check-conflict
     '(module
-        ((locals ()))
-        (begin (halt 0)))
+        ((new-frames ()) (locals ()) (call-undead ()))
+        (begin (jump done)))
     '(())
     '())
 
   ; No conflicts
   (check-conflict
     '(module
-        ((locals (x.1 x.2)))
-        (begin (set! x.2 12) (set! x.1 x.2) (halt x.1)))
-    '((x.2) (x.1) ())
+        ((new-frames ()) (locals (x.1 x.2)) (call-undead ()))
+        (begin (set! x.2 12) (set! x.1 x.2) (set! rax x.1) (jump done)))
+    '((x.2) (x.1) () ())
     '((x.1 ()) (x.2 ())))
 
   ; One-to-one conflict
   (check-conflict
     '(module
-        ((locals (x.1 x.2)))
+        ((new-frames ())
+         (locals (x.1 x.2))
+         (call-undead ()))
         (begin
           (set! x.1 5)
           (begin
             (set! x.2 10)
             (set! x.1 (+ x.1 x.2)))
-          (halt 0)))
+          (jump done)))
     '((x.1)
       ((x.1 x.2)
        ())
@@ -213,39 +216,49 @@
   ; Move optimization
   (check-conflict
     '(module
-        ((locals (x.1 x.2 x.3)))
+        ((new-frames ())
+         (locals (x.1 x.2 x.3))
+         (call-undead ()))
         (begin
           (set! x.1 5)
           (set! x.2 x.1)
           (set! x.3 x.1)
-          (halt x.2)))
+          (set! rax x.2)
+          (jump done)))
     '((x.1)
       (x.1 x.2)
       (x.2)
+      ()
       ())
     '((x.1 ()) (x.2 (x.3)) (x.3 (x.2))))
 
   ; No move optimization for binop
   (check-conflict
     '(module
-        ((locals (x.1 x.2 x.3)))
+        ((new-frames ())
+         (locals (x.1 x.2 x.3))
+         (call-undead ()))
         (begin
           (set! x.1 5)
           (set! x.2 x.1)
           (set! x.2 (+ x.2 x.1))
           (set! x.3 x.1)
-          (halt x.2)))
+          (set! rax x.2)
+          (jump done)))
     '((x.1)
       (x.1 x.2)
       (x.1 x.2)
       (x.2)
+      ()
       ())
     '((x.1 (x.2)) (x.2 (x.1 x.3)) (x.3 (x.2))))
 
   ; Many alocs + conflicts
   (check-conflict
     '(module
-      ((locals (v.1 w.2 x.3 y.4 z.5 t.6 p.1 a.10)))
+      ((new-frames ())
+       (locals (v.1 w.2 x.3 y.4 z.5 t.6 p.1 a.10))
+       (call-undead ()))
       (begin
         (set! v.1 1)
         (set! w.2 46)
@@ -266,7 +279,7 @@
         (begin
           (set! t.6 (* t.6 p.1))
           (set! z.5 (+ z.5 t.6))
-          (begin (halt z.5)))))
+          (begin (set! rax z.5) (jump done)))))
     '((v.1)
       (v.1 w.2)
       ((w.2 x.3))
@@ -296,39 +309,45 @@
   ; if in tail
   (check-conflict
     '(module
-      ((locals (x.1 x.2 x.3)))
+      ((new-frames ())
+       (locals (x.1 x.2 x.3))
+       (call-undead ()))
       (begin
         (set! x.1 5)
         (if (= x.1 2)
-          (begin (set! x.2 10) (set! x.1 (+ x.1 x.2)) (halt x.1))
-          (begin (set! x.3 9) (set! x.1 x.3) (halt x.1)))))
+          (begin (set! x.2 10) (set! x.1 (+ x.1 x.2)) (jump done x.1))
+          (begin (set! x.3 9) (set! x.1 x.3) (jump done x.1)))))
     '((x.1)
       ((x.1)
-       ((x.1 x.2) (x.1) ())
-       ((x.3) (x.1) ())))
+       ((x.1 x.2) (x.1) (x.1))
+       ((x.3) (x.1) (x.1))))
     '((x.1 (x.2)) (x.2 (x.1)) (x.3 ())))
 
    ; if in effect
   (check-conflict
     '(module
-      ((locals (x.1 x.2 x.3)))
+      ((new-frames ())
+       (locals (x.1 x.2 x.3))
+       (call-undead ()))
       (begin
         (set! x.1 5)
         (if (not (>= x.1 2))
           (begin (set! x.3 9) (set! x.1 x.3))
           (begin (set! x.2 10) (set! x.1 (* x.1 x.2))))
-        (halt x.1)))
+        (jump done x.1)))
     '((x.1)
       ((x.1)
        ((x.3) (x.1))
        ((x.1 x.2) (x.1)))
-      ())
+      (x.1))
     '((x.1 (x.2)) (x.2 (x.1)) (x.3 ())))
 
   ;; if in pred
   (check-conflict
     '(module
-      ((locals (x.1 x.2 x.3 x.4 x.5 x.6 x.7)))
+      ((new-frames ())
+       (locals (x.1 x.2 x.3 x.4 x.5 x.6 x.7))
+       (call-undead ()))
       (begin
         (set! x.6 0)
         (set! x.1 5)
@@ -350,8 +369,8 @@
                     (set! x.7 x.3)
                     (set! x.1 (* x.1 x.3))
                     (not (< x.4 x.7))))))
-          (halt x.2)
-          (halt x.3))))
+          (jump done x.2)
+          (jump done x.3))))
     '(()
       (x.1)
       (x.1 x.2)
@@ -367,8 +386,8 @@
           (x.1 x.7 x.4 x.3 x.2)
           (x.7 x.4 x.3 x.2)
           (x.3 x.2))))
-       ()
-       ()))
+       (x.2)
+       (x.3)))
     '((x.1 (x.2 x.3 x.4 x.5 x.7))
       (x.2 (x.1 x.3 x.4 x.5 x.7))
       (x.3 (x.1 x.2 x.4 x.5))
@@ -380,7 +399,7 @@
   ;; move optimization for rloc
   (check-conflict
     '(module
-        ((locals ()))
+        ((new-frames ()) (locals ()) (call-undead ()))
         (begin
           (set! rbx 5)
           (set! rdx rbx)
@@ -388,26 +407,26 @@
           (set! fv0 2)
           (set! fv1 fv0)
           (set! fv2 fv0)
-          (halt rdx)))
+          (jump done rdx)))
     '((rbx)
       (rbx rdx)
       (rdx)
       (rdx fv0)
       (rdx fv0)
       (rdx)
-      ())
+      (rdx))
     '((rsi (rdx)) (rdx (fv2 fv1 fv0 rsi)) (fv0 (rdx)) (fv1 (rdx)) (fv2 (rdx))))
 
   ;; proc & jumps base cases
   (check-conflict
-    '(module ((locals ()))
+    '(module ((new-frames ()) (locals ()) (call-undead ()))
       (jump done))
     '()
     (new-graph))
   (check-conflict-proc
-    '(module ((locals ()) (undead-out ()))
-      (define L.test.1 ((locals ()) (undead-out ())) (halt 0))
-      (define L.test.2 ((locals ()) (undead-out ())) (halt 3))
+    '(module ((new-frames ()) (locals ()) (undead-out ()) (call-undead ()))
+      (define L.test.1 ((new-frames ()) (locals ()) (undead-out ()) (call-undead ())) (jump done))
+      (define L.test.2 ((new-frames ()) (locals ()) (undead-out ()) (call-undead ())) (jump done))
       (jump L.test.1))
     '()
     (list (new-graph) (new-graph)))
@@ -415,7 +434,8 @@
   ;; complex jumps & procs
   (check-conflict-proc
     '(module
-      ((locals (u.1))
+      ((new-frames ())
+       (locals (u.1))
        (undead-out
          ((r8)
           (r8 rcx)
@@ -427,14 +447,19 @@
            ((rcx r14 u.1 r13)
             (r14 u.1 fv1 r13)
             (r14 u.1 fv2 fv1 r13)
-            (u.1 fv2 fv1 r13))))))
+            (u.1 fv2 fv1 r13)))))
+       (call-undead ()))
       (define L.test.1
-        ((locals ())
-         (undead-out ((rdi r13) (r13) ())))
-        (begin (set! r13 10) (set! r9 rdi) (halt r13)))
+        ((new-frames ())
+         (locals ())
+         (undead-out ((rdi r13) (r13) (r13)))
+         (call-undead ()))
+        (begin (set! r13 10) (set! r9 rdi) (jump done r13)))
       (define L.test.2
-        ((locals (x.1))
-         (undead-out ((x.1) (rdx x.1) (fv0 rdx x.1) (fv0 rdx x.1))))
+        ((new-frames ())
+         (locals (x.1))
+         (undead-out ((x.1) (rdx x.1) (fv0 rdx x.1) (fv0 rdx x.1)))
+         (call-undead ()))
         (begin (set! x.1 r13) (set! rdx x.1) (set! fv0 9) (jump x.1 x.1 rdx fv0)))
       (begin
         (set! r8 9)
@@ -465,4 +490,127 @@
       '((x.1 (fv0))
         (fv0 (x.1 rdx))
         (rdx (fv0)))))
+
+  ;; return-point
+  (check-conflict-proc
+    '(module
+      ((new-frames ((nfv.1 nfv.2)))
+       (locals (tmp-ra.1 nfv.1 nfv.2))
+       (call-undead (tmp-ra.1 fv0))
+       (undead-out
+         ((rbp tmp-ra.1)
+          (rcx rbp tmp-ra.1)
+          (rcx fv0 rbp tmp-ra.1)
+          ((rcx fv0 rax rbp tmp-ra.1)
+           ((nfv.2 rbp)
+            (nfv.2 nfv.1 rbp)
+            (rdx nfv.2 nfv.1 rbp)
+            (rdx nfv.2 nfv.1 r15 rbp)
+            (rbp r15 nfv.1 nfv.2 rdx)))
+          (fv0 rax rbp tmp-ra.1)
+          (rax rbp tmp-ra.1)
+          (rbp rax))))
+      (define L.test.1
+        ((new-frames ())
+         (locals (tmp-ra.2))
+         (call-undead ())
+         (undead-out ((rbp tmp-ra.2) (rax rbp tmp-ra.2) (rbp rax))))
+        (begin
+          (set! tmp-ra.2 r15)
+          (set! rax 10)
+          (jump tmp-ra.2 rbp rax)))
+      (begin
+        (set! tmp-ra.1 r15)
+        (set! rcx 9)
+        (set! fv0 10)
+        (return-point L.rp.1
+          (begin
+            (set! nfv.2 10)
+            (set! nfv.1 10)
+            (set! rdx 10)
+            (set! r15 L.rp.1)
+            (jump L.test.1 rbp r15 nfv.1 nfv.2 rdx)))
+        (set! rax (+ rax rcx))
+        (set! rax (+ rax fv0))
+        (jump tmp-ra.1 rbp rax)))
+    '((tmp-ra.1 (rax fv0 rcx rbp))
+      (rax (tmp-ra.1 rbp fv0))
+      (rbp (rax r15 rdx nfv.1 nfv.2 fv0 rcx tmp-ra.1))
+      (r15 (rbp nfv.1 nfv.2 rdx))
+      (nfv.1 (r15 rdx rbp nfv.2))
+      (nfv.2 (r15 rdx nfv.1 rbp))
+      (fv0 (rax tmp-ra.1 rbp rcx))
+      (rcx (fv0 tmp-ra.1 rbp))
+      (rdx (r15 rbp nfv.1 nfv.2)))
+    (list '((tmp-ra.2 (rax rbp)) (rbp (tmp-ra.2 rax)) (rax (tmp-ra.2 rbp)))))
+
+  ;; Book example (5.8)
+  (check-conflict-proc
+    '(module
+      ((new-frames ())
+       (locals (ra.12))
+       (call-undead ())
+       (undead-out ((ra.12 rbp) (ra.12 fv0 rbp) (fv0 r15 rbp) (fv0 r15 rbp))))
+      (define L.fact.4
+        ((new-frames ((nfv.16)))
+         (locals (ra.13 x.9 tmp.14 tmp.15 new-n.10 nfv.16 factn-1.11 tmp.17))
+         (undead-out
+          ((r15 x.9 rbp)
+           (x.9 ra.13 rbp)
+           ((x.9 ra.13 rbp)
+            ((ra.13 rax rbp) (rax rbp))
+            ((tmp.14 x.9 ra.13 rbp)
+             (tmp.14 tmp.15 x.9 ra.13 rbp)
+             (tmp.15 x.9 ra.13 rbp)
+             (new-n.10 x.9 ra.13 rbp)
+             ((rax x.9 ra.13 rbp)
+              ((nfv.16 rbp) (nfv.16 r15 rbp) (nfv.16 r15 rbp)))
+             (x.9 factn-1.11 ra.13 rbp)
+             (factn-1.11 tmp.17 ra.13 rbp)
+             (tmp.17 ra.13 rbp)
+             (ra.13 rax rbp)
+             (rax rbp)))))
+         (call-undead (x.9 ra.13)))
+        (begin
+          (set! x.9 fv0)
+          (set! ra.13 r15)
+          (if (= x.9 0)
+              (begin (set! rax 1) (jump ra.13 rbp rax))
+              (begin
+                (set! tmp.14 -1)
+                (set! tmp.15 x.9)
+                (set! tmp.15 (+ tmp.15 tmp.14))
+                (set! new-n.10 tmp.15)
+                (return-point L.rp.6
+                  (begin
+                    (set! nfv.16 new-n.10)
+                    (set! r15 L.rp.6)
+                    (jump L.fact.4 rbp r15 nfv.16)))
+                (set! factn-1.11 rax)
+                (set! tmp.17 x.9)
+                (set! tmp.17 (* tmp.17 factn-1.11))
+                (set! rax tmp.17)
+                (jump ra.13 rbp rax)))))
+      (begin
+        (set! ra.12 r15)
+        (set! fv0 5)
+        (set! r15 ra.12)
+        (jump L.fact.4 rbp r15 fv0)))
+    '((ra.12 (fv0 rbp))
+      (rbp (r15 fv0 ra.12))
+      (fv0 (r15 rbp ra.12))
+      (r15 (rbp fv0)))
+    (list
+      '((tmp.17 (rbp ra.13 factn-1.11))
+        (factn-1.11 (tmp.17 rbp ra.13 x.9))
+        (nfv.16 (r15 rbp))
+        (new-n.10 (rbp ra.13 x.9))
+        (tmp.15 (x.9 rbp ra.13 tmp.14))
+        (tmp.14 (tmp.15 rbp ra.13 x.9))
+        (x.9 (ra.13 rbp r15 factn-1.11 new-n.10 tmp.15 tmp.14))
+        (ra.13 (rbp x.9 rax tmp.17 factn-1.11 new-n.10 tmp.15 tmp.14))
+        (rbp
+          (ra.13 x.9 rax tmp.17 factn-1.11 r15 nfv.16 new-n.10 tmp.15 tmp.14))
+        (r15 (x.9 rbp nfv.16))
+        (rax (rbp ra.13)))))
   )
