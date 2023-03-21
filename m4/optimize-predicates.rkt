@@ -35,7 +35,8 @@
   (define (binop->procedure binop)
     (match binop
       [`+ x64-add]
-      [`* x64-mul]))
+      [`* x64-mul]
+      [`- x64-sub]))
 
   ;; opand env -> opand
   (define (convert-opand opand env)
@@ -719,4 +720,56 @@
               (jump done))))
       (begin
         (jump done))))
+
+  ;; subtract
+  (check-equal-interp?
+    '(module
+      (begin
+        (set! rax 10)
+        (set! rax (- rax 18))
+        (if (<= rax -8) (set! rax 42) (set! rax (- rax 2)))
+        (jump done)))
+    '(module
+      (begin
+        (set! rax 10)
+        (set! rax (- rax 18))
+        (set! rax 42)
+        (jump done))))
+
+  ;; return-point
+  (check-equal-interp?
+    '(module
+      (define L.test.1
+        (begin
+          (set! rdx r15)
+          (set! rax 20)
+          (jump r15)))
+      (begin
+        (set! fv0 r15)
+        (set! rax 2)
+        (return-point L.rp.1
+          (begin
+            (set! r15 L.rp.1)
+            (if (= rax 2)
+                (jump L.test.1)
+                (jump done))))
+        (set! rax (+ rax 5))
+        (if (< rax 7) (set! rax 11) (set! rax 13))
+        (jump fv0)))
+    '(module
+      (define L.test.1
+        (begin
+          (set! rdx r15)
+          (set! rax 20)
+          (jump r15)))
+      (begin
+        (set! fv0 r15)
+        (set! rax 2)
+        (return-point L.rp.1
+          (begin
+            (set! r15 L.rp.1)
+            (jump L.test.1)))
+        (set! rax (+ rax 5))
+        (if (< rax 7) (set! rax 11) (set! rax 13))
+        (jump fv0))))
   )
