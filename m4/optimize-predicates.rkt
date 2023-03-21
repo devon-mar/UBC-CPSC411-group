@@ -14,6 +14,13 @@
 (define/contract (optimize-predicates p)
   (-> nested-asm-lang-v5? nested-asm-lang-v5?)
 
+  ;; env loc triv -> void
+  ;; Update loc to triv if it is decided (integer), otherwise remove key
+  (define (env-update env loc triv)
+    (if (integer? triv)
+        (set-box! env (dict-set (unbox env) loc triv))
+        (set-box! env (dict-remove (unbox env) loc))))
+
   ;; relop -> procedure
   (define (symbol->relop relop)
     (match relop
@@ -30,22 +37,22 @@
       [`+ x64-add]
       [`* x64-mul]))
 
-  ;; triv dict -> triv
+  ;; triv env -> triv
   (define (convert-triv triv env)
     (match triv
       [(? integer?) triv]
-      [(? symbol?) (if (dict-has-key? env triv) (dict-ref env triv) triv)]))
+      [(? symbol?) (dict-ref (unbox env) triv triv)]))
 
-  ;; tail dict -> tail
+  ;; tail env -> tail
   (define (convert-tail t env)
     (match t
       [`(halt ,triv) t]
       [`(jump ,trg) t]
       [`(begin ,effects ... ,tail)
-       (define-values (new-effects new-env) (convert-effect-list effects env))
+       (define new-effects (convert-effect-list effects env))
        `(begin
          ,@new-effects
-         ,(convert-tail tail new-env))]
+         ,(convert-tail tail env))]
       [`(if ,pred ,tail1 ,tail2)
        (convert-if-tail
          pred
@@ -53,7 +60,7 @@
          (lambda (e) (convert-tail tail2 e))
          env)]))
 
-  ;; pred (dict -> tail) (dict -> tail) dict -> tail
+  ;; pred (env -> tail) (env -> tail) env -> tail
   (define (convert-if-tail pred tfn1 tfn2 env)
     (match pred
       [`(true) ;; base case
@@ -63,19 +70,11 @@
       [`(not ,nested-pred)
        (convert-if-tail nested-pred tfn2 tfn1 env)]
       [`(begin ,effects ... ,nested-pred)
-       (define-values (new-effects new-env) (convert-effect-list effects env))
-       `(begin
-         ,@new-effects
-         ,(convert-if-tail nested-pred tfn1 tfn2 new-env))]
+       (define new-effects (convert-effect-list effects env))
+       (define new-tail (convert-if-tail nested-pred tfn1 tfn2 env))
+       `(begin ,@new-effects ,new-tail)]
       [`(,relop ,loc ,triv) ;; base case
-       (convert-relop
-         relop
-         (convert-triv loc env)
-         (convert-triv triv env)
-         (lambda () (tfn1 env))
-         (lambda () (tfn2 env))
-         (lambda ()
-           `(if ,pred ,(tfn1 env) ,(tfn2 env))))]
+       (convert-relop relop loc triv tfn1 tfn2 env)]
       [`(if ,pred ,pred1 ,pred2)
        (convert-if-tail
          pred
@@ -83,7 +82,7 @@
          (lambda (e) (convert-if-tail pred2 tfn1 tfn2 e))
          env)]))
 
-  ;; pred (effect -> effect dict) (effect -> effect dict) dict -> effect dict
+  ;; pred (effect -> effect env) (effect -> effect env) env -> effect
   (define (convert-if-effect pred efn1 efn2 env)
     (match pred
       [`(true) ;; base case
@@ -93,25 +92,11 @@
       [`(not ,nested-pred)
        (convert-if-effect nested-pred efn2 efn1 env)]
       [`(begin ,effects ... ,nested-pred)
-       (define-values (new-effects new-env) (convert-effect-list effects env))
-       (define-values (new-effect-t new-env-t) (convert-if-effect nested-pred efn1 efn2 new-env))
-       (values
-         `(begin
-           ,@new-effects
-           ,new-effect-t)
-         new-env-t)]
+       (define new-effects (convert-effect-list effects env))
+       (define new-effect-t (convert-if-effect nested-pred efn1 efn2 env))
+       `(begin ,@new-effects ,new-effect-t)]
       [`(,relop ,loc ,triv) ;; base case
-       (convert-relop
-         relop
-         (convert-triv loc env)
-         (convert-triv triv env)
-         (lambda () (efn1 env))
-         (lambda () (efn2 env))
-         (lambda ()
-           (define-values (new-effect1 new-env1) (efn1 env))
-           (define-values (new-effect2 new-env2) (efn2 env))
-           (values `(if ,pred ,new-effect1 ,new-effect2)
-                   (set-intersect new-env1 new-env2))))]
+       (convert-relop relop loc triv efn1 efn2 env)]
       [`(if ,pred ,pred1 ,pred2)
        (convert-if-effect
          pred
@@ -119,44 +104,37 @@
          (lambda (e) (convert-if-effect pred2 efn1 efn2 e))
          env)]))
 
-  ;; relop triv triv (-> tail) (-> tail) (-> tail) -> tail
-  ;; relop triv triv (-> effect dict) (-> effect dict) (-> effect dict) -> effect dict
-  (define (convert-relop relop a1 a2 tfn1 tfn2 tfn-if)
+  ;; relop loc triv (env -> tail) (env -> tail) env -> tail
+  ;; relop loc triv (env -> effect) (env -> effect) env -> effect
+  (define (convert-relop relop loc triv tfn1 tfn2 env)
+    (define a1 (convert-triv loc env))
+    (define a2 (convert-triv triv env))
     (if (and (integer? a1) (integer? a2))
         (if ((symbol->relop relop) a1 a2)
-            (tfn1)
-            (tfn2))
-        (tfn-if)))
+            (tfn1 env)
+            (tfn2 env))
+        (let ([env1 (box (unbox env))] [env2 (box (unbox env))])
+          (begin0
+            `(if (,relop ,loc ,triv) ,(tfn1 env1) ,(tfn2 env2))
+            (set-box! env (set-intersect (unbox env1) (unbox env2)))))))
 
-  ;; (effect ...) dict -> (values (effect ...) dict)
+  ;; (effect ...) env -> (effect ...)
   (define (convert-effect-list effect-list env)
-    (for/fold ([new-effect-list '()] [intermediate-env env]) ([e effect-list])
-      (define-values (new-effect new-env) (convert-effect e intermediate-env))
-      (values (append new-effect-list (list new-effect)) new-env)))
+    (for/fold ([new-effect-list '()]) ([e effect-list])
+      (define new-effect (convert-effect e env))
+      (append new-effect-list (list new-effect))))
 
-  ;; dict loc triv -> dict
-  ;; Add loc to triv if it is decided (integer), otherwise remove key
-  (define (env-add env loc triv)
-    (if (integer? triv)
-        (dict-set env loc triv)
-        (dict-remove env loc)))
-
-  ;; effect dict -> (values effect dict)
+  ;; effect env -> (values effect env)
   (define (convert-effect e env)
     (match e
       [`(set! ,loc_1 (,binop ,loc_1 ,opand))
-       (define binop-evaluation (convert-binop binop loc_1 opand env))
-       (values `(set! ,loc_1 (,binop ,loc_1 ,opand))
-               (env-add env loc_1 binop-evaluation))]
+       (env-update env loc_1 (convert-binop binop loc_1 opand env))
+       `(set! ,loc_1 (,binop ,loc_1 ,opand))]
       [`(set! ,loc ,triv)
-       (values `(set! ,loc ,triv)
-               (env-add env loc (convert-triv triv env)))]
-      [`(begin
-          ,effects ...)
-       (define-values (new-effects new-env) (convert-effect-list effects env))
-       (values `(begin
-                  ,@new-effects)
-               new-env)]
+       (env-update env loc (convert-triv triv env))
+       `(set! ,loc ,triv)]
+      [`(begin ,effects ...)
+       `(begin ,@(convert-effect-list effects env))]
       [`(if ,pred ,effect1 ,effect2)
        (convert-if-effect
          pred
@@ -164,8 +142,8 @@
          (lambda (e) (convert-effect effect2 e))
          env)]))
 
-  ;; binop loc triv dict -> symbol
-  ;; binop loc triv dict -> integer
+  ;; binop loc triv env -> symbol
+  ;; binop loc triv env -> integer
   (define (convert-binop binop loc opand env)
     (define interp-loc (convert-triv loc env))
     (define interp-opand (convert-triv opand env))
@@ -178,7 +156,7 @@
      (match block
        [`(define ,label ,tail)
          ;; Begin with clear env since source of jump could be anywhere.
-         (define env '())
+         (define env (box '()))
          `(define ,label ,(convert-tail tail env))]))
 
   ;; ((define label tail) ...)
@@ -189,7 +167,8 @@
   (define (convert-p p)
     (match p
       [`(module ,block-list ... ,tail)
-        (define env '())
+        ;; env is box(dict(loc, int)) (we use box to support set-intersect)
+        (define env (box '()))
         `(module ,@(convert-block-list block-list),(convert-tail tail env))]))
 
   (convert-p p))
@@ -676,4 +655,22 @@
           (if (= fv1 12) (halt 3) (halt 4))))
       (begin
         (halt 3))))
+
+  ;; Value is not carried to another branch in undecided if
+  (check-equal?
+    (optimize-predicates
+      '(module
+        (define L.test.1
+          (if (= fv1 4)
+              (begin (set! fv1 9) (if (= fv2 10) (halt 1) (halt 2)))
+              (begin (set! fv2 10) (if (= fv1 9) (halt 3) (halt 4)))))
+        (begin
+          (halt 4))))
+    '(module
+      (define L.test.1
+        (if (= fv1 4)
+            (begin (set! fv1 9) (if (= fv2 10) (halt 1) (halt 2)))
+            (begin (set! fv2 10) (if (= fv1 9) (halt 3) (halt 4)))))
+      (begin
+        (halt 4))))
   )
