@@ -130,7 +130,7 @@
       (define new-effect (convert-effect e env))
       (append new-effect-list (list new-effect))))
 
-  ;; effect env -> (values effect env)
+  ;; effect env -> effect
   (define (convert-effect e env)
     (match e
       [`(set! ,loc_1 (,binop ,loc_1 ,opand))
