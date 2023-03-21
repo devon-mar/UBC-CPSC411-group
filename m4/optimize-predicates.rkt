@@ -2,7 +2,7 @@
 
 (require
   cpsc411/compiler-lib
-  cpsc411/langs/v5)
+  cpsc411/langs/v6)
 
 (provide optimize-predicates)
 
@@ -10,9 +10,9 @@
 ;; Milestone 5 Exercise 12
 ;; Milestone 6 Exercise 15
 ;;
-;; Optimize Nested-asm-lang programs by analyzing and simplifying predicates.
+;; Optimize Nested-asm-lang-fvars programs by analyzing and simplifying predicates.
 (define/contract (optimize-predicates p)
-  (-> nested-asm-lang-v5? nested-asm-lang-v5?)
+  (-> nested-asm-lang-fvars-v6? nested-asm-lang-fvars-v6?)
 
   ;; env loc triv -> void
   ;; Update loc to triv if it is decided (integer), otherwise remove key
@@ -37,17 +37,23 @@
       [`+ x64-add]
       [`* x64-mul]))
 
+  ;; opand env -> opand
+  (define (convert-opand opand env)
+    (match opand
+      [(? integer?) opand]
+      [(or (? register?) (? fvar?)) ;; loc
+       (dict-ref (unbox env) opand opand)]))
+
   ;; triv env -> triv
   (define (convert-triv triv env)
     (match triv
-      [(? integer?) triv]
-      [(? symbol?) (dict-ref (unbox env) triv triv)]))
+      [(? label?) triv]
+      [opand (convert-opand opand env)]))
 
   ;; tail env -> tail
   (define (convert-tail t env)
     (match t
-      [`(halt ,triv) t]
-      [`(jump ,trg) t]
+      [`(jump ,_) t]
       [`(begin ,effects ... ,tail)
        (define new-effects (convert-effect-list effects env))
        `(begin
@@ -73,8 +79,8 @@
        (define new-effects (convert-effect-list effects env))
        (define new-tail (convert-if-tail nested-pred tfn1 tfn2 env))
        `(begin ,@new-effects ,new-tail)]
-      [`(,relop ,loc ,triv) ;; base case
-       (convert-relop relop loc triv tfn1 tfn2 env)]
+      [`(,relop ,loc ,opand) ;; base case
+       (convert-relop relop loc opand tfn1 tfn2 env)]
       [`(if ,pred ,pred1 ,pred2)
        (convert-if-tail
          pred
@@ -95,8 +101,8 @@
        (define new-effects (convert-effect-list effects env))
        (define new-effect-t (convert-if-effect nested-pred efn1 efn2 env))
        `(begin ,@new-effects ,new-effect-t)]
-      [`(,relop ,loc ,triv) ;; base case
-       (convert-relop relop loc triv efn1 efn2 env)]
+      [`(,relop ,loc ,opand) ;; base case
+       (convert-relop relop loc opand efn1 efn2 env)]
       [`(if ,pred ,pred1 ,pred2)
        (convert-if-effect
          pred
@@ -104,18 +110,18 @@
          (lambda (e) (convert-if-effect pred2 efn1 efn2 e))
          env)]))
 
-  ;; relop loc triv (env -> tail) (env -> tail) env -> tail
-  ;; relop loc triv (env -> effect) (env -> effect) env -> effect
-  (define (convert-relop relop loc triv tfn1 tfn2 env)
+  ;; relop loc opand (env -> tail) (env -> tail) env -> tail
+  ;; relop loc opand (env -> effect) (env -> effect) env -> effect
+  (define (convert-relop relop loc opand tfn1 tfn2 env)
     (define a1 (convert-triv loc env))
-    (define a2 (convert-triv triv env))
+    (define a2 (convert-opand opand env))
     (if (and (integer? a1) (integer? a2))
         (if ((symbol->relop relop) a1 a2)
             (tfn1 env)
             (tfn2 env))
         (let ([env1 (box (unbox env))] [env2 (box (unbox env))])
           (begin0
-            `(if (,relop ,loc ,triv) ,(tfn1 env1) ,(tfn2 env2))
+            `(if (,relop ,loc ,opand) ,(tfn1 env1) ,(tfn2 env2))
             (set-box! env (set-intersect (unbox env1) (unbox env2)))))))
 
   ;; (effect ...) env -> (effect ...)
@@ -140,13 +146,18 @@
          pred
          (lambda (e) (convert-effect effect1 e))
          (lambda (e) (convert-effect effect2 e))
-         env)]))
+         env)]
+      [`(return-point ,label ,tail)
+       (begin0
+        `(return-point ,label ,(convert-tail tail env))
+         ;; clear env after return
+         (set-box! env '()))]))
 
   ;; binop loc triv env -> symbol
   ;; binop loc triv env -> integer
   (define (convert-binop binop loc opand env)
     (define interp-loc (convert-triv loc env))
-    (define interp-opand (convert-triv opand env))
+    (define interp-opand (convert-opand opand env))
     (if (and (integer? interp-loc) (integer? interp-opand))
         ((binop->procedure binop) interp-loc interp-opand)
         `(,binop ,loc ,opand)))
@@ -175,49 +186,72 @@
 
 (module+ test
   (require rackunit)
-  (check-equal?
-    (optimize-predicates
-      `(module
-        (begin
-          (set! fv1 1)
-          (if (> fv1 0) (halt 1) (halt 2)))))
-    `(module
-      (begin
-        (set! fv1 1)
-        (halt 1))))
+
+  ;; check that optimized program is as expected and interprets to the same value
+  ;; p p -> void
+  (define-check (check-equal-interp? orig expected)
+    (check-equal? (optimize-predicates orig) expected)
+    (check-equal?
+      (interp-nested-asm-lang-fvars-v6 (optimize-predicates orig))
+      (interp-nested-asm-lang-fvars-v6 orig)))
+
+  ;; check that optimization did not change the program
+  ;; p -> void
+  (define-check (check-no-change? program)
+    (check-equal? (optimize-predicates program) program))
+
 
   (check-equal?
     (optimize-predicates
       `(module
         (begin
           (set! fv1 1)
-          (if (< fv1 0) (halt 1) (halt 2)))))
+          (if (> fv1 0)
+              (begin (set! rax 1) (jump done))
+              (begin (set! rax 2) (jump done))))))
     `(module
       (begin
         (set! fv1 1)
-        (halt 2))))
+        (begin (set! rax 1) (jump done)))))
 
   (check-equal?
     (optimize-predicates
       `(module
         (begin
           (set! fv1 1)
-          (if (< fv1 ,(max-int 64)) (halt 1) (halt 2)))))
-      `(module
-        (begin
-          (set! fv1 1)
-          (halt 1))))
+          (if (< fv1 0)
+              (begin (set! rax 1) (jump done))
+              (begin (set! rax 2) (jump done))))))
+    `(module
+      (begin
+        (set! fv1 1)
+        (begin (set! rax 2) (jump done)))))
 
   (check-equal?
     (optimize-predicates
       `(module
         (begin
           (set! fv1 1)
-          (if (= fv1 1) (halt 1) (halt 2)))))
+          (if (< fv1 ,(max-int 64))
+              (begin (set! rax 1) (jump done))
+              (begin (set! rax 2) (jump done))))))
+      `(module
+        (begin
+          (set! fv1 1)
+          (begin (set! rax 1) (jump done)))))
+
+  (check-equal?
+    (optimize-predicates
+      `(module
+        (begin
+          (set! fv1 1)
+          (if (= fv1 1)
+              (begin (set! rax 1) (jump done))
+              (begin (set! rax 2) (jump done))))))
     `(module
       (begin
         (set! fv1 1)
-        (halt 1))))
+        (begin (set! rax 1) (jump done)))))
 
   (check-equal?
     (optimize-predicates
@@ -225,12 +259,14 @@
         (begin
           (set! fv1 2)
           (set! fv1 (+ fv1 3))
-          (if (= fv1 5) (halt 1) (halt 2)))))
+          (if (= fv1 5)
+              (begin (set! rax 1) (jump done))
+              (begin (set! rax 2) (jump done))))))
     `(module
       (begin
         (set! fv1 2)
         (set! fv1 (+ fv1 3))
-        (halt 1))))
+        (begin (set! rax 1) (jump done)))))
 
   ;; Test >= relop equal
   (check-equal?
@@ -238,11 +274,13 @@
       `(module
         (begin
           (set! fv1 1)
-          (if (>= fv1 1) (halt 1) (halt 2)))))
+          (if (>= fv1 1)
+              (begin (set! rax 1) (jump done))
+              (begin (set! rax 2) (jump done))))))
     `(module
       (begin
         (set! fv1 1)
-        (halt 1))))
+        (begin (set! rax 1) (jump done)))))
 
   ;; Test >= relop greater than
   (check-equal?
@@ -250,11 +288,13 @@
       `(module
         (begin
           (set! fv1 1)
-          (if (>= fv1 1) (halt 1) (halt 2)))))
+          (if (>= fv1 1)
+              (begin (set! rax 1) (jump done))
+              (begin (set! rax 2) (jump done))))))
     `(module
       (begin
         (set! fv1 1)
-        (halt 1))))
+        (begin (set! rax 1) (jump done)))))
 
   ;; Test <= relop equal
   (check-equal?
@@ -262,11 +302,13 @@
       `(module
         (begin
           (set! fv1 1)
-          (if (<= fv1 1) (halt 1) (halt 2)))))
+          (if (<= fv1 1)
+              (begin (set! rax 1) (jump done))
+              (begin (set! rax 2) (jump done))))))
     `(module
       (begin
         (set! fv1 1)
-        (halt 1))))
+        (begin (set! rax 1) (jump done)))))
 
   ;; Test <= relop less than
   (check-equal?
@@ -274,11 +316,13 @@
       `(module
         (begin
           (set! fv1 0)
-          (if (<= fv1 1) (halt 1) (halt 2)))))
+          (if (<= fv1 1)
+              (begin (set! rax 1) (jump done))
+              (begin (set! rax 2) (jump done))))))
     `(module
       (begin
         (set! fv1 0)
-        (halt 1))))
+        (begin (set! rax 1) (jump done)))))
 
   ;; Test != relop
   (check-equal?
@@ -286,11 +330,13 @@
       `(module
         (begin
           (set! fv1 1)
-          (if (!= fv1 1) (halt 1) (halt 2)))))
+          (if (!= fv1 1)
+              (begin (set! rax 1) (jump done))
+              (begin (set! rax 2) (jump done))))))
     `(module
       (begin
         (set! fv1 1)
-        (halt 2))))
+        (begin (set! rax 2) (jump done)))))
 
   ;; Test = relop
   (check-equal?
@@ -298,11 +344,13 @@
       `(module
         (begin
           (set! fv1 1)
-          (if (= fv1 1) (halt 1) (halt 2)))))
+          (if (= fv1 1)
+              (begin (set! rax 1) (jump done))
+              (begin (set! rax 2) (jump done))))))
     `(module
       (begin
         (set! fv1 1)
-        (halt 1))))
+        (begin (set! rax 1) (jump done)))))
 
   ;; true
   (check-equal?
@@ -310,11 +358,13 @@
       `(module
         (begin
           (set! fv1 1)
-          (if (true) (halt 1) (halt 2)))))
+          (if (true)
+              (begin (set! rax 1) (jump done))
+              (begin (set! rax 2) (jump done))))))
     `(module
       (begin
         (set! fv1 1)
-        (halt 1))))
+        (begin (set! rax 1) (jump done)))))
 
   ;; false
   (check-equal?
@@ -322,11 +372,13 @@
       `(module
         (begin
           (set! fv1 1)
-          (if (false) (halt 1) (halt 2)))))
+          (if (false)
+              (begin (set! rax 1) (jump done))
+              (begin (set! rax 2) (jump done))))))
     `(module
       (begin
         (set! fv1 1)
-        (halt 2))))
+        (begin (set! rax 2) (jump done)))))
 
   ;; not false
   (check-equal?
@@ -334,11 +386,13 @@
       `(module
         (begin
           (set! fv1 1)
-          (if (not (false)) (halt 1) (halt 2)))))
+          (if (not (false))
+              (begin (set! rax 1) (jump done))
+              (begin (set! rax 2) (jump done))))))
     `(module
       (begin
         (set! fv1 1)
-        (halt 1))))
+        (begin (set! rax 1) (jump done)))))
 
   ;; not true
   (check-equal?
@@ -346,11 +400,13 @@
       `(module
         (begin
           (set! fv1 1)
-          (if (not (true)) (halt 1) (halt 2)))))
+          (if (not (true))
+              (begin (set! rax 1) (jump done))
+              (begin (set! rax 2) (jump done))))))
     `(module
       (begin
         (set! fv1 1)
-        (halt 2))))
+        (begin (set! rax 2) (jump done)))))
 
   ;; double not
   (check-equal?
@@ -358,33 +414,32 @@
       `(module
         (begin
           (set! fv1 1)
-          (if (not (not (true))) (halt 1) (halt 2)))))
+          (if (not (not (true)))
+              (begin (set! rax 1) (jump done))
+              (begin (set! rax 2) (jump done))))))
     `(module
       (begin
         (set! fv1 1)
-        (halt 1))))
+        (begin (set! rax 1) (jump done)))))
 
-  (define if-begin-test
-    `(module (begin
-               (set! fv1 1)
-               (if (begin
-                     (set! fv0 1)
-                     (set! fv2 2)
-                     (< fv0 fv2))
-                   (halt 1)
-                   (halt 2)))))
   ;; Begin effects pred
-  (check-equal?
-    (optimize-predicates if-begin-test)
+  (check-equal-interp?
+    `(module
+      (begin
+        (set! fv1 1)
+        (if (begin
+              (set! fv0 1)
+              (set! fv2 2)
+              (< fv0 fv2))
+            (begin (set! rax 1) (jump done))
+            (begin (set! rax 2) (jump done)))))
     `(module
       (begin
         (set! fv1 1)
         (begin
           (set! fv0 1)
           (set! fv2 2)
-          (halt 1)))))
-  (check-equal? (interp-nested-asm-lang-v5 if-begin-test)
-                (interp-nested-asm-lang-v5 (optimize-predicates if-begin-test)))
+          (begin (set! rax 1) (jump done))))))
 
   ;; check (if pred pred pred)
   (check-equal?
@@ -392,11 +447,13 @@
       `(module
         (begin
           (set! fv1 1)
-          (if (if (true) (true) (false)) (halt 1) (halt 2)))))
+          (if (if (true) (true) (false))
+              (begin (set! rax 1) (jump done))
+              (begin (set! rax 2) (jump done))))))
     `(module
       (begin
         (set! fv1 1)
-        (halt 1))))
+        (begin (set! rax 1) (jump done)))))
 
   ;; check (if pred pred pred)
   (check-equal?
@@ -404,41 +461,34 @@
       `(module
         (begin
           (set! fv1 1)
-          (if (if (true) (> rsp rax) (false)) (halt 1) (halt 2)))))
+          (if (if (true) (> rsp rax) (false))
+              (begin (set! rax 1) (jump done))
+              (begin (set! rax 2) (jump done))))))
     `(module
       (begin
         (set! fv1 1)
-        (if (> rsp rax) (halt 1) (halt 2)))))
+        (if (> rsp rax)
+            (begin (set! rax 1) (jump done))
+            (begin (set! rax 2) (jump done))))))
 
   ;; check (set! loc (+ loc opand)) is identity
-  (check-equal?
-    (optimize-predicates
-      `(module
-        (begin
-          (set! fv1 1)
-          (set! fv1 (+ fv1 2))
-          (halt fv1))))
+  (check-no-change?
     `(module
       (begin
         (set! fv1 1)
         (set! fv1 (+ fv1 2))
-        (halt fv1))))
+        (set! rax fv1)
+        (jump done))))
 
   ;; check nested begin is identity
-  (check-equal?
-    (optimize-predicates
-      `(module
-        (begin
-          (begin
-            (set! fv1 1)
-            (set! fv1 (+ fv1 2)))
-          (halt fv1))))
+  (check-no-change?
     `(module
       (begin
         (begin
           (set! fv1 1)
           (set! fv1 (+ fv1 2)))
-        (halt fv1))))
+        (set! rax fv1)
+        (jump done))))
 
   (check-equal?
     (optimize-predicates
@@ -447,13 +497,15 @@
           (begin
             (set! fv1 1)
             (if (true) (set! fv1 (+ fv1 2)) (set! fv1 0)))
-          (halt fv1))))
+          (set! rax fv1)
+          (jump done))))
     `(module
       (begin
         (begin
           (set! fv1 1)
           (set! fv1 (+ fv1 2)))
-        (halt fv1))))
+        (set! rax fv1)
+        (jump done))))
 
   (check-equal?
     (optimize-predicates
@@ -462,22 +514,27 @@
           (begin
             (set! fv1 1)
             (if (false) (set! fv1 (+ fv1 2)) (set! fv1 0)))
-          (halt fv1))))
+          (set! rax fv1)
+          (jump done))))
     `(module
       (begin
         (begin
           (set! fv1 1)
           (set! fv1 0))
-        (halt fv1))))
+        (set! rax fv1)
+        (jump done))))
 
   ;; Optimize predicate in block and jump in tail
   (check-equal?
     (optimize-predicates
       `(module
-        (define L.block.1 (if (true) (halt 42) (halt 2)))
+        (define L.block.1
+          (if (true)
+              (begin (set! rax 42) (jump done))
+              (begin (set! rax 2) (jump done))))
         (jump L.block.1)))
     `(module
-      (define L.block.1 (halt 42))
+      (define L.block.1 (begin (set! rax 42) (jump done)))
       (jump L.block.1)))
 
   ;; Handle jump in block
@@ -485,23 +542,29 @@
     (optimize-predicates
       `(module
         (define L.block.2 (jump L.block.1))
-        (define L.block.1 (if (true) (halt 42) (halt 2)))
+        (define L.block.1
+          (if (true)
+              (begin (set! rax 42) (jump done))
+              (begin (set! rax 2) (jump done))))
         (jump L.block.2)))
     `(module
       (define L.block.2 (jump L.block.1))
-      (define L.block.1 (halt 42))
+      (define L.block.1 (begin (set! rax 42) (jump done)))
       (jump L.block.2)))
 
   ;; (set! loc label) place label into location and jump
   (check-equal?
     (optimize-predicates
       `(module
-        (define L.block.1 (if (true) (halt 42) (halt 2)))
+        (define L.block.1
+          (if (true)
+              (begin (set! rax 42) (jump done))
+              (begin (set! rax 2) (jump done))))
         (begin
           (set! rax L.block.1)
           (jump rax))))
     `(module
-      (define L.block.1 (halt 42))
+      (define L.block.1 (begin (set! rax 42) (jump done)))
         (begin
           (set! rax L.block.1)
           (jump rax))))
@@ -510,34 +573,36 @@
   (check-equal?
     (optimize-predicates
       `(module
-        (define L.block.1 (begin (set! rax 5) (if (= rax 5) (halt 42) (halt 2))))
+        (define L.block.1
+          (begin
+            (set! rax 5)
+            (if (= rax 5)
+                (begin (set! rax 42) (jump done))
+                (begin (set! rax 2) (jump done)))))
         (jump L.block.1)))
     `(module
-      (define L.block.1 (begin (set! rax 5) (halt 42)))
+      (define L.block.1
+        (begin
+          (set! rax 5)
+          (begin (set! rax 42) (jump done))))
       (jump L.block.1)))
 
   ;; Binop with unknown values is identity
-  (check-equal?
-    (optimize-predicates
-      `(module
-        (begin
-          (set! rax (+ rax 1))
-          (halt rax))))
+  (check-no-change?
     `(module
       (begin
         (set! rax (+ rax 1))
-        (halt rax))))
+        (jump done))))
 
   ;; int64 is bound
-  (check-equal?
-    (optimize-predicates
-      '(module
-        (begin
-          (set! rax 9223372036854775807)
-          (set! rax (+ rax 1))
-          (if (> rax 9223372036854775807)
-              (begin (set! rax 2) (jump done))
-              (jump done)))))
+  (check-equal-interp?
+    '(module
+      (begin
+        (set! rax 9223372036854775807)
+        (set! rax (+ rax 1))
+        (if (> rax 9223372036854775807)
+            (begin (set! rax 2) (jump done))
+            (jump done))))
     '(module
       (begin
         (set! rax 9223372036854775807)
@@ -545,31 +610,33 @@
         (jump done))))
 
   ;; check set inside of pred evaluation
-  (check-equal?
-    (optimize-predicates
-      '(module
-        (begin
-          (set! fv1 9)
-          (if (begin (set! fv2 10) (= fv1 9))
-              (if (= fv2 10) (halt fv2) (halt 17))
-              (halt fv1)))))
+  (check-equal-interp?
     '(module
       (begin
         (set! fv1 9)
-        (begin (set! fv2 10) (halt fv2)))))
+        (if (begin (set! fv2 10) (= fv1 9))
+            (if (= fv2 10)
+                (begin (set! rax 22) (jump done))
+                (begin (set! rax 17) (jump done)))
+            (begin (set! rax fv1) (jump done)))))
+    '(module
+      (begin
+        (set! fv1 9)
+        (begin
+          (set! fv2 10)
+          (begin (set! rax 22) (jump done))))))
 
   ;; check set inside of pred inside of if tail pred evaluation
-  (check-equal?
-    (optimize-predicates
-      '(module
-        (begin
-          (set! fv1 9)
-          (set! fv2 2)
-          (if (if (begin (set! fv1 fv2) (= fv1 9))
-                  (begin (set! fv2 9) (false))
-                  (begin (set! fv2 fv1) (= fv2 2)))
-              (halt 2)
-              (halt 3)))))
+  (check-equal-interp?
+    '(module
+      (begin
+        (set! fv1 9)
+        (set! fv2 2)
+        (if (if (begin (set! fv1 fv2) (= fv1 9))
+                (begin (set! fv2 9) (false))
+                (begin (set! fv2 fv1) (= fv2 2)))
+            (begin (set! rax 2) (jump done))
+            (begin (set! rax 3) (jump done)))))
     '(module
       (begin
         (set! fv1 9)
@@ -578,21 +645,22 @@
           (set! fv1 fv2)
           (begin
             (set! fv2 fv1)
-            (halt 2))))))
+            (begin (set! rax 2) (jump done)))))))
 
   ;; check set inside of pred inside of if effect pred evaluation
-  (check-equal?
-    (optimize-predicates
-      '(module
-        (begin
-          (set! fv1 9)
-          (set! fv2 2)
-          (if (if (begin (set! fv1 fv2) (= fv1 9))
-                  (begin (set! fv2 9) (false))
-                  (begin (set! fv2 fv1) (= fv2 2)))
-              (set! fv3 fv2)
-              (set! fv3 11))
-          (if (= fv1 2) (halt 3) (halt 15)))))
+  (check-equal-interp?
+    '(module
+      (begin
+        (set! fv1 9)
+        (set! fv2 2)
+        (if (if (begin (set! fv1 fv2) (= fv1 9))
+                (begin (set! fv2 9) (false))
+                (begin (set! fv2 fv1) (= fv2 2)))
+            (set! fv3 fv2)
+            (set! fv3 11))
+        (if (= fv1 2)
+            (begin (set! rax 3) (jump done))
+            (begin (set! rax 15) (jump done)))))
     '(module
       (begin
         (set! fv1 9)
@@ -602,75 +670,74 @@
           (begin
             (set! fv2 fv1)
             (set! fv3 fv2)))
-        (halt 3))))
+        (begin (set! rax 3) (jump done)))))
 
   ;; Environment following undecided branch is intersect
-  (check-equal?
-    (optimize-predicates
-      '(module
-        (define L.test.1
-          (begin
-            (if (= fv0 2)
-                (set! fv1 3)
-                (set! fv1 3))
-            (if (= fv1 3) (halt 2) (halt 8))))
-        (begin
-          (halt 3))))
+  (check-equal-interp?
     '(module
       (define L.test.1
         (begin
           (if (= fv0 2)
               (set! fv1 3)
               (set! fv1 3))
-          (halt 2)))
+          (if (= fv1 3)
+              (set! rax 2)
+              (set! rax 8))
+          (jump done)))
       (begin
-        (halt 3))))
+        (set! fv0 2)
+        (jump L.test.1)))
+    '(module
+      (define L.test.1
+        (begin
+          (if (= fv0 2)
+              (set! fv1 3)
+              (set! fv1 3))
+          (set! rax 2)
+          (jump done)))
+      (begin
+        (set! fv0 2)
+        (jump L.test.1))))
 
   ;; Value following undecided set! is undefined
-  (check-equal?
-    (optimize-predicates
-      '(module
-        (define L.test.1
-          (begin
-            (set! fv0 9)
-            (set! fv0 (+ fv0 fv1))
-            (if (= fv1 9) (halt 1) (halt 2))))
-        (define L.test.2
-          (begin
-            (set! fv0 12)
-            (set! fv0 fv1)
-            (if (= fv1 12) (halt 3) (halt 4))))
-        (begin
-          (halt 3))))
+  (check-no-change?
     '(module
       (define L.test.1
         (begin
           (set! fv0 9)
           (set! fv0 (+ fv0 fv1))
-          (if (= fv1 9) (halt 1) (halt 2))))
+          (if (= fv1 9)
+              (set! rax 1)
+              (set! rax 2))
+          (jump done)))
       (define L.test.2
         (begin
           (set! fv0 12)
           (set! fv0 fv1)
-          (if (= fv1 12) (halt 3) (halt 4))))
+          (if (= fv1 12)
+              (set! rax 3)
+              (set! rax 4))
+          (jump done)))
       (begin
-        (halt 3))))
+        (jump done))))
 
   ;; Value is not carried to another branch in undecided if
-  (check-equal?
-    (optimize-predicates
-      '(module
-        (define L.test.1
-          (if (= fv1 4)
-              (begin (set! fv1 9) (if (= fv2 10) (halt 1) (halt 2)))
-              (begin (set! fv2 10) (if (= fv1 9) (halt 3) (halt 4)))))
-        (begin
-          (halt 4))))
+  (check-no-change?
     '(module
       (define L.test.1
         (if (= fv1 4)
-            (begin (set! fv1 9) (if (= fv2 10) (halt 1) (halt 2)))
-            (begin (set! fv2 10) (if (= fv1 9) (halt 3) (halt 4)))))
+            (begin
+              (set! fv1 9)
+              (if (= fv2 10)
+                  (set! rax 1)
+                  (set! rax 2))
+              (jump done))
+            (begin
+              (set! fv2 10)
+              (if (= fv1 9)
+                  (set! rax 3)
+                  (set! rax 4))
+              (jump done))))
       (begin
-        (halt 4))))
+        (jump done))))
   )
