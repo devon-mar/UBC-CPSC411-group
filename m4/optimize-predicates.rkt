@@ -67,6 +67,7 @@
          env)]))
 
   ;; pred (env -> tail) (env -> tail) env -> tail
+  ;; pred (env -> effect) (env -> effect) env -> effect
   (define (convert-if-tail pred tfn1 tfn2 env)
     (match pred
       [`(true) ;; base case
@@ -86,28 +87,6 @@
          pred
          (lambda (e) (convert-if-tail pred1 tfn1 tfn2 e))
          (lambda (e) (convert-if-tail pred2 tfn1 tfn2 e))
-         env)]))
-
-  ;; pred (effect -> effect env) (effect -> effect env) env -> effect
-  (define (convert-if-effect pred efn1 efn2 env)
-    (match pred
-      [`(true) ;; base case
-       (efn1 env)]
-      [`(false) ;; base case
-       (efn2 env)]
-      [`(not ,nested-pred)
-       (convert-if-effect nested-pred efn2 efn1 env)]
-      [`(begin ,effects ... ,nested-pred)
-       (define new-effects (convert-effect-list effects env))
-       (define new-effect-t (convert-if-effect nested-pred efn1 efn2 env))
-       `(begin ,@new-effects ,new-effect-t)]
-      [`(,relop ,loc ,opand) ;; base case
-       (convert-relop relop loc opand efn1 efn2 env)]
-      [`(if ,pred ,pred1 ,pred2)
-       (convert-if-effect
-         pred
-         (lambda (e) (convert-if-effect pred1 efn1 efn2 e))
-         (lambda (e) (convert-if-effect pred2 efn1 efn2 e))
          env)]))
 
   ;; relop loc opand (env -> tail) (env -> tail) env -> tail
@@ -142,7 +121,7 @@
       [`(begin ,effects ...)
        `(begin ,@(convert-effect-list effects env))]
       [`(if ,pred ,effect1 ,effect2)
-       (convert-if-effect
+       (convert-if-tail
          pred
          (lambda (e) (convert-effect effect1 e))
          (lambda (e) (convert-effect effect2 e))
