@@ -386,4 +386,19 @@
          (set-empty? (info-ref bar-info 'locals))
          (set=? (info-ref info 'locals) '(a.1 b.1 x.1))))
 
+
+(check-match
+    (uncover-locals
+      `(module ((new-frames ()))
+         (define L.bar.1 ((new-frames ())) (begin (return-point L.barreturn.1 ,m5-tail-2) (jump r15)))
+         ,m5-tail-1))
+    `(module
+       ,info
+       (define L.bar.1 ,bar-info (begin (return-point L.barreturn.1 ,bar-tail) (jump r15)))
+       ,tail)
+    (and
+      (equal? tail m5-tail-1)
+      (equal? bar-tail m5-tail-2)
+      (equal? (list->set (info-ref bar-info 'locals)) m5-locals-2)
+      (equal? (list->set (info-ref info 'locals)) m5-locals-1)))
   )
