@@ -15,7 +15,8 @@
   (-> nested-asm-lang-fvars-v6? nested-asm-lang-fvars-v6?)
 
   ;; env loc triv -> void
-  ;; Update loc to triv if it is decided (integer), otherwise remove key
+  ;; Update loc to triv in env if it is decided (integer),
+  ;; otherwise remove key
   (define (env-update env loc triv)
     (if (integer? triv)
         (set-box! env (dict-set (unbox env) loc triv))
@@ -69,6 +70,8 @@
 
   ;; pred (env -> tail) (env -> tail) env -> tail
   ;; pred (env -> effect) (env -> effect) env -> effect
+  ;; Convert an (if pred t1 t2) where
+  ;; tfn1 creates t1 and tfn2 creates t2
   (define (convert-if pred tfn1 tfn2 env)
     (match pred
       [`(true) ;; base case
@@ -92,6 +95,8 @@
 
   ;; relop loc opand (env -> tail) (env -> tail) env -> tail
   ;; relop loc opand (env -> effect) (env -> effect) env -> effect
+  ;; Convert an (if (relop loc opand) t1 t2) where
+  ;; tfn1 creates t1 and tfn2 creates t2
   (define (convert-relop relop loc opand tfn1 tfn2 env)
     (define a1 (convert-triv loc env))
     (define a2 (convert-opand opand env))
@@ -99,7 +104,9 @@
         (if ((symbol->relop relop) a1 a2)
             (tfn1 env)
             (tfn2 env))
-        (let ([env1 (box (unbox env))] [env2 (box (unbox env))])
+        (let ([env1 (box (unbox env))]
+              [env2 (box (unbox env))])
+          ;; interpret both branches with env copies, merge envs after
           (begin0
             `(if (,relop ,loc ,opand) ,(tfn1 env1) ,(tfn2 env2))
             (set-box! env (set-intersect (unbox env1) (unbox env2)))))))
