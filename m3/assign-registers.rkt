@@ -16,7 +16,6 @@
 ;; Assumes current-assignable-registers parameter to be set
 (define/contract (assign-registers p)
   (-> asm-pred-lang-v6/framed? asm-pred-lang-v6/spilled?)
-  (define fvar-counter 0)
 
   ;; (list aloc ...) (list (aloc (loc ...))) -> (values aloc (list aloc ...) (list (aloc (aloc...))...))
   ;; removes low degree abstract location from aloc-list and return tuple of
@@ -30,19 +29,10 @@
     (define removed (car sorted))
     (values removed (remove removed aloc-list) (remove-vertex conf-list removed)))
 
-  ;; aloc ((aloc loc)...) (list fvar) -> (values ((aloc loc) ...)  (aloc ...) )
-  ;; generates new aloc assignment by mapping aloc to an fvar
-  (define (assign-aloc-to-fvar aloc prev-assignment)
-    (values prev-assignment (list aloc)))
-
-  ;; aloc ((aloc loc)...) (list register) -> (values ((aloc loc) ...)  (aloc ...) )
-  ;; generates new aloc assignment by mapping aloc to a register in the whitelist
-  (define (assign-aloc-to-reg aloc prev-assignment whitelist-regs)
-    (values (cons (list aloc (first whitelist-regs)) prev-assignment) '()))
-
   ;; aloc (list aloc ...) ((aloc loc)...) -> (values ((aloc loc) ...)  (aloc ...) )
   ;; Either assigns aloc to a register that does not conflict with existing assignments nor
-  ;; its conflict list, or marks aloc as a spilled value
+  ;; its conflict list, or marks aloc as a spilled value. Returns pair of values. The first is a
+  ;; list of register assignments. The second is a list of locals to be spilled to fvars
   (define (assign-aloc aloc conf-list prev-assignment)
     (define conflicts (get-neighbors conf-list aloc))
     (define-values (blacklist-regs)
@@ -62,12 +52,12 @@
               reg-list)])))
     (define whitelist-regs (set-subtract (current-assignable-registers) blacklist-regs))
     (if (empty? whitelist-regs)
-        (assign-aloc-to-fvar aloc prev-assignment)
-        (assign-aloc-to-reg aloc prev-assignment whitelist-regs)))
+        (values prev-assignment (list aloc)) ;; Add aloc to list of locals to be spilled
+        (values (cons (list aloc (first whitelist-regs)) prev-assignment) '())))
 
   ;; aloc-list conf-list -> (values ((aloc loc) ...) (aloc ...) )
-  ;; Takes list of abstract locations and list of conflicts, returns tuple of
-  ;; register assignment for the abstract locations and a list of spilled locals
+  ;; Takes list of abstract locations and list of conflicts,  Returns pair of values. The first is a
+  ;; list of register assignments. The second is a list of locals to be spilled to fvars
   (define (generate-assignment aloc-list conf-list)
     (cond
       [(empty? aloc-list) (values '() '())]
@@ -140,6 +130,7 @@
                (set! z.5 (+ z.5 t.6))
                (jump r15))))
 
+  ;; Case with all registers available
   (check-match
     (assign-registers t2)
     `(module
@@ -174,6 +165,7 @@
       (equal? locals `())
       (equal? (list->set (map first assignments)) (list->set (map first `((p.1 r15) (z.5 r14) (y.4 r13) (x.3 r9) (w.2 r8) (t.6 r9) (v.1 r15)))))))
 
+  ;; Case with restricted number of registers
   (check-match
     (parameterize ([current-assignable-registers '(r9 r10)]) (assign-registers t2))
     `(module
@@ -207,34 +199,52 @@
         (equal? (list->set (map first assignments)) (list->set (map first `((p.1 r10) (z.5 r9) (v.1 r10)))))
         (equal? (list->set locals) (list->set `(t.6 w.2 x.3 y.4)))))
 
-  (check-equal? (assign-registers '(module ((locals (x.1)) (conflicts ((x.1 ()))) (assignment ()))
-                                           (begin
-                                             (set! x.1 42)
-                                             (jump r15))))
-                '(module ((locals ()) (conflicts ((x.1 ()))) (assignment ((x.1 r15))))
-                         (begin
-                           (set! x.1 42)
-                           (jump r15))))
+  (check-equal? (assign-registers '(module 
+                                      ((locals (x.1))
+                                       (conflicts ((x.1 ())))
+                                       (assignment ()))
+                                      (begin
+                                        (set! x.1 42)
+                                        (jump r15))))
+                '(module 
+                  ((locals ())
+                   (conflicts ((x.1 ())))
+                   (assignment ((x.1 r15))))
+                    (begin
+                      (set! x.1 42)
+                      (jump r15))))
   (check-equal? (parameterize ([current-assignable-registers '(r9)])
-                  (assign-registers '(module ((locals (x.1)) (conflicts ((x.1 ()))) (assignment ()))
-                                             (begin
-                                               (set! x.1 42)
-                                               (jump r15)))))
-                '(module ((locals ()) (conflicts ((x.1 ()))) (assignment ((x.1 r9))))
-                         (begin
-                           (set! x.1 42)
-                           (jump r15))))
+                  (assign-registers '(module 
+                                      ((locals (x.1))
+                                       (conflicts ((x.1 ())))
+                                       (assignment ()))
+                                        (begin
+                                          (set! x.1 42)
+                                          (jump r15)))))
+                '(module
+                  ((locals ())
+                   (conflicts ((x.1 ())))
+                   (assignment ((x.1 r9))))
+                  (begin
+                    (set! x.1 42)
+                    (jump r15))))
   (check-equal? (parameterize ([current-assignable-registers '()])
-                  (assign-registers '(module ((locals (x.1)) (conflicts ((x.1 ()))) (assignment ()))
-                                             (begin
-                                               (set! x.1 42)
-                                               (jump r15)))))
-                '(module ((locals (x.1)) (conflicts ((x.1 ()))) (assignment ()))
-                         (begin
-                           (set! x.1 42)
-                           (jump r15))))
+                  (assign-registers '(module
+                                      ((locals (x.1))
+                                       (conflicts ((x.1 ())))
+                                       (assignment ()))
+                                      (begin
+                                        (set! x.1 42)
+                                        (jump r15)))))
+                '(module
+                  ((locals (x.1))
+                   (conflicts ((x.1 ())))
+                   (assignment ()))
+                  (begin
+                    (set! x.1 42)
+                    (jump r15))))
 
-  ;; check does not assign to conflicting register
+  ;; check does not assign to conflicting aloc
   (check-match
     (assign-registers
       '(module ((locals (x.1 x.2))
@@ -252,8 +262,28 @@
     (and 
       (dict-equal? assignment '((x.2 r13) (x.1 r14)))
       (equal? locals '())))
+  
 
-  ;; check does not assign to conflicting fvar
+  ;; check does not assign with conflicting register
+  (check-equal? (parameterize
+                  ([current-assignable-registers '(r9)])
+                  (assign-registers 
+                    '(module 
+                      ((locals (x.1))
+                        (conflicts ((x.1 (r9)) (r9 (x.1))))
+                        (assignment ()))
+                      (begin
+                        (set! x.1 42)
+                        (jump r15)))))
+                '(module 
+                  ((locals (x.1))
+                   (conflicts ((x.1 (r9)) (r9 (x.1))))
+                   (assignment ()))
+                    (begin
+                      (set! x.1 42)
+                      (jump r15))))
+
+  ;; check does not assign with conflicting registers
   (check-match
     (parameterize ([current-assignable-registers '()])
       (assign-registers
@@ -272,7 +302,6 @@
     (equal? locals '(x.2 x.1)))
 
   ;; assignment in procedures
-  ;; TODO Figure out assignment of fv
   (check-match
     (assign-registers
       '(module ((locals (x.1 x.2))
@@ -302,5 +331,4 @@
          (dict-equal? assignment2 '((x.1 r14) (x.3 r15)))
          (equal? locals2 '())
          (dict-equal? assignment3 '())
-         (equal? locals3 '())))
-)
+         (equal? locals3 '()))))
