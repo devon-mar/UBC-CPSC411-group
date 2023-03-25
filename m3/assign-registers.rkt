@@ -283,7 +283,7 @@
                       (set! x.1 42)
                       (jump r15))))
 
-  ;; check does not assign with conflicting registers
+  ;; check does not assign with empty current-assignable-registers
   (check-match
     (parameterize ([current-assignable-registers '()])
       (assign-registers
@@ -299,7 +299,7 @@
             (begin
               (set! x.1 42)
               (jump r15)))
-    (equal? locals '(x.2 x.1)))
+    (equal? (list->set locals) (list->set '(x.2 x.1))))
 
   ;; assignment in procedures
   (check-match
