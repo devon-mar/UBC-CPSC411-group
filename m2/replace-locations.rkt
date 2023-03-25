@@ -2,351 +2,259 @@
 
 (require
   cpsc411/compiler-lib
-  cpsc411/langs/v5
-  "../utils/compiler-utils.rkt")
+  cpsc411/langs/v6)
 
 (provide replace-locations)
 
 ;; Milestone 2 Exercise 8
 ;; Milestone 4 Exercise 12
 ;; Milestone 5 Exercise 11
+;; Milestone 6 Exercise 14
 ;;
-;; Compiles Asm-Pred-lang /assignments to Nested-asm-lang, replaced each abstract
-;; location with its assigned physical location from the assignment info field.
+;; Compiles Asm-pred-lang v6/assignments to Nested-asm-lang-fvars v6 by
+;; replacing all abstract location with physical locations using the
+;; assignment described in the assignment info field.
 (define/contract (replace-locations p)
-  (-> asm-pred-lang-v5/assignments? nested-asm-lang-v5?)
+  (-> asm-pred-lang-v6/assignments? nested-asm-lang-fvars-v6?)
 
-  ;; Returns true iff l is a rloc in Asm-Pred-Lang (or loc in Nested-Asm-Lang)
-  ;; any -> boolean
-  (define (rloc? l)
-    (or (register? l) (fvar? l)))
-
-  (define assignments?
-    (listof (cons/c aloc? (listof rloc?))))
-
-  ; Returns the assignment in a for aloc.
-  (define/contract (assignment-ref a aloc)
-    (-> assignments? aloc? rloc?)
-    (car (dict-ref a aloc)))
-
-  ;; Replaces each aloc in t with its assigned physical location from a
-  ;;
-  ;; a: assignments?
-  ;; t: asm-pred-lang-v5-trg
-  ;; -> nested-asm-lang-v5-trg
-  (define/contract (replace-locations-trg a t)
-    (-> assignments? any/c any/c)
-    (match t
-      [(? label?) t]
-      [loc (replace-locations-loc a loc)]))
-
-  ;; Replaces each aloc in l with its assigned physical location from a
-  ;;
-  ;; a: assignments?
-  ;; l: asm-pred-lang-v5-loc
-  ;; -> nested-asm-lang-v5-loc
-  (define/contract (replace-locations-loc a l)
-    (-> assignments? (or/c aloc? rloc?) rloc?)
-    (match l
-      [(? aloc?) (assignment-ref a l)]
-      [rloc rloc]))
-
-  ;; Replaces each aloc in t with its assigned physical location from a.
-  ;;
-  ;; a: assignments?
-  ;; t: asm-pred-lang-v5/assignments-triv
-  ;; -> nested-asm-lang-v5-triv
-  (define/contract (replace-locations-triv a t)
-    (-> assignments? any/c any/c)
-    (match t
-      [(? label?) t]
-      [opand (replace-locations-opand a opand)]))
-
-  ;; Replaces each aloc in o with its assigned physical location from a.
-  ;;
-  ;; a: assignments?
-  ;; o: asm-pred-lang-v5-opand
-  ;; -> nested-asm-lang-v5-opand
-  (define/contract (replace-locations-opand a o)
-    (-> assignments? any/c any/c)
-    (match o
-      [(? int64?) o]
-      [loc (replace-locations-loc a loc)]))
-
-  ;; Replaces each aloc in p with its assigned physical location from a.
-  ;;
-  ;; a: assignments?
-  ;; p: asm-pred-lang-v5/assignments-pred
-  ;; -> nested-asm-lang-v5-pred
-  (define/contract (replace-locations-pred a p)
-    (-> assignments? any/c any/c)
-    (match p
-      [`(true) p]
-      [`(false) p]
-      [`(not ,pred) `(not ,(replace-locations-pred a pred))]
-      [`(begin ,effects ... ,pred)
-       `(begin
-         ,@(map (lambda (e) (replace-locations-effect a e)) effects)
-         ,(replace-locations-pred a pred))]
-      [`(if ,ppred ,pred1 ,pred2)
-       `(if ,(replace-locations-pred a ppred)
-            ,(replace-locations-pred a pred1)
-            ,(replace-locations-pred a pred2))]
-      [`(,relop ,loc ,opand)
-       `(,relop ,(replace-locations-loc a loc) ,(replace-locations-opand a opand))]))
-
-  ;; Replaces each aloc in e with its assigned physical location from a.
-  ;;
-  ;; a: assignments?
-  ;; e: asm-pred-lang-v5/assignments-effect
-  ;; -> nested-asm-lang-v5-effect
-  (define/contract (replace-locations-effect a e)
-    (-> assignments? any/c any/c)
-    (match e
-      [`(set! ,loc (,binop ,loc ,triv))
-        `(set!
-           ,(replace-locations-loc a loc)
-           (,binop ,(replace-locations-loc a loc)
-                   ,(replace-locations-triv a triv)))]
-      [`(set! ,loc ,triv)
-        `(set! ,(replace-locations-loc a loc) ,(replace-locations-triv a triv))]
-      ;; removed tail `e` from template
-      [`(begin ,es ...)
-        `(begin
-           ,@(map (lambda (e) (replace-locations-effect a e)) es))]
-      [`(if ,pred ,effect1 ,effect2)
-       `(if ,(replace-locations-pred a pred)
-            ,(replace-locations-effect a effect1)
-            ,(replace-locations-effect a effect2))]))
-
-  ;; Replaces each aloc in t with its assigned physical location from a.
-  ;;
-  ;; a: assignments?
-  ;; t: asm-pred-lang-v5/assignments-tail
-  ;; -> nested-asm-lang-v5-tail
-  (define/contract (replace-locations-tail a t)
-    (-> assignments? any/c any/c)
-    (match t
-      [`(halt ,opand) `(halt ,(replace-locations-opand a opand))]
-      [`(jump ,trg ,loc ...) `(jump ,(replace-locations-trg a trg))]
-      [`(begin ,es ... ,tail)
-        `(begin
-           ,@(map (lambda (e) (replace-locations-effect a e)) es)
-           ,(replace-locations-tail a tail))]
-      [`(if ,pred ,tail1 ,tail2)
-       `(if ,(replace-locations-pred a pred)
-            ,(replace-locations-tail a tail1)
-            ,(replace-locations-tail a tail2))]))
-
-  ;; Replaces each aloc in tail with its assigned physical location
-  ;; from the assignments in info.
-  ;; proc ::= (define label tail)
-  ;;
-  ;; label info tail -> proc
-  (define (replace-locations-proc label info tail)
-    `(define ,label ,(replace-locations-tail (info-ref info 'assignment) tail)))
-
-  ;; Replaces each aloc in t with its assigned physical location from the assignments
-  ;; in p's info.
-  ;; asm-pred-lang-v5/assignments-p -> nested-asm-lang-v5-p
+  ;; asm-pred-lang-v6/assignments-p -> nested-asm-lang-fvars-v6-p
   (define (replace-locations-p p)
     (match p
       [`(module ,info (define ,labels ,infos ,tails) ... ,tail)
-       `(module
-         ,@(map replace-locations-proc labels infos tails)
-         ,(replace-locations-tail (info-ref info 'assignment) tail))]))
+        `(module
+           ,@(map replace-locations-proc labels infos tails)
+           ,(replace-locations-tail (info-ref info 'assignment) tail))]))
+
+  ;; tail: asm-pred-lang-v6/assignments-tail
+  ;; -> nested-asm-lang-fvars-v6-proc
+  (define/contract (replace-locations-proc label info tail)
+    (-> label? info? any/c any/c)
+    `(define
+       ,label
+       ,(replace-locations-tail (info-ref info 'assignment) tail)))
+
+  ;; assignment asm-pred-lang-v6/assignments-pred -> nested-asm-lang-fvars-v6-pred
+  (define (replace-locations-pred as p)
+    (match p
+      [`(true)
+        p]
+      [`(false)
+        p]
+      [`(not ,p)
+        `(not ,(replace-locations-pred as p))]
+      [`(begin ,es ... ,p)
+        `(begin
+           ,@(map (lambda (e) (replace-locations-effect as e)) es)
+           ,(replace-locations-pred as p))]
+      [`(if ,p1 ,p2 ,p3)
+        `(if
+           ,(replace-locations-pred as p1)
+           ,(replace-locations-pred as p2)
+           ,(replace-locations-pred as p3))]
+      [`(,r ,l ,o)
+        `(,r
+          ,(replace-locations-loc as l)
+          ,(replace-locations-opand as o))]))
+
+  ;; assignment asm-pred-lang-v6/assignments-tail -> nested-asm-lang-fvars-v6-tail
+  (define (replace-locations-tail as t)
+    (match t
+      [`(jump ,trg ,_ ...)
+        `(jump ,(replace-locations-trg as trg))]
+      [`(begin ,es ... ,t)
+        `(begin
+           ,@(map (lambda (e) (replace-locations-effect as e)) es)
+           ,(replace-locations-tail as t))]
+      [`(if ,p ,t1 ,t2)
+        `(if
+           ,(replace-locations-pred as p)
+           ,(replace-locations-tail as t1)
+           ,(replace-locations-tail as t2))]))
+
+  ;; assignment asm-pred-lang-v6/assignments-effect -> nested-asm-lang-fvars-v6-effect
+  (define (replace-locations-effect as e)
+    (match e
+      [`(set! ,loc (,binop ,loc ,opand))
+        `(set!
+           ,(replace-locations-loc as loc)
+           (,binop ,(replace-locations-loc as loc)
+                   ,(replace-locations-opand as opand)))]
+      [`(set! ,loc ,triv)
+        `(set! ,(replace-locations-loc as loc) ,(replace-locations-triv as triv))]
+      ;; modified template - removed tail effect
+      [`(begin ,es ...)
+        `(begin
+           ,@(map (lambda (e) (replace-locations-effect as e)) es))]
+      [`(if ,p ,e1 ,e2)
+        `(if
+           ,(replace-locations-pred as p)
+           ,(replace-locations-effect as e1)
+           ,(replace-locations-effect as e2))]
+      [`(return-point ,label ,tail)
+        `(return-point ,label ,(replace-locations-tail as tail))]))
+
+  ;; assignment asm-pred-lang-v6/assignments-opand -> nested-asm-lang-fvars-v6-opand
+  (define (replace-locations-opand as o)
+    (match o
+      [(? int64?) o]
+      [_ (replace-locations-loc as o)]))
+
+  ;; assignment asm-pred-lang-v6/assignments-triv -> nested-asm-lang-fvars-v6-triv
+  (define (replace-locations-triv as t)
+    (match t
+      [(? label?) t]
+      [_ (replace-locations-opand as t)]))
+
+  ;; assignment asm-pred-lang-v6/assignments-loc -> nested-asm-lang-fvars-v6-loc
+  (define (replace-locations-loc as l)
+    (-> info? any/c (or/c register? fvar?))
+    (match l
+      [(? aloc?) (info-ref as l)]
+      [_ l]))
+
+  ;; assignment asm-pred-lang-v6/assignments-trg -> nested-asm-lang-fvars-v6-trg
+  (define (replace-locations-trg as t)
+    (match t
+      [(? label?) t]
+      [_ (replace-locations-loc as t)]))
+
+  ;; not used
+  #;
+  (define (replace-locations-binop b)
+    (match b
+      ['* (void)]
+      ['+ (void)]
+      ['- (void)]))
+  
+  ;; not used
+  #;
+  (define (replace-locations-relop r)
+    (match r
+      ['< (void)]
+      ['<= (void)]
+      ['= (void)]
+      ['>= (void)]
+      ['> (void)]
+      ['!= (void)]))
 
   (replace-locations-p p))
 
 (module+ test
   (require rackunit)
 
-  (check-equal?
-    (replace-locations
-      '(module ((locals (x.1)) (assignment ((x.1 rax))))
-        (begin
-          (set! x.1 0)
-          (halt x.1))))
-    '(module (begin (set! rax 0) (halt rax))))
-  (check-equal?
-    (replace-locations
-      '(module ((locals (x.1 y.1 w.1))
-                (assignment ((x.1 rax) (y.1 rbx) (w.1 r9))))
-        (begin
-          (set! x.1 0)
-          (set! y.1 x.1)
-          (set! w.1 (+ w.1 y.1))
-          (halt w.1))))
-    '(module (begin (set! rax 0) (set! rbx rax) (set! r9 (+ r9 rbx)) (halt r9))))
+  ;; tail/(jump trg loc ...)
+  ;; tail/(begin effect ... tail)
+  (define-syntax-rule (check-42 as es)
+    (check-42p
+      `(module
+         ((assignment ((tmp-ra.1 r15) ,@as)))
+         (begin
+           (set! tmp-ra.1 r15)
+           (begin
+             ,@es
+             (jump tmp-ra.1 rbp rax))))))
 
-  ;; nested begins
-  (check-equal?
-    (replace-locations
-      '(module ((locals (x.1)) (assignment ((x.1 rax))))
-        (begin
-          (begin
-            (begin
-              (set! x.1 0)
-              (set! x.1 42)))
-          (halt x.1))))
-    '(module
-      (begin
-        (begin
-          (begin
-            (set! rax 0)
-            (set! rax 42)))
-        (halt rax))))
+  ;; as: (listof (list/c aloc? rloc"))
+  ;; es: (listof effect)
+  (define-check (check-42p p)
+    (check-equal?
+      (interp-nested-asm-lang-fvars-v6 (replace-locations p))
+      42))
 
-  ;; replace in ifs
-  (check-equal?
-    (replace-locations
+  (define rax (current-return-value-register))
+
+  (check-42
+    `((x.1 ,rax))
+    `((set! x.1 42)))
+
+  (check-42
+    `((x.1 ,rax) (a.1 fv0) (b.1 r8) (c.1 r9))
+    `((set! b.1 10)
+      ;; effect/(set! loc triv)
+      (set! a.1 b.1)
+      (set! a.1 10)
+      (set! c.1 10)
+      ;; effect/(if pred effect effect)
+      ;; pred/(relop loc opand)
+      (if (= a.1 10)
+          (set! x.1 42)
+          (set! x.1 0))))
+
+  (check-42
+    `((a.1 r8) (b.1 fv0))
+    `((set! a.1 5)
+      (set! b.1 5)
+      ;; pred/(true)
+      ;; pred/(false)
+      ;; pred/(not pred)
+      ;; pred/(if pred pred pred)
+      (if (if (= a.1 b.1) (if (= a.1 b.1) (true) (false)) (if (not (!= a.1 b.1)) (true) (false)))
+        (set! ,rax 42)
+        (set! ,rax 0))))
+
+  (check-42
+    `((a.1 r8) (b.1 r9))
+    ;; pred/(begin effect ... pred)
+    `((set! a.1 5)
+      (set! b.1 5)
+      ;; effect/(set! loc_1 (binop loc_1 opand))
+      (if (begin (set! a.1 (+ a.1 b.1)) (set! b.1 10) (= a.1 b.1))
+        ;; effect/(begin effect ... effect)
+        (begin
+          (set! ,rax 7)
+          (set! ,rax (* ,rax 6)))
+        (set! ,rax 0))))
+
+  #;
+  (parameterize ([current-parameter-registers '()])
+    (pretty-display
+     ((compose
+       assign-frame-variables
+       assign-registers
+       allocate-frames
+       assign-call-undead-variables
+       conflict-analysis
+       undead-analysis
+       uncover-locals
+       select-instructions
+       impose-calling-conventions
+       normalize-bind
+       sequentialize-let
+       uniquify)
       '(module
-        ((locals (x.1 x.2 x.3 x.4))
-         (assignment ((x.1 rdx) (x.2 r12) (x.3 fv0) (x.4 fv7))))
-        (begin
-          (set! x.1 5)
-          (set! x.3 x.1)
-          (if (= x.1 2)
-              (set! x.2 9)
-              (begin
-                (set! x.4 1)
-                (if (> x.3 x.2)
-                    (set! x.3 (* x.3 x.2))
-                    (set! x.2 (* x.2 x.3)))))
-          (if (if (= x.3 x.2) (not (< x.3 2)) (>= x.4 9))
-              (halt x.1)
-              (halt x.4)))))
-    '(module
-      (begin
-        (set! rdx 5)
-        (set! fv0 rdx)
-        (if (= rdx 2)
-            (set! r12 9)
-            (begin
-              (set! fv7 1)
-              (if (> fv0 r12)
-                  (set! fv0 (* fv0 r12))
-                  (set! r12 (* r12 fv0)))))
-        (if (if (= fv0 r12) (not (< fv0 2)) (>= fv7 9))
-            (halt rdx)
-            (halt fv7)))))
+         (define foo (lambda () 50))
+         (let ([x (call foo)])
+           (if (= 1 2)
+             0
+             (- x 8)))))))
 
-  ;; replace in preds
-  (check-equal?
-    (replace-locations
-      '(module
-        ((locals (x.1 x.2 x.3 x.4 x.5))
-         (assignment ((x.1 rdx) (x.2 r12) (x.3 fv0) (x.4 fv7) (x.5 fv5))))
-        (begin
-          (set! x.1 5)
-          (set! x.3 x.1)
-          (if (if (true) (= x.1 2) (not (not (!= x.3 9))))
-              (set! x.2 9)
-              (if (begin (> x.3 x.2))
-                  (set! x.3 (* x.3 x.2))
-                  (set! x.2 (* x.2 x.3))))
-          (if (begin
-                (begin (set! x.5 20))
-                (set! x.2 x.4)
-                (if (<= x.2 9) (set! x.4 9) (set! x.4 (+ x.4 x.4)))
-                (if (false) (not (< x.3 2)) (false)))
-              (halt x.1)
-              (halt x.4)))))
+  (check-42p
     '(module
-      (begin
-        (set! rdx 5)
-        (set! fv0 rdx)
-        (if (if (true) (= rdx 2) (not (not (!= fv0 9))))
-            (set! r12 9)
-            (if (begin (> fv0 r12))
-                (set! fv0 (* fv0 r12))
-                (set! r12 (* r12 fv0))))
-        (if (begin
-              (begin (set! fv5 20))
-              (set! r12 fv7)
-              (if (<= r12 9) (set! fv7 9) (set! fv7 (+ fv7 fv7)))
-              (if (false) (not (< fv0 2)) (false)))
-            (halt rdx)
-            (halt fv7)))))
-
-  ;; rlocs
-  (check-equal?
-    (replace-locations
-      '(module ((locals (x.1)) (assignment ((x.1 rax) (x.2 fv2))))
-        (begin
-          (set! x.1 0)
-          (set! x.2 3)
-          (set! rdx 10)
-          (set! fv0 9)
-          (set! rdx (+ rdx fv0))
-          (set! fv0 (* fv0 x.2))
-          (if (if (< rdx fv0) (>= fv0 x.2) (!= x.1 rdx))
-              (halt rdx)
-              (halt fv0)))))
-    '(module
-      (begin
-        (set! rax 0)
-        (set! fv2 3)
-        (set! rdx 10)
-        (set! fv0 9)
-        (set! rdx (+ rdx fv0))
-        (set! fv0 (* fv0 fv2))
-        (if (if (< rdx fv0) (>= fv0 fv2) (!= rax rdx))
-            (halt rdx)
-            (halt fv0)))))
-
-  ;; replace in jumps
-  (check-equal?
-    (replace-locations
-      '(module ((locals (x.1 x.2)) (assignment ((x.1 rax) (x.2 fv0))))
-        (define L.test.1 ((locals (x.2)) (assignment ((x.2 fv1))))
-          (begin (set! x.2 rdx) (jump x.2 r11 fv3)))
-        (define L.test.2 ((locals ()) (assignment ()))
-          (jump done))
-        (define L.test.3 ((locals ()) (assignment ()))
-          (begin (set! r14 L.test.2) (jump r14)))
-        (begin
-          (set! x.1 L.test.1)
-          (set! x.2 99)
-          (set! rdx L.test.3)
-          (jump x.1 x.2 rdx))))
-    '(module
-      (define L.test.1 (begin (set! fv1 rdx) (jump fv1)))
-      (define L.test.2 (jump done))
-      (define L.test.3 (begin (set! r14 L.test.2) (jump r14)))
-      (begin
-        (set! rax L.test.1)
-        (set! fv0 99)
-        (set! rdx L.test.3)
-        (jump rax))))
-
-  ;; replace in procedures
-  (check-equal?
-    (replace-locations
-      '(module ((locals (x.1 x.2)) (assignment ((x.1 rax) (x.2 fv0))))
-        (define L.test.1 ((locals (x.2)) (assignment ((x.2 fv1))))
-          (begin (set! x.2 rdx) (jump x.2 r11)))
-        (define L.test.2 ((locals (x.3 x.4)) (assignment ((x.3 rax) (x.4 fv0))))
-          (if (not (begin (set! x.3 rdx) (not (< x.3 x.4)))) (halt x.3) (jump x.4)))
-        (define L.test.3 ((locals (x.2 x.4)) (assignment ((x.2 r13) (x.4 fv1))))
-          (begin (set! x.4 14) (set! x.2 rdx) (set! x.2 (+ x.2 x.4)) (jump x.4)))
-        (begin
-          (set! x.1 L.test.1)
-          (set! x.2 99)
-          (set! x.2 (* x.2 99))
-          (set! rdx L.test.3)
-          (jump x.1 x.2 rdx))))
-    '(module
-      (define L.test.1
-        (begin (set! fv1 rdx) (jump fv1)))
-      (define L.test.2
-        (if (not (begin (set! rax rdx) (not (< rax fv0)))) (halt rax) (jump fv0)))
-      (define L.test.3
-        (begin (set! fv1 14) (set! r13 rdx) (set! r13 (+ r13 fv1)) (jump fv1)))
-      (begin
-        (set! rax L.test.1)
-        (set! fv0 99)
-        (set! fv0 (* fv0 99))
-        (set! rdx L.test.3)
-        (jump rax))))
+       ((locals ())
+        (conflicts
+         ((tmp.4 (rbp tmp-ra.3 x.1))
+          (tmp-ra.3 (x.1 rbp tmp.4 rax))
+          (x.1 (rbp tmp-ra.3 tmp.4))
+          (rax (rbp tmp-ra.3))
+          (rbp (x.1 r15 tmp-ra.3 tmp.4 rax))
+          (r15 (rbp))))
+        (assignment ((tmp-ra.3 fv0) (tmp.4 r15) (x.1 r14))))
+       (define L.foo.1
+         ((locals ())
+          (conflicts
+           ((tmp-ra.2 (rax rbp)) (rbp (rax tmp-ra.2)) (rax (rbp tmp-ra.2))))
+          (assignment ((tmp-ra.2 r15))))
+         (begin (set! tmp-ra.2 r15) (set! rax 50) (jump tmp-ra.2 rbp rax)))
+       (begin
+         (set! tmp-ra.3 r15)
+         (begin
+           (set! rbp (- rbp 8))
+           ;; effect/(return-point label tail)
+           (return-point L.rp.2 (begin (set! r15 L.rp.2) (jump L.foo.1 rbp r15)))
+           (set! rbp (+ rbp 8)))
+         (set! x.1 rax)
+         ;; tail/(if pred tail tail)
+         (if (begin (set! tmp.4 1) (= tmp.4 2))
+           (begin (set! rax 0) (jump tmp-ra.3 rbp rax))
+           (begin (set! rax x.1) (set! rax (- rax 8)) (jump tmp-ra.3 rbp rax))))))
   )
