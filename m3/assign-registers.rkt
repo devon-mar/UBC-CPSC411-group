@@ -96,7 +96,7 @@
 (module+ test
   (require
     rackunit
-    cpsc411/langs/v5
+    cpsc411/langs/v6
     "../utils/gen-utils.rkt")
 
   (define t1
