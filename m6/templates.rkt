@@ -421,3 +421,78 @@
       ['!= (void)]))
 
   (void))
+
+(define/contract (nested-asm-lang-fvars-v6-template p)
+  (-> nested-asm-lang-fvars-v6? any/c)
+
+  (define (nested-asm-lang-fvars-v6-template-p p)
+    (match p
+      [`(module (define ,labels ,tails) ... ,tail)
+        (void)]))
+
+  (define (nested-asm-lang-fvars-v6-template-pred p)
+    (match p
+      [`(true)
+        (void)]
+      [`(false)
+        (void)]
+      [`(not ,p)
+        (void)]
+      [`(begin ,es ... ,p)
+        (void)]
+      [`(if ,p1 ,p2 ,p3)
+        (void)]
+      [`(,r ,o1 ,o2)
+        (void)]))
+
+  (define (nested-asm-lang-fvars-v6-template-tail t)
+    (match t
+      [`(jump ,trg)
+        (void)]
+      [`(begin ,es ... ,t)
+        (void)]
+      [`(if ,p ,t1 ,t2)
+        (void)]))
+
+  (define (nested-asm-lang-fvars-v6-template-effect e)
+    (match e
+      [`(set! ,l (,b ,l ,o))
+        (void)]
+      [`(set! ,l ,t)
+        (void)]
+      [`(begin ,es ... ,e)
+        (void)]
+      [`(if ,p ,e1 ,e2)
+        (void)]
+      [`(return-point ,l ,t)
+        (void)]))
+
+  (define (nested-asm-lang-fvars-v6-template-opand o)
+    (match o
+      [(? int64?)
+       (void)]
+      [loc 
+        (void)]))
+
+  (define (nested-asm-lang-fvars-v6-template-triv t)
+    (match t
+      [(? label?)
+       (void)]
+      [opand
+        (void)]))
+
+  (define (nested-asm-lang-fvars-v6-template-loc l)
+    (match l
+      [(? register?)
+       (void)]
+      [(? fvar?)
+       (void)]))
+
+  (define (nested-asm-lang-fvars-v6-template-trg t)
+    (match t
+      [(? label?)
+       (void)]
+      [loc
+        (void)]))
+
+  (void))
