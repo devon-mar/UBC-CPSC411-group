@@ -46,7 +46,7 @@
           [(? aloc?)
            (define prev 
               (if
-                (dict-has-key? c)
+                (dict-has-key? prev-assignment c)
                 (first (dict-ref prev-assignment c))
                 (void)))
            (if (register? prev)
