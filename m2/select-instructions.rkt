@@ -108,8 +108,8 @@
            ,(select-instructions-pred p)
            ,(select-instructions-effect e1)
            ,(select-instructions-effect e2))]
-      [`(return-point ,_ ,_)
-        e]))
+      [`(return-point ,l ,t)
+        `(return-point ,l ,(select-instructions-tail t))]))
 
   ;; o: imp-cmf-lang-v6-opand
   ;; f: (-> asm-pred-lang-v6-loc asm-pred-lang-v6-pred)
@@ -387,4 +387,18 @@
          (begin
            (set! x.5 0)
            (begin (set! rdi x.5) (set! r15 tmp-ra.8) (jump L.foo.2 rbp r15 rdi))))))
+
+  (check-42p
+    '(module
+       ((new-frames (())))
+       (define L.foo.1
+         ((new-frames ()))
+         (begin (set! tmp-ra.2 r15) (set! rax 50) (jump tmp-ra.2 rbp rax)))
+       (begin
+         (set! tmp-ra.3 r15)
+         (return-point L.rp.2 (begin (set! r15 L.rp.2) (jump L.foo.1 rbp r15)))
+         (set! x.1 rax)
+         (if (begin (set! tmp.4 1) (= tmp.4 2))
+           (begin (set! rax 0) (jump tmp-ra.3 rbp rax))
+           (begin (set! rax x.1) (set! rax (- rax 8)) (jump tmp-ra.3 rbp rax))))))
   )
