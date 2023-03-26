@@ -51,21 +51,19 @@
                 (void)))
            (if (register? prev)
                fvar-list
-               ;; we don't need to add fvars from prev-assignment
-               ;; since assignment fvars are always unique to the next assignment
                (append fvar-list (list prev)))])))
       ;; Begin fvar search at 0 to use minimum fvar offset possible
       (assign-aloc-to-fvar aloc prev-assignment blacklist-fvars 0))
 
-  ;; aloc-list conf-list -> aloc assignment
-  ;; Takes list of abstract locations and list of conflicts, returns
-  ;; register assignment for the abstract locations
-  (define (generate-assignment aloc-list conf-list)
+  ;; aloc-list conf-list aloc-assignment -> aloc-assignment
+  ;; Takes list of abstract locations, list of conflicts and list of assignments that already
+  ;; exist in info. Returns register assignment for the abstract locations
+  (define (generate-assignment aloc-list conf-list info-assignment)
     (cond
-      [(empty? aloc-list) `()]
+      [(empty? aloc-list) info-assignment]
       [else
        (define-values (pop-aloc new-aloc-list new-conf-list) (pop-ld-aloc aloc-list conf-list))
-       (define new-assignment (generate-assignment new-aloc-list new-conf-list))
+       (define new-assignment (generate-assignment new-aloc-list new-conf-list info-assignment))
        (assign-aloc pop-aloc conf-list new-assignment)]))
 
   ;; info -> info
@@ -73,12 +71,13 @@
   (define (convert-info info)
     (define local-list (info-ref info 'locals))
     (define conflicts (info-ref info 'conflicts))
+    (define new-assignment (generate-assignment local-list conflicts (info-ref info 'assignment)))
     (begin
       ;; Reset fvar counter when in new scope since conflict graph and locals are
       ;; independent from all other scopes.
       (info-remove
         (info-remove
-          (info-set info 'assignment (generate-assignment local-list conflicts))
+          (info-set info 'assignment new-assignment)
           'conflicts)
         'locals )))
 
@@ -178,6 +177,39 @@
               (set! x.1 42)
               (jump r15)))
     (dict-equal? assignment '((x.2 fv0) (x.1 fv1))))
+
+
+  ;; check does not assign to already assigned frame veriable in assignments
+  (check-match
+    (assign-frame-variables
+      '(module 
+          ((locals (x.1 x.2))
+           (conflicts ((x.1 (fv0 r15 x.2 x.3)) (r15 (x.1 x.2)) (fv0 (x.1)) (x.2 (r15 x.1 x.3)) (x.3 (x.1 x.2))))
+           (assignment ((x.3 fv0))))
+                (begin
+                  (set! x.1 42)
+                  (jump r15))))
+    `(module ((assignment ,assignment))
+            (begin
+              (set! x.1 42)
+              (jump r15)))
+    (dict-equal? assignment '((x.2 fv2) (x.1 fv1) (x.3 fv0))))
+
+  ;; check that it preserves existing register assignments
+  (check-match
+    (assign-frame-variables
+      '(module 
+          ((locals (x.1 x.2))
+           (conflicts ((x.1 (fv0 r15 x.2 x.3)) (r15 (x.1 x.2)) (fv0 (x.1)) (x.2 (r15 x.1 x.3)) (x.3 (x.1 x.2))))
+           (assignment ((x.3 rax))))
+                (begin
+                  (set! x.1 42)
+                  (jump r15))))
+    `(module ((assignment ,assignment))
+            (begin
+              (set! x.1 42)
+              (jump r15)))
+    (dict-equal? assignment '((x.2 fv0) (x.1 fv1) (x.3 rax))))
 
   ;; assignment in procedures
   (check-match
