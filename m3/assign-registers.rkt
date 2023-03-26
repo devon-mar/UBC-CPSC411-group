@@ -47,8 +47,6 @@
               (void)))
            (if (register? prev)
                (append (list prev) reg-list)
-               ;; we don't need to add fvars from prev-assignment
-               ;; since assignment fvars are always unique to the next assignment
               reg-list)])))
     (define whitelist-regs (set-subtract (current-assignable-registers) blacklist-regs))
     (if (empty? whitelist-regs)
