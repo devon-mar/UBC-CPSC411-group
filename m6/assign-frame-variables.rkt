@@ -44,7 +44,11 @@
           [(? register?) fvar-list]
           [(? fvar?) (append fvar-list (list c))]
           [(? aloc?)
-           (define prev (first (dict-ref prev-assignment c)))
+           (define prev 
+              (if
+                (dict-has-key? c)
+                (first (dict-ref prev-assignment c))
+                (void)))
            (if (register? prev)
                fvar-list
                ;; we don't need to add fvars from prev-assignment
@@ -94,7 +98,7 @@
 (module+ test
   (require
     rackunit
-    cpsc411/langs/v5
+    cpsc411/langs/v6
     "../utils/gen-utils.rkt")
 
   (define t2
@@ -162,9 +166,10 @@
   ;; check does not assign to conflicting register
   (check-match
     (assign-frame-variables
-      '(module ((locals (x.1 x.2))
-                (conflicts ((x.1 (fv0 r15 x.2)) (r15 (x.1 x.2)) (fv0 (x.1)) (x.2 (r15 x.1))))
-                (assignment ()))
+      '(module 
+          ((locals (x.1 x.2))
+           (conflicts ((x.1 (fv0 r15 x.2)) (r15 (x.1 x.2)) (fv0 (x.1)) (x.2 (r15 x.1))))
+           (assignment ()))
                 (begin
                   (set! x.1 42)
                   (jump r15))))
@@ -195,5 +200,4 @@
     (and (dict-equal? assignment '((x.2 fv1) (x.1 fv0)))
          (dict-equal? assignment1 '((x.3 fv0) (x.2 fv0)))
          (dict-equal? assignment2 '((x.3 fv0) (x.1 fv1)))
-         (dict-equal? assignment3 '())))
-)
+         (dict-equal? assignment3 '()))))
