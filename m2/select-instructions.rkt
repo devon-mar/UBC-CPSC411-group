@@ -16,6 +16,12 @@
 (define/contract (select-instructions p)
   (-> imp-cmf-lang-v6? asm-pred-lang-v6?)
 
+  ;; Selects appropriate sequence of abstract assembly instructions
+  ;; to implement the operations in the given procedure represented
+  ;; by label, info, and tail.
+  ;;
+  ;; tail: imp-cmf-lang-v6-tail
+  ;; -> asm-pred-lang-v6-tail
   (define/contract (select-instructions-proc label info tail)
     (-> label? info? any/c any/c)
     `(define
@@ -23,6 +29,7 @@
        ,info
        ,(select-instructions-tail tail)))
 
+  ;; imp-cmf-lang-v6-p asm-pred-lang-v6-p
   (define (select-instructions-p p)
     (match p
       [`(module ,info (define ,labels ,infos ,tails) ... ,tail)
@@ -31,6 +38,7 @@
            ,@(map select-instructions-proc labels infos tails)
            ,(select-instructions-tail tail))]))
 
+  ;; imp-cmf-lang-v6-pred asm-pred-lang-v6-pred
   (define (select-instructions-pred p)
     (match p
       [`(true)
@@ -54,6 +62,7 @@
           o1
           (lambda (l) `(,r ,l ,o2)))]))
 
+  ;; imp-cmf-lang-v6-tail asm-tail-lang-v6-tail
   (define (select-instructions-tail t)
     (match t
       [`(begin ,es ... ,t)
@@ -83,6 +92,7 @@
       ;; triv
       [_ (f v)]))
 
+  ;; imp-cmf-lang-v6-effect asm-effect-lang-v6-effect
   (define (select-instructions-effect e)
     (match e
       [`(set! ,l ,v)
@@ -102,7 +112,7 @@
         e]))
 
   ;; o: imp-cmf-lang-v6-opand
-  ;; f: (asm-pred-lang-v6-loc -> asm-pred-lang-v6-pred)
+  ;; f: (-> asm-pred-lang-v6-loc asm-pred-lang-v6-pred)
   ;; -> asm-pred-lang-v6-pred
   (define (select-instructions-opand o f)
     (match o
