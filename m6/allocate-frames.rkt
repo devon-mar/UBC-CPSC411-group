@@ -118,9 +118,9 @@
            ,(allocate-frames-pred fw p))]
       [`(if ,p1 ,p2 ,p3)
         `(if
-           ,(allocate-frames-pred p1)
-           ,(allocate-frames-pred p2)
-           ,(allocate-frames-pred p3))]
+           ,(allocate-frames-pred fw p1)
+           ,(allocate-frames-pred fw p2)
+           ,(allocate-frames-pred fw p3))]
       [`(,_ ,_ ,_)
         p]))
 
@@ -380,4 +380,179 @@
             (fv0 (r15 rbp fv1 tmp-ra.4))
             (r15 (rbp fv0 fv1))))
       ))
+
+  #;
+  ((compose
+     assign-call-undead-variables
+     conflict-analysis
+     undead-analysis
+     uncover-locals
+     select-instructions
+     impose-calling-conventions
+     normalize-bind
+     sequentialize-let
+     uniquify)
+    '(module
+       (define foo
+         (lambda ()
+           (if (if (true) (not (false)) (false))
+             5
+             0)))
+       (define bar
+         (lambda (x y)
+           (if (let ([x (+ 1 x)]
+                     [y (if (true) y 0)]) (= x y))
+             x
+             y)))
+       (let ([a (call foo)]
+             [b (call bar 36 36)])
+         (+ a b))))
+
+  (check-match
+    (allocate-frames
+      '(module
+         ((new-frames (() ()))
+          (locals (b.5))
+          (call-undead (a.6 tmp-ra.9))
+            #;
+          (undead-out
+           ((tmp-ra.9 rbp)
+            ((rax tmp-ra.9 rbp) ((r15 rbp) (r15 rbp)))
+            (a.6 tmp-ra.9 rbp)
+            ((rax a.6 tmp-ra.9 rbp)
+             ((rsi rbp) (rsi rdi rbp) (rsi rdi r15 rbp) (rsi rdi r15 rbp)))
+            (a.6 b.5 tmp-ra.9 rbp)
+            (b.5 rax tmp-ra.9 rbp)
+            (tmp-ra.9 rax rbp)
+            (rax rbp)))
+          (conflicts
+           ((tmp-ra.9 (rax b.5 a.6 rbp))
+            (a.6 (b.5 rbp tmp-ra.9))
+            (b.5 (rax rbp tmp-ra.9 a.6))
+            (rbp (rax b.5 rdi rsi a.6 r15 tmp-ra.9))
+            (r15 (rdi rsi rbp))
+            (rsi (r15 rdi rbp))
+            (rdi (r15 rbp rsi))
+            (rax (rbp tmp-ra.9 b.5))))
+          (assignment ((tmp-ra.9 fv0) (a.6 fv1))))
+         (define L.foo.1
+           ((new-frames ())
+            (locals (tmp-ra.7))
+            #;
+            (undead-out
+             ((tmp-ra.7 rbp)
+              (((tmp-ra.7 rbp) (tmp-ra.7 rbp) (tmp-ra.7 rbp))
+               ((tmp-ra.7 rax rbp) (rax rbp))
+               ((tmp-ra.7 rax rbp) (rax rbp)))))
+            (call-undead ())
+            (conflicts
+             ((tmp-ra.7 (rbp rax)) (rax (rbp tmp-ra.7)) (rbp (tmp-ra.7 rax))))
+            (assignment ()))
+           (begin
+             (set! tmp-ra.7 r15)
+             (if (if (true) (not (false)) (false))
+               (begin (set! rax 5) (jump tmp-ra.7 rbp rax))
+               (begin (set! rax 0) (jump tmp-ra.7 rbp rax)))))
+         (define L.bar.2
+           ((new-frames ())
+            (locals (x.4 y.3 x.2 y.1 tmp-ra.8))
+            #;
+            (undead-out
+             ((rdi rsi tmp-ra.8 rbp)
+              (rsi x.2 tmp-ra.8 rbp)
+              (y.1 x.2 tmp-ra.8 rbp)
+              ((((x.4 y.1 x.2 tmp-ra.8 rbp) (x.4 y.1 x.2 tmp-ra.8 rbp))
+                ((x.4 y.1 x.2 tmp-ra.8 rbp)
+                 (y.3 x.4 y.1 x.2 tmp-ra.8 rbp)
+                 (y.3 x.4 y.1 x.2 tmp-ra.8 rbp))
+                (y.1 x.2 tmp-ra.8 rbp))
+               ((tmp-ra.8 rax rbp) (rax rbp))
+               ((tmp-ra.8 rax rbp) (rax rbp)))))
+            (call-undead ())
+            (conflicts
+             ((x.4 (y.3 rbp tmp-ra.8 x.2 y.1))
+              (y.3 (rbp tmp-ra.8 x.2 y.1 x.4))
+              (x.2 (y.1 rbp tmp-ra.8 rsi y.3 x.4))
+              (y.1 (rbp tmp-ra.8 x.2 y.3 x.4))
+              (tmp-ra.8 (y.1 x.2 rbp rsi rdi y.3 x.4 rax))
+              (rax (rbp tmp-ra.8))
+              (rbp (y.1 x.2 tmp-ra.8 y.3 x.4 rax))
+              (rdi (tmp-ra.8))
+              (rsi (x.2 tmp-ra.8))))
+            (assignment ()))
+           (begin
+             (set! tmp-ra.8 r15)
+             (set! x.2 rdi)
+             (set! y.1 rsi)
+             (if (begin
+                   (begin (set! x.4 1) (set! x.4 (+ x.4 x.2)))
+                   (if (true) (set! y.3 y.1) (set! y.3 0))
+                   (= x.4 y.3))
+               (begin (set! rax x.2) (jump tmp-ra.8 rbp rax))
+               (begin (set! rax y.1) (jump tmp-ra.8 rbp rax)))))
+         (begin
+           (set! tmp-ra.9 r15)
+           (return-point L.rp.3 (begin (set! r15 L.rp.3) (jump L.foo.1 rbp r15)))
+           (set! a.6 rax)
+           (return-point
+            L.rp.4
+            (begin
+              (set! rsi 36)
+              (set! rdi 36)
+              (set! r15 L.rp.4)
+              (jump L.bar.2 rbp r15 rdi rsi)))
+           (set! b.5 rax)
+           (set! rax a.6)
+           (set! rax (+ rax b.5))
+           (jump tmp-ra.9 rbp rax))))
+    `(module
+       ,info
+       (define L.foo.1
+         ,info-foo
+         (begin
+           (set! tmp-ra.7 r15)
+           (if (if (true) (not (false)) (false))
+             (begin (set! rax 5) (jump tmp-ra.7 rbp rax))
+             (begin (set! rax 0) (jump tmp-ra.7 rbp rax)))))
+       (define L.bar.2
+         ,info-bar
+         (begin
+           (set! tmp-ra.8 r15)
+           (set! x.2 rdi)
+           (set! y.1 rsi)
+           (if (begin
+                 (begin (set! x.4 1) (set! x.4 (+ x.4 x.2)))
+                 (if (true) (set! y.3 y.1) (set! y.3 0))
+                 (= x.4 y.3))
+             (begin (set! rax x.2) (jump tmp-ra.8 rbp rax))
+             (begin (set! rax y.1) (jump tmp-ra.8 rbp rax)))))
+       (begin
+         (set! tmp-ra.9 r15)
+         (begin
+           (set! rbp (- rbp 16))
+           (return-point L.rp.3 (begin (set! r15 L.rp.3) (jump L.foo.1 rbp r15)))
+           (set! rbp (+ rbp 16)))
+         (set! a.6 rax)
+         (begin
+           (set! rbp (- rbp 16))
+           (return-point
+            L.rp.4
+            (begin
+              (set! rsi 36)
+              (set! rdi 36)
+              (set! r15 L.rp.4)
+              (jump L.bar.2 rbp r15 rdi rsi)))
+           (set! rbp (+ rbp 16)))
+         (set! b.5 rax)
+         (set! rax a.6)
+         (set! rax (+ rax b.5))
+         (jump tmp-ra.9 rbp rax)))
+    (and
+      (= 3 (length info))
+      (= 3 (length info-bar))
+      (= 3 (length info-foo))
+
+      (empty? (info-ref info-foo 'assignment))
+      (empty? (info-ref info-bar 'assignment))
+      (equal? (sort '((tmp-ra.9 fv0) (a.6 fv1)) assignment<?) (sort (info-ref info 'assignment) assignment<?))))
   )
