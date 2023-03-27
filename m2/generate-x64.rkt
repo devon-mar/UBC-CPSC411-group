@@ -1,36 +1,28 @@
 #lang racket
 (require
   cpsc411/compiler-lib
-  cpsc411/langs/v4)
+  cpsc411/langs/v6)
 
 (provide generate-x64)
 
 ;; Milestone 2 Exercise 12
 ;; Milestone 4 Exercise 1
+;; Milestone 6 Exercise 19
 ;;
-;; Compile the Paren-x64 v4 program into a valid sequence of x64 instructions,
+;; Compile the Paren-x64 v6 program into a valid sequence of x64 instructions,
 ;; represented as a string.
 (define/contract (generate-x64 p)
-  (-> paren-x64-v4? string?)
+  (-> paren-x64-v6? string?)
+
+  (define/contract (trg? t)
+    (-> any/c boolean?)
+    (or (register? t) (label? t)))
 
   (define/contract (triv? t)
     (-> any/c boolean?)
     (or (trg? t) (int64? t)))
 
-  (define/contract (trg? t)
-    (-> any/c boolean?)
-    (or (register? t)
-        (label? t)))
-
-  ;; Returns the appropriate x64 instruction name for the binop b.
-  (define/contract (binop->ins b)
-    (-> symbol? string?)
-    (match b
-      ['* "imul"]
-      ['+ "add"]))
-
-
-  ;; paren-x64-v4-p -> string?
+  ;; paren-x64-v6-p -> string?
   (define (generate-x64-p p)
     (match p
       [`(begin ,s ...)
@@ -39,14 +31,15 @@
           ""
           (map generate-x64-s s))]))
 
-  ;; paren-x64-v4-s -> string?
-  (define (generate-x64-s s)
+  ;; paren-x64-v6-s -> string?
+  (define/contract (generate-x64-s s)
+    (-> any/c string?)
     (match s
-      [`(set! ,reg (,binop ,reg ,int32))
+      [`(set! ,reg (,b ,reg ,int32))
         #:when (int32? int32)
-        (format "~a ~a, ~a" (binop->ins binop) reg int32)]
-      [`(set! ,reg (,binop ,reg ,loc))
-        (format "~a ~a, ~a" (binop->ins binop) reg (generate-x64-loc loc))]
+        (format "~a ~a, ~a" (binop->ins b) reg int32)]
+      [`(set! ,reg (,b ,reg ,loc))
+        (format "~a ~a, ~a" (binop->ins b) reg (generate-x64-loc loc))]
       [`(set! ,reg ,triv)
         #:when (and (register? reg) (triv? triv))
         (format "mov ~a, ~a" reg triv)]
@@ -67,23 +60,59 @@
       [`(jump-if ,relop ,label)
         (format "~a ~a" (relop->x64-jmp relop) label)]))
 
+  ;; not used
+  #;
+  (define (generate-x64-trg t)
+    (match t
+      [(? register?)
+        (void)]
+      [(? label?)
+       (void)]))
 
+  ;; not used
   #;
   (define (generate-x64-triv t)
     (match t
-      [(? trg?) (void)]
-      [(? int64?) (void)]))
+      [(? int64?)
+       (void)]
+      [trg 
+        (void)]))
 
+  ;; not used
   #;
   (define (generate-x64-opand o)
     (match o
-      [(? int64?) (void)]
-      [(? register?) (void)]))
+      [(? int64?)
+       (void)]
+      [(? register?)
+       (void)]))
 
-  ;; Returns the appropriate x64 jump
-  ;; instructions for the relop r.
+  ;; paren-x64-v6-loc -> string?
+  (define/contract (generate-x64-loc l)
+    (-> any/c string?)
+    (match l
+      [(? register?) (symbol->string l)]
+      [_ (addr->x64 l)]))
+
+  ;; Returns the displacement mode operand for the given addr
   ;;
-  ;; paren-x64-v4-relop -> string?
+  ;; paren-x64-v6-addr -> x64 displacement mode operand string
+  (define (addr->x64 a)
+    (match a
+      [`(,fbp - ,dispoffset)
+        (format "QWORD [~a - ~a]" fbp dispoffset)]))
+
+  ;; paren-x64-v6-binop -> string?
+  (define/contract (binop->ins b)
+    (-> symbol? string?)
+    (match b
+      ['* "imul"]
+      ['+ "add"]
+      ['- "sub"]))
+
+  ;; Returns the appropriate x64 jump instructions for the relop r.
+  ;;
+  ;; paren-x64-v6-relop -> string?
   (define/contract (relop->x64-jmp r)
     (-> symbol? string?)
     (match r
@@ -93,24 +122,6 @@
       ['>= "jge"]
       ['> "jg"]
       ['!= "jne"]))
-
-  ;; Returns the displacement mode operand
-  ;; for the given addr
-  ;;
-  ;; Displacement mode operand -> x64 displacement mode operand string
-  (define (addr->x64 a)
-    (match a
-      [`(,fbp - ,dispoffset)
-        (format "QWORD [~a - ~a]" fbp dispoffset)]))
-
-  ;; Returns the appropriate register or displacement mode operand for loc.
-  ;;
-  ;; paren-x64-v4-loc -> string? or register?
-  (define (generate-x64-loc l)
-    (match l
-      [(? register?) l]
-      ;; addr
-      [_ (addr->x64 l)]))
 
   (generate-x64-p p))
 
@@ -303,4 +314,11 @@
     '(begin
        (set! rax 21)
        (set! rax (* rax 2))))
+
+  ;; M6 test
+  ; binop sub
+  (check-42
+    '(begin
+       (set! rax 50)
+       (set! rax (- rax 8))))
   )
