@@ -2,25 +2,26 @@
 
 (require
   cpsc411/compiler-lib
-  cpsc411/langs/v5)
+  cpsc411/langs/v6)
 
 (provide uncover-locals)
 
 ;; Milestone 2 Exercise 6
 ;; Milestone 4 Exercise 16
 ;; Milestone 5 Exercise 7
+;; Milestone 6 Exercise 7
 ;;
-;; Compiles Asm-pred-lang v5 to Asm-pred-lang v5/locals, analysing which abstract
+;; Compiles Asm-pred-lang v6 to Asm-pred-lang v6/locals, analysing which abstract
 ;; locations are used in the program and decorating the program with the
 ;; set of variables in an info field.
 (define/contract (uncover-locals p)
-  (-> asm-pred-lang-v5? asm-pred-lang-v5/locals?)
+  (-> asm-pred-lang-v6? asm-pred-lang-v6/locals?)
 
   ;; Returns a procedure with the 'locals info set.
   ;; 
   ;; label: procedure label
   ;; tail: procedure tail
-  ;; -> asm-pred-lang-v5/locals-proc
+  ;; -> asm-pred-lang-v6/locals-proc
   (define (uncover-locals-proc label info tail)
     (-> label? info? any/c any/c)
     `(define
@@ -28,7 +29,7 @@
        ,(info-set info 'locals (set->list (uncover-locals-tail tail)))
        ,tail))
 
-  ;; asm-pred-lang-v5-p -> asm-pred-lang-v5/locals-p
+  ;; asm-pred-lang-v6-p -> asm-pred-lang-v6/locals-p
   (define (uncover-locals-p p)
     (match p
       [`(module ,info (define ,labels ,infos ,tails) ... ,tail)
@@ -37,7 +38,7 @@
            ,@(map uncover-locals-proc labels infos tails)
            ,tail)]))
 
-  ;; asm-pred-lang-v5-pred -> set
+  ;; asm-pred-lang-v6-pred -> set
   (define/contract (uncover-locals-pred p)
     (-> any/c set?)
     (match p
@@ -56,12 +57,10 @@
           (uncover-locals-loc l)
           (uncover-locals-opand o))]))
 
-  ;; asm-pred-lang-v5-tail -> set
+  ;; asm-pred-lang-v6-tail -> set
   (define/contract (uncover-locals-tail t)
     (-> any/c set?)
     (match t
-      [`(halt ,o)
-        (uncover-locals-opand o)]
       [`(jump ,trg ,_ ...)
         (uncover-locals-trg trg)]
       [`(begin ,es ... ,t)
@@ -75,9 +74,11 @@
           (uncover-locals-tail t1)
           (uncover-locals-tail t2))]))
 
-  ;; asm-pred-lang-v5-effect -> set
+  ;; asm-pred-lang-v6-effect -> set
   (define (uncover-locals-effect e)
     (match e
+      [`(return-point ,_ ,tail)
+        (uncover-locals-tail tail)]
       [`(set! ,loc (,_ ,loc ,opand))
         (set-union
           (uncover-locals-loc loc)
@@ -98,7 +99,7 @@
           (uncover-locals-effect e1)
           (uncover-locals-effect e2))]))
 
-  ;; asm-pred-lang-v5-opand -> set
+  ;; asm-pred-lang-v6-opand -> set
   (define/contract (uncover-locals-opand o)
     (-> any/c set?)
     (match o
@@ -106,14 +107,14 @@
       ;; loc
       [_ (uncover-locals-loc o)]))
 
-  ;; asm-pred-lang-v5-triv -> set
+  ;; asm-pred-lang-v6-triv -> set
   (define/contract (uncover-locals-triv t)
     (-> any/c set?)
     (match t
       [(? label?) (set)]
       [_ (uncover-locals-opand t)]))
 
-  ;; asm-pred-lang-v5-loc -> set
+  ;; asm-pred-lang-v6-loc -> set
   (define/contract (uncover-locals-loc l)
     (-> any/c set?)
     (match l
@@ -121,7 +122,7 @@
       ;; rloc
       [_ (set)]))
 
-  ;; asm-pred-lang-v5-trg -> set
+  ;; asm-pred-lang-v6-trg -> set
   (define/contract (uncover-locals-trg t)
     (-> any/c set?)
     (match t
@@ -153,35 +154,35 @@
 
   ; no locals
   (check-equal?
-    (uncover-locals '(module () (begin (halt 0))))
-    '(module ((locals ())) (begin (halt 0))))
+    (uncover-locals '(module ((new-frames ())) (begin (jump r15))))
+    '(module ((new-frames ()) (locals ())) (begin (jump r15))))
 
   ; 1 local
   (check-equal?
     (uncover-locals
-     '(module ()
+     '(module ((new-frames ()))
        (begin
          (set! x.1 0)
-         (halt x.1))))
-   '(module ((locals (x.1)))
+         (jump x.1))))
+   '(module ((new-frames ()) (locals (x.1)))
      (begin
        (set! x.1 0)
-       (halt x.1))))
+       (jump x.1))))
   ; 2 locals
   (check-match
     (uncover-locals
-     '(module ()
+     '(module ((new-frames ()))
        (begin
          (set! x.1 0)
          (set! y.1 x.1)
          (set! y.1 (+ y.1 x.1))
-         (halt y.1))))
-   `(module ((locals (,locals ...)))
+         (jump y.1))))
+   `(module ((new-frames ()) (locals (,locals ...)))
      (begin
        (set! x.1 0)
        (set! y.1 x.1)
        (set! y.1 (+ y.1 x.1))
-       (halt y.1)))
+       (jump y.1)))
    (and
      (member 'x.1 locals)
      (member 'y.1 locals)
@@ -190,34 +191,29 @@
   ; nested begin
   (check-match
     (uncover-locals
-     '(module ()
+     '(module ((new-frames ()))
        (begin
          (begin
            (set! x.1 0)
            (set! y.1 x.1))
          (set! y.1 (+ y.1 x.1))
-         (halt y.1))))
-   `(module ((locals (,locals ...)))
+         (jump y.1))))
+   `(module ((new-frames ()) (locals (,locals ...)))
      (begin
        (begin
          (set! x.1 0)
          (set! y.1 x.1))
        (set! y.1 (+ y.1 x.1))
-       (halt y.1)))
+       (jump y.1)))
    (and
      (member 'x.1 locals)
      (member 'y.1 locals)
      (= (length locals) 2)))
 
-  ;; Info in input should be preserved.
-  (check-equal?
-    (uncover-locals '(module ([test 123]) (begin (halt 0))))
-    `(module ,(info-set '([test 123]) 'locals '()) (begin (halt 0))))
-
   ;; aloc in ifs
   (check-match
     (uncover-locals
-      `(module ()
+      `(module ((new-frames ()))
         (begin
           (begin
             (set! x.1 0)
@@ -231,13 +227,13 @@
                   (if (not (false))
                       (set! g.1 x.1)
                       (set! h.1 x.1))
-                  (halt x.1))
+                  (jump x.1))
                 (begin
                   (if (= x.1 x.1)
                       (set! i.1 x.1)
                       (set! j.1 x.1))
-                  (if (true) (halt k.1) (halt l.1))))))))
-    `(module ((locals (,locals ...)))
+                  (if (true) (jump k.1) (jump l.1))))))))
+    `(module ((new-frames ()) (locals ,locals))
       (begin
         (begin
           (set! x.1 0)
@@ -251,19 +247,19 @@
                 (if (not (false))
                     (set! g.1 x.1)
                     (set! h.1 x.1))
-                (halt x.1))
+                (jump x.1))
               (begin
                 (if (= x.1 x.1)
                     (set! i.1 x.1)
                     (set! j.1 x.1))
-                (if (true) (halt k.1) (halt l.1)))))))
+                (if (true) (jump k.1) (jump l.1)))))))
     (equal? (list->set locals)
             (list->set '(a.1 b.1 c.1 d.1 e.1 f.1 g.1 h.1 i.1 j.1 k.1 l.1 v.1 x.1 y.1 z.1))))
 
   ;; aloc in pred
   (check-match
     (uncover-locals
-      `(module ()
+      `(module ((new-frames ()))
         (begin
           (set! x.1 0)
           (if (not (not (begin (if (= a.1 b.1) (set! c.1 d.1) (set! e.1 f.1)) (> g.1 h.1))))
@@ -271,13 +267,13 @@
                 (if (not (<= i.1 j.1))
                     (set! x.1 2)
                     (set! x.1 3))
-                (halt x.1))
+                (jump x.1))
               (begin
                 (if (= k.1 l.1)
                     (set! x.1 4)
                     (set! x.1 5))
-                (if (begin (!= m.1 n.1)) (halt 6) (halt 7)))))))
-    `(module ((locals (,locals ...)))
+                (if (begin (!= m.1 n.1)) (jump r15) (jump r15)))))))
+    `(module ((new-frames ()) (locals ,locals))
       (begin
         (set! x.1 0)
         (if (not (not (begin (if (= a.1 b.1) (set! c.1 d.1) (set! e.1 f.1)) (> g.1 h.1))))
@@ -285,12 +281,12 @@
               (if (not (<= i.1 j.1))
                   (set! x.1 2)
                   (set! x.1 3))
-              (halt x.1))
+              (jump x.1))
             (begin
               (if (= k.1 l.1)
                   (set! x.1 4)
                   (set! x.1 5))
-              (if (begin (!= m.1 n.1)) (halt 6) (halt 7))))))
+              (if (begin (!= m.1 n.1)) (jump r15) (jump r15))))))
     (equal? (list->set locals)
             (list->set '(a.1 b.1 c.1 d.1 e.1 f.1 g.1 h.1 i.1 j.1 k.1 l.1 m.1 n.1 x.1))))
 
@@ -304,12 +300,12 @@
              (if (not (<= i.1 j.1))
                  (set! x.1 2)
                  (set! x.1 3))
-             (halt x.1))
+             (jump x.1))
            (begin
              (if (= k.1 l.1)
                  (set! x.1 4)
                  (set! x.1 5))
-             (if (begin (!= m.1 n.1)) (halt 6) (halt 7))))))
+             (if (begin (!= m.1 n.1)) (jump r15) (jump r15))))))
   (define m5-locals-2 (list->set '(a.1 b.1 c.1 d.1 e.1 f.1 g.1 h.1 i.1 j.1 k.1 l.1 v.1 x.1 y.1 z.1)))
   (define m5-tail-2 
     '(begin
@@ -325,17 +321,17 @@
                (if (not (false))
                    (set! g.1 x.1)
                    (set! h.1 x.1))
-               (halt x.1))
+               (jump x.1))
              (begin
                (if (= x.1 x.1)
                    (set! i.1 x.1)
                    (set! j.1 x.1))
-               (if (true) (halt k.1) (halt l.1)))))))
+               (if (true) (jump k.1) (jump l.1)))))))
   (check-match
     (uncover-locals
-      `(module ()
-         (define L.foo.1 () ,m5-tail-1)
-         (define L.bar.1 () ,m5-tail-2)
+      `(module ((new-frames ()))
+         (define L.foo.1 ((new-frames ())) ,m5-tail-1)
+         (define L.bar.1 ((new-frames ())) ,m5-tail-2)
          ,m5-tail-1))
     `(module
        ,info
@@ -354,9 +350,9 @@
   (check-match
     (uncover-locals
       `(module
-         ()
-         (define L.foo.1 () (halt 42))
-         (define L.bar.1 () (halt 2))
+         ((new-frames ()))
+         (define L.foo.1 ((new-frames ())) (jump r15))
+         (define L.bar.1 ((new-frames ())) (jump r15))
          (begin
            (set! a.1 1)
            (set! b.1 2)
@@ -371,8 +367,8 @@
              (jump x.1 ,fbp)))))
     `(module
        ,info
-       (define L.foo.1 ,foo-info (halt 42))
-       (define L.bar.1 ,bar-info (halt 2))
+       (define L.foo.1 ,foo-info (jump r15))
+       (define L.bar.1 ,bar-info (jump r15))
        (begin
          (set! a.1 1)
          (set! b.1 2)
@@ -390,4 +386,18 @@
          (set-empty? (info-ref bar-info 'locals))
          (set=? (info-ref info 'locals) '(a.1 b.1 x.1))))
 
-  )
+;; Check return-point is handled correctly
+(check-match
+  (uncover-locals
+    `(module ((new-frames ()))
+        (define L.bar.1 ((new-frames ())) (begin (return-point L.barreturn.1 ,m5-tail-2) (jump r15)))
+        ,m5-tail-1))
+  `(module
+      ,info
+      (define L.bar.1 ,bar-info (begin (return-point L.barreturn.1 ,bar-tail) (jump r15)))
+      ,tail)
+  (and
+    (equal? tail m5-tail-1)
+    (equal? bar-tail m5-tail-2)
+    (equal? (list->set (info-ref bar-info 'locals)) m5-locals-2)
+    (equal? (list->set (info-ref info 'locals)) m5-locals-1))))
