@@ -14,7 +14,8 @@
 
 ;; list list -> boolean
 ;; Check if list contains the same elements
-(define (list-equiv? list1 list2)
+(define/contract (list-equiv? list1 list2)
+  (-> list? list? boolean?)
   (empty? (set-symmetric-difference list1 list2)))
 
 ;; Dict(K V) Dict(K V) ((V V) -> boolean) -> boolean

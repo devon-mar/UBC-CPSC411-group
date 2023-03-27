@@ -2,7 +2,7 @@
 
 (require
   cpsc411/compiler-lib
-  cpsc411/langs/v5
+  cpsc411/langs/v6
   "../utils/compiler-utils.rkt")
 
 (provide undead-analysis)
@@ -10,27 +10,30 @@
 ;; Milestone 3 - Exercise 1
 ;; Milestone 4 - Exercise 15
 ;; Milestone 5 - Exercise 8
+;; Milestone 6 - Exercise 8
 ;;
 ;; Performs undeadness analysis, decorating the program with undead-set tree.
 ;; Only the info field of the program is modified.
 (define/contract (undead-analysis p)
-  (-> asm-pred-lang-v5/locals? asm-pred-lang-v5/undead?)
+  (-> asm-pred-lang-v6/locals? asm-pred-lang-v6/undead?)
+
+  ;; call-undead for the current examining block
+  (define call-undead (void))
 
   ;; Performs undeadness analysis, decorating the program with undead-set tree.
   ;; Only the info field of the program is modified.
   (define/contract (undead-analysis-p p)
-    (-> asm-pred-lang-v5/locals? asm-pred-lang-v5/undead?)
+    (-> asm-pred-lang-v6/locals? asm-pred-lang-v6/undead?)
     (match p
       [`(module ,info (define ,labels ,infos ,tails) ... ,tail)
-        `(module
-          ,(info-set
-             info
-             'undead-out
-             (let-values
-               ([(ust _) (undead-analysis-tail tail '())])
-               ust))
-          ,@(map undead-analysis-proc labels infos tails)
-          ,tail)]))
+       (set! call-undead (list))
+       (define-values (ust _) (undead-analysis-tail tail '()))
+       (define newinfo
+         (info-set (info-set info 'undead-out ust) 'call-undead call-undead))
+       `(module
+         ,newinfo
+         ,@(map undead-analysis-proc labels infos tails)
+         ,tail)]))
 
   ;; Performs undead analysis and adds undead-set tree to info of proc
   ;; proc ::= (define label info tail)
@@ -38,8 +41,11 @@
   ;; label info tail -> proc
   (define/contract (undead-analysis-proc label info tail)
     (-> label? info? any/c any/c)
+    (set! call-undead (list))
     (define-values (ust _) (undead-analysis-tail tail '()))
-    `(define ,label ,(info-set info 'undead-out ust) ,tail))
+    (define newinfo
+      (info-set (info-set info 'undead-out ust) 'call-undead call-undead))
+    `(define ,label ,newinfo ,tail))
 
   ;; Computes the undead-in set for instruction t
   ;; given the undead-out set for t.
@@ -50,10 +56,6 @@
         (values undead-set-tree/rloc? undead-set/rloc?))
 
     (match t
-      [`(halt ,triv)
-        (values
-          '()
-          (undead-analysis-triv triv uo))]
       [`(begin ,effects ... ,tail)
         (define-values (tail-ust tail-ui)
           (undead-analysis-tail tail uo))
@@ -79,7 +81,8 @@
          (set-union (undead-analysis-trg trg uo) loc))]))
 
   ;; Computes the undead-in set for instruction e
-  ;; given the undead-out set for e.
+  ;; given the undead-out set for e
+  ;; and updates call-undead for e.
   ;;
   ;; effect undead-set/rloc? -> (values undead-set-tree/rloc? undead-set/rloc?)
   (define/contract (undead-analysis-effect e uo)
@@ -119,7 +122,13 @@
        (define-values (ut1 ui1) (undead-analysis-effect effect1 uo))
        (define-values (ut2 ui2) (undead-analysis-effect effect2 uo))
        (define-values (utp uip) (undead-analysis-pred pred (set-union ui1 ui2)))
-       (values (list utp ut1 ut2) uip)]))
+       (values (list utp ut1 ut2) uip)]
+      [`(return-point ,label ,tail)
+       (define cu (filter (lambda (x) (or (fvar? x) (aloc? x))) uo))
+       (set! call-undead (set-union call-undead cu))
+       (define-values (utt uit) (undead-analysis-tail tail '()))
+       (values (list uo utt)
+               (set-remove (set-union uo uit) (current-return-value-register)))]))
 
   ;; Computes undead set tree and undead-in set for pred p
   ;; given undead-out set for p
@@ -186,27 +195,21 @@
   (define (undead-analysis-binop b uo)
     (match b
       ['* (void)]
-      ['+ (void)]))
+      ['+ (void)]
+      ['- (void)]))
+
   (undead-analysis-p p))
 
 (module+ test
   (require
     rackunit
+    "../utils/gen-utils.rkt"
     "../utils/test-utils.rkt")
 
   ;; For CPSC411 test suite
   (require
    rackunit/text-ui
    cpsc411/test-suite/public/v2-reg-alloc)
-
-  (define/contract (set-equal? s1 s2)
-    (-> list? list? boolean?)
-    (empty? (set-symmetric-difference s1 s2)))
-
-  (check-true (set-equal? '(1 2) '(1 2)))
-  (check-true (set-equal? '(2 1) '(1 2)))
-  (check-false (set-equal? '(2 1 3) '(1 2)))
-  (check-false (set-equal? '(2 1) '(1 2 3)))
 
   ;; Quick helper to check that two undead-set-trees
   ;; are equal.
@@ -218,7 +221,7 @@
       [(cons _ '()) #f]
       [(cons s1 s2)
        #:when (not (list? (car s1)))
-       (set-equal? s1 s2)]
+       (list-equiv? s1 s2)]
       [(cons s1 s2)
        (and (equal? (length s1) (length s2))
             (andmap ust-equal? s1 s2))]))
@@ -241,21 +244,27 @@
   ;; tail: tail
   ;; want: the expected locals
   (define-check (check-ust locals tail want)
-    (match (undead-analysis `(module ([locals ,locals]) ,tail))
+    (match (undead-analysis `(module ([new-frames ()] [locals ,locals]) ,tail))
       [`(module ,info ,tail2)
-        ;; Should just contain locals and undead-out
+        ;; Should contain locals, new-frames, undead-out, and call-undead
         (check-equal?
-          (length info)
-          2)
+          (info-ref info 'locals)
+          locals)
+        (check-equal?
+          (info-ref info 'new-frames)
+          (list))
         (check-ust-equal?
           (info-ref info 'undead-out)
           want)
+        (check-equal?
+          (info-ref info 'call-undead)
+          (list))
         ;; Should remain unchanged
         (check-equal? tail2 tail)]))
 
   ;; Check usts produced by 'undead-analysis' for tail and each of the procs
   ;; p info (List-of info) -> void
-  (define-check (check-ust-proc program ust-tail ust-procs)
+  (define-check (check-ust-proc program ust-tail ust-procs cu-tail cu-procs)
     ;; get fields from original program
     (define-values (main-info main-tail proc-labels proc-infos proc-tails)
       (extract-asm-pred-lang program))
@@ -264,35 +273,46 @@
       (extract-asm-pred-lang (undead-analysis program)))
     ;; keeps locals
     (check-equal? (info-ref ua-main-info 'locals) (info-ref main-info 'locals))
-    (check-equal? ua-main-tail main-tail)
     (check-equal?
       (map (lambda (x) (info-ref x 'locals)) ua-proc-infos)
       (map (lambda (x) (info-ref x 'locals)) proc-infos))
+    ;; keeps new-frames
+    (check-equal? (info-ref ua-main-info 'new-frames) (info-ref main-info 'new-frames))
+    (check-equal?
+      (map (lambda (x) (info-ref x 'new-frames)) ua-proc-infos)
+      (map (lambda (x) (info-ref x 'new-frames)) proc-infos))
     ;; tails is the same
+    (check-equal? ua-main-tail main-tail)
     (check-equal? ua-proc-tails proc-tails)
     ;; check undead-out is as expected
     (check-ust-equal? (info-ref ua-main-info 'undead-out) ust-tail)
     (for ([ua-proc-info ua-proc-infos] [ust-proc ust-procs])
-      (check-ust-equal? (info-ref ua-proc-info 'undead-out) ust-proc)))
+      (check-ust-equal? (info-ref ua-proc-info 'undead-out) ust-proc))
+    ;; check call-undead is as expected
+    (check-list-equiv? (info-ref ua-main-info 'call-undead) cu-tail)
+    (for ([ua-proc-info ua-proc-infos] [cu-proc cu-procs])
+      (check-list-equiv? (info-ref ua-proc-info 'call-undead) cu-proc)))
 
   ;; Simple
   (check-ust
     '()
-    '(halt 42)
+    '(jump done)
     '())
 
   (check-ust
     '()
-    '(begin (halt 42))
-    '(()))
+    '(begin (set! rax 42) (jump done))
+    '(() ()))
 
   ;; Unused set!
   (check-ust
     '(x.1)
     '(begin
        (set! x.1 42)
-       (halt 42))
+       (set! rax 42)
+       (jump done))
     '(()
+      ()
       ()))
 
   ;; Referenced set!
@@ -300,8 +320,10 @@
     '(x.1)
     '(begin
        (set! x.1 42)
-       (halt x.1))
+       (set! rax x.1)
+       (jump done))
     '((x.1)
+      ()
       ()))
 
   ;; Referenced binop
@@ -310,9 +332,11 @@
     '(begin
        (set! x.1 40)
        (set! x.1 (+ x.1 2))
-       (halt x.1))
+       (set! rax x.1)
+       (jump done))
     '((x.1)
       (x.1)
+      ()
       ()))
 
   ;; Unreferenced binop
@@ -321,8 +345,10 @@
     '(begin
        (set! x.1 40)
        (set! x.1 (+ x.1 2))
-       (halt 42))
+       (set! rax 42)
+       (jump done))
     '((x.1)
+      ()
       ()
       ()))
 
@@ -333,10 +359,12 @@
        (set! x.2 2)
        (set! x.1 40)
        (set! x.1 (+ x.1 x.2))
-       (halt x.1))
+       (set! rax x.1)
+       (jump done))
     '((x.2)
       (x.2 x.1)
       (x.1)
+      ()
       ()))
 
   ;; nested begin in tail-tail
@@ -347,10 +375,12 @@
        (begin
          (set! x.2 2)
          (set! x.1 (+ x.1 x.2))
-         (halt x.1)))
+         (set! rax x.1)
+         (jump done)))
     '((x.1)
       ((x.2 x.1)
        (x.1)
+       ()
        ())))
 
   ;; nested begin in tail-effect
@@ -361,10 +391,12 @@
        (begin
          (set! x.2 2)
          (set! x.1 (+ x.1 x.2)))
-       (halt x.1))
+       (set! rax x.1)
+       (jump done))
     '((x.1)
       ((x.2 x.1)
        (x.1))
+      ()
       ()))
 
   ;; from book 1
@@ -372,8 +404,10 @@
     '(x.1)
     '(begin
        (set! x.1 42)
-       (halt x.1))
+       (set! rax x.1)
+       (jump done))
     '((x.1)
+      ()
       ()))
 
   ;; from book 2
@@ -394,8 +428,8 @@
        (set! p.1 -1)
        (set! t.6 (* t.6 p.1))
        (set! z.5 (+ z.5 t.6))
-       (halt z.5))
-
+       (set! rax z.5)
+       (jump done))
     '((v.1)
       (v.1 w.2)
       (x.3 w.2)
@@ -410,6 +444,7 @@
       (p.1 t.6 z.5)
       (t.6 z.5)
       (z.5)
+      ()
       ()))
 
   ;; if in tail
@@ -421,15 +456,15 @@
       (set! y.2 6)
       (set! z.3 7)
       (if (begin (set! i.1 10) (not (= y.2 5)))
-          (begin (set! a.1 i.1) (set! a.1 (* a.1 9)) (halt v.0))
-          (begin (set! b.1 x.1) (set! c.1 b.1) (halt 10))))
+          (begin (set! a.1 i.1) (set! a.1 (* a.1 9)) (set! rax v.0) (jump done))
+          (begin (set! b.1 x.1) (set! c.1 b.1) (set! rax 10) (jump done))))
     '((v.0)
       (x.1 v.0)
       (x.1 y.2 v.0)
       (x.1 y.2 v.0)
       (((x.1 i.1 v.0 y.2) (x.1 i.1 v.0))
-       ((v.0 a.1) (v.0) ())
-       ((b.1) () ()))))
+       ((v.0 a.1) (v.0) () ())
+       ((b.1) () () ()))))
 
   ;; if in effect
   (check-ust
@@ -445,7 +480,8 @@
           (begin (set! a.1 i.1) (set! u.1 9) (set! a.1 (* a.1 9)) (set! v.1 9))
           (begin (set! b.1 x.1) (set! c.1 b.1) (set! u.1 10)))
       (set! d.1 u.1)
-      (halt v.1))
+      (set! rax v.1)
+      (jump done))
     '((u.1)
       (v.1 u.1)
       (v.1 x.1 u.1)
@@ -456,6 +492,7 @@
        ((a.1) (u.1 a.1) (u.1) (v.1 u.1))
        ((v.1 b.1) (v.1) (v.1 u.1)))
       (v.1)
+      ()
       ()))
 
   ;; if in pred
@@ -472,8 +509,8 @@
             (if (true)
                 (begin (set! a.1 i.1) (set! u.1 9) (set! a.1 (* a.1 9)) (< v.1 9))
                 (begin (set! b.1 x.1) (set! c.1 b.1) (= c.1 10))))
-          (halt u.1)
-          (halt z.1)))
+          (begin (set! rax u.1) (jump done))
+          (begin (set! rax z.1) (jump done))))
     '((u.1)
       (v.1 u.1)
       (v.1 u.1 x.1)
@@ -483,8 +520,8 @@
         ((z.1 v.1 i.1 u.1 x.1)
          ((z.1 v.1 a.1) (u.1 z.1 v.1 a.1) (u.1 z.1 v.1) (u.1 z.1))
          ((u.1 z.1 b.1) (u.1 z.1 c.1) (u.1 z.1))))
-       ()
-       ())))
+       (() ())
+       (() ()))))
 
   ;; rlocs
   (check-ust
@@ -498,7 +535,9 @@
       (set! fv1 u.1)
       (set! rdx (* rdx fv0))
       (if (< rcx fv1) (set! rcx 2) (set! fv2 9))
-      (if (not (!= fv2 r8)) (halt rdx) (halt fv2)))
+      (if (not (!= fv2 r8))
+          (begin (set! rax rdx) (jump done))
+          (begin (set! rax fv2) (jump done))))
     '((fv2 r8)
       (fv2 r8 rcx)
       (rdx fv2 r8 rcx)
@@ -507,25 +546,29 @@
       (rdx fv2 r8 rcx fv1 fv0)
       (rdx fv2 r8 rcx fv1)
       ((rdx fv2 r8) (rdx fv2 r8) (rdx fv2 r8))
-      ((rdx fv2) () ())))
+      ((rdx fv2) (() ()) (() ()))))
 
   ;; proc & jumps base cases
   (check-ust-proc
-    '(module ((locals ()))
+    '(module ((new-frames ()) (locals ()))
       (jump done))
+    '()
+    (list)
     '()
     (list))
   (check-ust-proc
-    '(module ((locals ()))
-      (define L.test.1 ((locals ())) (halt 0))
-      (define L.test.2 ((locals ())) (halt 3))
+    '(module ((new-frames ()) (locals ()))
+      (define L.test.1 ((new-frames ()) (locals ())) (jump done))
+      (define L.test.2 ((new-frames ()) (locals ())) (jump done))
       (jump L.test.1))
+    '()
+    (list '() '())
     '()
     (list '() '()))
 
   ;; simple jump
   (check-ust-proc
-    '(module ((locals (x.1)))
+    '(module ((new-frames ()) (locals (x.1)))
       (begin
         (set! x.1 1)
         (set! rsi 9)
@@ -537,14 +580,16 @@
       (x.1 rsi fv0)
       (x.1 rsi fv0 fv1)
       (x.1 rsi fv0))
+    (list)
+    '()
     (list))
 
   ;; complex jumps & procs
   (check-ust-proc
-    '(module ((locals (u.1)))
-      (define L.test.1 ((locals ()))
-        (begin (set! r13 10) (set! r9 rdi) (halt r13)))
-      (define L.test.2 ((locals (x.1)))
+    '(module ((new-frames ()) (locals (u.1)))
+      (define L.test.1 ((new-frames ()) (locals ()))
+        (begin (set! r13 10) (set! r9 rdi) (set! rax r13) (jump done)))
+      (define L.test.2 ((new-frames ()) (locals (x.1)))
         (begin (set! x.1 r13) (set! rdx x.1) (set! fv0 9) (jump x.1 x.1 rdx fv0)))
       (begin
         (set! r8 9)
@@ -570,5 +615,148 @@
       ((rcx fv0 r13 u.1)
        ((rdx fv0) (rdx fv0 fv2) (rdx fv0 fv2))
        ((r14 r13 u.1 rcx) (r14 r13 fv1 u.1) (r14 r13 fv1 fv2 u.1) (r13 fv1 fv2 u.1))))
-    (list '((r13 rdi) (r13) ()) '((x.1) (x.1 rdx) (x.1 rdx fv0) (x.1 rdx fv0))))
+    (list '((r13 rdi) (r13) () ()) '((x.1) (x.1 rdx) (x.1 rdx fv0) (x.1 rdx fv0)))
+    '()
+    (list))
+
+  ;; return-point
+  (check-ust-proc
+    '(module ((new-frames ()) (locals (x.1 y.2 z.3)))
+      (define L.test.1
+        ((new-frames ()) (locals (tmp-ra.1)))
+        (begin
+          (set! tmp-ra.1 r15)
+          (set! rax 10)
+          (set! r15 tmp-ra.1)
+          (jump tmp-ra.1 rbp rax)))
+      (begin
+        (set! tmp-ra.2 r15)
+        (set! v.0 0)
+        (set! x.1 3)
+        (set! y.2 2)
+        (set! z.3 1)
+        (set! fv0 6)
+        (set! fv1 5)
+        (set! fv2 4)
+        (set! fv4 2)
+        (set! rcx 8)
+        (set! rdx 7)
+        (return-point L.rp.1
+          (begin
+            (set! r8 x.1)
+            (set! rcx z.3)
+            (set! fv3 fv0)
+            (set! fv1 fv4)
+            (set! r15 L.rp.1)
+            (jump L.test.1 rbp rax r8 rcx r15 fv1 fv3)))
+        (set! rax (+ rax x.1))
+        (set! rax (+ rax y.2))
+        (set! rax (+ rax rcx))
+        (set! rax (+ rax fv0))
+        (set! rax (+ rax fv1))
+        (set! rax (+ rax fv2))
+        (set! r15 tmp-ra.2)
+        (jump tmp-ra.2 rbp rax)))
+    '((tmp-ra.2 rbp)
+      (tmp-ra.2 rbp)
+      (tmp-ra.2 rbp x.1)
+      (tmp-ra.2 rbp x.1 y.2)
+      (tmp-ra.2 rbp x.1 y.2 z.3)
+      (tmp-ra.2 rbp x.1 y.2 z.3 fv0)
+      (tmp-ra.2 rbp x.1 y.2 z.3 fv0 fv1)
+      (tmp-ra.2 rbp x.1 y.2 z.3 fv0 fv1 fv2)
+      (tmp-ra.2 rbp x.1 y.2 z.3 fv0 fv1 fv2 fv4)
+      (tmp-ra.2 rbp x.1 y.2 z.3 fv0 fv1 fv2 fv4 rcx)
+      (tmp-ra.2 rbp x.1 y.2 z.3 fv0 fv1 fv2 fv4 rcx)
+      ((tmp-ra.2 rbp x.1 y.2 fv0 fv1 fv2 rax rcx)
+       ((fv0 fv4 r8 rax rbp z.3)
+        (fv0 fv4 rcx r8 rax rbp)
+        (fv3 fv4 rcx r8 rax rbp)
+        (fv1 fv3 rcx r8 rax rbp)
+        (fv1 fv3 rcx r8 rax rbp r15)
+        (fv1 fv3 rcx r8 rax rbp r15)))
+      (tmp-ra.2 rbp rax rcx fv0 fv1 fv2 y.2)
+      (tmp-ra.2 rbp rax rcx fv0 fv1 fv2)
+      (tmp-ra.2 rbp rax fv0 fv1 fv2)
+      (tmp-ra.2 rbp rax fv1 fv2)
+      (tmp-ra.2 rbp rax fv2)
+      (tmp-ra.2 rbp rax)
+      (tmp-ra.2 rbp rax)
+      (rax rbp))
+    (list '((tmp-ra.1 rbp) (tmp-ra.1 rax rbp) (tmp-ra.1 rax rbp) (rax rbp)))
+    '(x.1 y.2 fv0 fv1 fv2 tmp-ra.2)
+    (list '()))
+
+  ;; factorial example
+  (check-ust-proc
+    '(module
+      ((new-frames ((nfv.5 nfv.6)))
+       (locals (x.1 nfv.6 nfv.5 tmp-ra.4)))
+      (define L.fact.1
+        ((new-frames ((nfv.2 nfv.3)))
+         (locals (n.2 acc.2 nfv.2 nfv.3 r.1 tmp-ra.1 acc.1 n.1)))
+        (begin
+          (set! tmp-ra.1 r15)
+          (set! n.1 fv0)
+          (set! acc.1 fv1)
+          (if (<= n.1 1)
+              (begin (set! rax acc.1) (jump tmp-ra.1 rbp rax))
+              (begin
+                (set! n.2 n.1)
+                (set! n.2 (- n.2 1))
+                (set! acc.2 n.1)
+                (set! acc.2 (* acc.2 acc.1))
+                (return-point
+                  L.rp.1
+                  (begin
+                    (set! nfv.3 acc.2)
+                    (set! nfv.2 n.2)
+                    (set! r15 L.rp.1)
+                    (jump L.fact.1 rbp r15 nfv.2 nfv.3)))
+                (set! r.1 rax)
+                (set! rax r.1)
+                (jump tmp-ra.1 rbp rax)))))
+      (begin
+        (set! tmp-ra.4 r15)
+        (return-point
+          L.rp.2
+          (begin
+            (set! nfv.6 1)
+            (set! nfv.5 5)
+            (set! r15 L.rp.2)
+            (jump L.fact.1 rbp r15 nfv.5 nfv.6)))
+        (set! x.1 rax)
+        (set! rax x.1)
+        (set! rax (+ rax 18))
+        (jump tmp-ra.4 rbp rax)))
+    '((tmp-ra.4 rbp)
+      ((rax tmp-ra.4 rbp)
+       ((nfv.6 rbp)
+        (nfv.6 nfv.5 rbp)
+        (nfv.6 nfv.5 r15 rbp)
+        (nfv.6 nfv.5 r15 rbp)))
+      (x.1 tmp-ra.4 rbp)
+      (rax tmp-ra.4 rbp)
+      (tmp-ra.4 rax rbp)
+      (rax rbp))
+    (list
+      '((fv0 fv1 tmp-ra.1 rbp)
+        (fv1 n.1 tmp-ra.1 rbp)
+        (n.1 acc.1 tmp-ra.1 rbp)
+        ((n.1 acc.1 tmp-ra.1 rbp)
+         ((tmp-ra.1 rax rbp) (rax rbp))
+         ((n.2 n.1 acc.1 tmp-ra.1 rbp)
+          (n.1 acc.1 n.2 tmp-ra.1 rbp)
+          (acc.1 acc.2 n.2 tmp-ra.1 rbp)
+          (n.2 acc.2 tmp-ra.1 rbp)
+          ((rax tmp-ra.1 rbp)
+           ((n.2 nfv.3 rbp)
+            (nfv.3 nfv.2 rbp)
+            (nfv.3 nfv.2 r15 rbp)
+            (nfv.3 nfv.2 r15 rbp)))
+          (r.1 tmp-ra.1 rbp)
+          (tmp-ra.1 rax rbp)
+          (rax rbp)))))
+    '(tmp-ra.4)
+    (list '(tmp-ra.1)))
   )
