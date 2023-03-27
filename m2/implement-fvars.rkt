@@ -14,18 +14,23 @@
 (define/contract (implement-fvars p)
   (-> nested-asm-lang-fvars-v6? nested-asm-lang-v6?)
 
+  (define offset 0)
+
   ;; nested-asm-lang-fvars-v6-p nested-asm-lang-v6-p
   (define (implement-fvars-p p)
     (match p
       [`(module (define ,labels ,tails) ... ,tail)
+        (set! offset 0)
+        (define new-tail (implement-fvars-tail tail))
         `(module
            ,@(map implement-fvars-proc labels tails)
-           ,(implement-fvars-tail tail))]))
+           ,new-tail)]))
 
   ;; tail: nested-asm-lang-fvars-v6-tail
   ;; -> nested-asm-lang-v6-tail
   (define/contract (implement-fvars-proc label tail)
     (-> label? any/c any/c)
+    (set! offset 0)
     `(define
        ,label
        ,(implement-fvars-tail tail)))
@@ -73,7 +78,10 @@
     (match e
       [`(set! ,l (,b ,l ,o))
         (define loc (implement-fvars-loc l))
-        `(set! ,loc (,b ,loc ,(implement-fvars-opand o)))]
+        (begin0
+        `(set! ,loc (,b ,loc ,(implement-fvars-opand o)))
+        (when (and (equal? l (current-frame-base-pointer-register)) (number? o))
+          (set! offset ((match b ['- -] ['+ +]) offset o))))]
       [`(set! ,l ,t)
         `(set!
            ,(implement-fvars-loc l)
@@ -105,7 +113,7 @@
   ;; Return the displacement mode operand for fvar f.
   (define/contract (implement-fvars-fvar f)
     (-> fvar? any/c)
-    `(,(current-frame-base-pointer-register) - ,(* 8 (fvar->index f))))
+    `(,(current-frame-base-pointer-register) - ,(+ (* (fvar->index f) (current-word-size-bytes)) offset)))
 
   ;; nested-asm-lang-fvars-v6-loc nested-asm-lang-v6-loc
   (define (implement-fvars-loc l)
@@ -211,4 +219,54 @@
          ;; effect/(return-point label tail)
          (return-point L.rt.1 (jump ,(fv 4)))
          (jump r15))))
+
+  ;; https://piazza.com/class/lcquw2vc2cs73i/post/339
+  (check-equal?
+    (implement-fvars
+      '(module
+         (define L.swap.1
+           (begin
+             (set! fv4 r15)
+             (set! r14 fv0)
+             (set! r15 fv1)
+             (if (< r15 r14)
+                 (begin
+                   (set! rax r14)
+                   (jump fv4))
+                 (begin
+                   (begin
+                     (set! rbp (- rbp 40))
+                     (return-point L.rp.1
+                       (begin
+                         (set! fv5 r15)
+                         (set! fv6 r14)
+                         (set! r15 L.rp.1)
+                         (jump L.swap.1)))
+                     (set! rbp (+ rbp 40)))
+                   (jump fv4)))))
+         (begin
+           (set! fv1 7)
+           (set! fv0 4)
+           (jump L.swap.1))))
+    '(module
+       (define L.swap.1
+         (begin
+           (set! (rbp - 32) r15)
+           (set! r14 (rbp - 0))
+           (set! r15 (rbp - 8))
+           (if (< r15 r14)
+             (begin (set! rax r14) (jump (rbp - 32)))
+             (begin
+               (begin
+                 (set! rbp (- rbp 40))
+                 (return-point
+                  L.rp.1
+                  (begin
+                    (set! (rbp - 0) r15)
+                    (set! (rbp - 8) r14)
+                    (set! r15 L.rp.1)
+                    (jump L.swap.1)))
+                 (set! rbp (+ rbp 40)))
+               (jump (rbp - 32))))))
+       (begin (set! (rbp - 8) 7) (set! (rbp - 0) 4) (jump L.swap.1))))
   )
