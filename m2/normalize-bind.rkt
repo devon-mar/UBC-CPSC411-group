@@ -2,25 +2,26 @@
 
 (require
   cpsc411/compiler-lib
-  cpsc411/langs/v5)
+  cpsc411/langs/v6)
 
 (provide normalize-bind)
 
 ;; Milestone 2 Exercise 3
 ;; Milestone 4 Exercise 19
 ;; Milestone 5 Exercise 4
+;; Milestone 6 Exercise 4
 ;;
-;; Compiles Imp-mf-lang v5 to Imp-cmf-lang v5, pushing set! under begin so that
+;; Compiles Imp-mf-lang v6 to Imp-cmf-lang v6, pushing set! under begin so that
 ;; the right-hand-side of each set! is simple value-producing operation.
 (define/contract (normalize-bind p)
-  (-> imp-mf-lang-v5? proc-imp-cmf-lang-v5?)
+  (-> imp-mf-lang-v6? proc-imp-cmf-lang-v6?)
 
   ;; Pushes a (set! ,aloc ,value) under a begin so that
   ;; the right-hand-size of each set! is a simple value producing operation.
   ;;
-  ;; aloc: imp-mf-lang-v5-aloc?
-  ;; value: imp-mf-lang-v5-value
-  ;; -> proc-imp-cmf-lang-v5-effect
+  ;; aloc: imp-mf-lang-v6-aloc?
+  ;; value: imp-mf-lang-v6-value
+  ;; -> proc-imp-cmf-lang-v6-effect
   (define/contract (normalize-bind-set aloc value)
     (-> aloc? any/c any/c)
     (match value
@@ -34,15 +35,15 @@
           ,(normalize-bind-set aloc vf))]
       [_ `(set! ,aloc ,value)]))
 
-  ;; tail: imp-mf-lang-v5-tail?
-  ;; -> proc-imp-cmf-lang-v5-proc
+  ;; tail: imp-mf-lang-v6-tail?
+  ;; -> proc-imp-cmf-lang-v6-proc
   (define/contract (normalize-bind-proc label params tail)
     (-> label? (listof aloc?) any/c any/c)
     `(define
        ,label
        (lambda ,params ,(normalize-bind-tail tail))))
 
-  ;; imp-mf-lang-v5-p -> proc-imp-cmf-lang-v5-p
+  ;; imp-mf-lang-v6-p -> proc-imp-cmf-lang-v6-p
   (define (normalize-bind-p p)
     (match p
       [`(module (define ,labels (lambda (,alocs ...) ,tails)) ... ,tail)
@@ -50,7 +51,7 @@
            ,@(map normalize-bind-proc labels alocs tails)
            ,(normalize-bind-tail tail))]))
 
-  ;; imp-mf-lang-v5-pred -> proc-imp-cmf-lang-v5-pred
+  ;; imp-mf-lang-v6-pred -> proc-imp-cmf-lang-v6-pred
   (define (normalize-bind-pred p)
     (match p
       [`(true)
@@ -70,7 +71,7 @@
            ,(normalize-bind-pred p3))]
       [`(,_ ,_ ,_) p]))
 
-  ;; imp-mf-lang-v5-tail -> proc-imp-cmf-lang-v5-tail
+  ;; imp-mf-lang-v6-tail -> proc-imp-cmf-lang-v6-tail
   (define (normalize-bind-tail t)
     (match t
       [`(begin ,es ... ,tail)
@@ -86,7 +87,7 @@
       ;; value
       [_ (normalize-bind-value t)]))
 
-  ;; imp-mf-lang-v5-value -> proc-imp-cmf-lang-v5-value
+  ;; imp-mf-lang-v6-value -> proc-imp-cmf-lang-v6-value
   (define (normalize-bind-value v)
     (match v
       [`(begin ,es ... ,v)
@@ -98,11 +99,12 @@
            ,(normalize-bind-pred p)
            ,(normalize-bind-value v1)
            ,(normalize-bind-value v2))]
+      [`(call ,_ ,_ ...) v]
       [`(,_ ,_ ,_) v]
       ;; triv
       [_ v]))
 
-  ;; imp-mf-lang-v5-effect -> proc-imp-cmf-lang-v5-effect
+  ;; imp-mf-lang-v6-effect -> proc-imp-cmf-lang-v6-effect
   (define (normalize-bind-effect e)
     (match e
       [`(set! ,a ,v)
@@ -140,7 +142,8 @@
   (define (normalize-bind-binop b)
     (match b
       ['* (void)]
-      ['+ (void)]))
+      ['+ (void)]
+      ['- (void)]))
 
   ;; not used
   #;
@@ -242,7 +245,7 @@
   ;; M3 tests
 	(define-check (check-42 p)
 		(check-equal?
-			(interp-imp-cmf-lang-v5 (normalize-bind p))
+			(interp-imp-cmf-lang-v6 (normalize-bind p))
 			42))
 
   (check-42
@@ -353,5 +356,22 @@
                (set! o.1 z.1)
                (* x.1 o.1)))))
        (call L.foo.1 30 20 21 1)))
-           
+
+  ;; M6 tests
+  ;; call as value
+  (check-42
+    '(module
+      (define L.fact.1
+        (lambda (n.1 acc.1)
+          (if (<= n.1 1)
+            acc.1
+            (begin
+              (set! n.2 (- n.1 1))
+              (set! acc.2 (* n.1 acc.1))
+              (begin
+                (set! r.1 (begin (if (true)
+                                     (begin (call L.fact.1 n.2 acc.2))
+                                     (call L.fact.1 acc.2 n.2))))
+                r.1)))))
+      (begin (set! x.1 (call L.fact.1 4 1)) (+ x.1 18))))
   )
