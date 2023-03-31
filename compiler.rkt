@@ -28,7 +28,11 @@
 
  "m6/assign-call-undead-variables.rkt"
  "m6/allocate-frames.rkt"
- "m6/assign-frame-variables.rkt")
+ "m6/assign-frame-variables.rkt"
+
+ "m7/implement-safe-primops.rkt"
+ "m7/specify-representation.rkt"
+ "m7/remove-complex-opera.rkt")
 
 (provide
  uniquify
@@ -54,58 +58,6 @@
  flatten-program
  patch-instructions
  generate-x64)
-
-;; TODO: Fill in.
-;; You'll want to merge milestone-6 code in
-
-;; Stubs; remove or replace with your definitions.
-(define-values (uniquify
-                implement-safe-primops
-                specify-representation
-                remove-complex-opera*
-                sequentialize-let
-                normalize-bind
-                impose-calling-conventions
-                select-instructions
-                uncover-locals
-                undead-analysis
-                conflict-analysis
-                assign-call-undead-variables
-                allocate-frames
-                assign-registers
-                assign-frame-variables
-                replace-locations
-                implement-fvars
-                optimize-predicates
-                expose-basic-blocks
-                resolve-predicates
-                flatten-program
-                patch-instructions
-                generate-x64)
-  (values
-   values
-   values
-   values
-   values
-   values
-   values
-   values
-   values
-   values
-   values
-   values
-   values
-   values
-   values
-   values
-   values
-   values
-   values
-   values
-   values
-   values
-   values
-   values))
 
 (module+ test
   (require

@@ -115,3 +115,31 @@ For versions of the skeletons from prior versions of the course, see the tags.
 | 17       | `implement-fvars`              | `m2/implement-fvars.rkt`              |
 | 18       | `patch-instructions`           | `m2/patch-instructions.rkt`           |
 | 19       | `generate-x64`                 | `m2/generate-x64.rkt`                 |
+
+### Milestone 7
+
+| Exercise | Pass                           | File                                  |
+|----------|--------------------------------|---------------------------------------|
+| 2        | `check-exprs-lang`             | `m7/check-exprs-lang.rkt`             |
+| 3        | `uniquify`                     | `m2/uniquify.rkt`                     |
+| 4        | `implement-safe-primops`       | `m7/implement-safe-primops.rkt`       |
+| 5        | `specify-representation`       | `m7/specify-representation.rkt`       |
+| 6        | `remove-complex-opera*`        | `m7/remove-complex-opera.rkt`         |
+| 7        | `sequentialize-let`            | `m2/sequentialize-let.rkt`            |
+| 7        | `impose-calling-conventions`   | `m5/impose-calling-conventions.rkt`   |
+| 7        | `normalize-bind`               | `m2/normalize-bind.rkt`               |
+| 7        | `select-instructions`          | `m2/select-instructions.rkt`          |
+| 7        | `uncover-locals`               | `m2/uncover-locals.rkt`               |
+| 7        | `undead-analysis`              | `m3/undead-analysis.rkt`              |
+| 7        | `conflict-analysis`            | `m3/conflict-analysis.rkt`            |
+| 7        | `assign-call-undead-variables` | `m6/assign-call-undead-variables.rkt` |
+| 7        | `allocate-frames`              | `m6/allocate-frames.rkt`              |
+| 7        | `assign-registers`             | `m3/assign-registers.rkt`             |
+| 7        | `assign-frame-variables`       | `m6/assign-frame-variables.rkt`       |
+| 7        | `replace-locations`            | `m2/replace-locations.rkt`            |
+| 7        | `optimize-predicates`          | `m4/optimize-predicates.rkt`          |
+| 7        | `implement-fvars`              | `m2/implement-fvars.rkt`              |
+| 7        | `expose-basic-blocks`          | `m4/expose-basic-blocks.rkt`          |
+| 7        | `flatten-program`              | `m4/flatten-program.rkt`              |
+| 8        | `patch-instructions`           | `m2/patch-instructions.rkt`           |
+| 9        | `generate-x64`                 | `m2/generate-x64`                     |
