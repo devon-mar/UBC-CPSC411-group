@@ -2,7 +2,33 @@
 
 (require
  cpsc411/compiler-lib
- cpsc411/ptr-run-time)
+ cpsc411/ptr-run-time
+
+ "m2/uniquify.rkt"
+ "m2/generate-x64.rkt"
+ "m2/implement-fvars.rkt"
+ "m2/normalize-bind.rkt"
+ "m2/patch-instructions.rkt"
+ "m2/replace-locations.rkt"
+ "m2/select-instructions.rkt"
+ "m2/sequentialize-let.rkt"
+ "m2/uncover-locals.rkt"
+ "m2/uniquify.rkt"
+
+ "m3/assign-registers.rkt"
+ "m3/conflict-analysis.rkt"
+ "m3/undead-analysis.rkt"
+
+ "m4/optimize-predicates.rkt"
+ "m4/expose-basic-blocks.rkt"
+ "m4/resolve-predicates.rkt"
+ "m4/flatten-program.rkt"
+
+ "m5/impose-calling-conventions.rkt"
+
+ "m6/assign-call-undead-variables.rkt"
+ "m6/allocate-frames.rkt"
+ "m6/assign-frame-variables.rkt")
 
 (provide
  uniquify
