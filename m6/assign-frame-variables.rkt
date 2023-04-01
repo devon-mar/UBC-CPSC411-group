@@ -8,6 +8,7 @@
 (provide assign-frame-variables)
 
 ;; Milestone 6 Exercise 13
+;; Milestone 7 Exercise 7
 ;;
 ;; Assign frame location to each local variable
 (define/contract (assign-frame-variables p)

@@ -10,6 +10,7 @@
 ;; Milestone 4 Exercise 12
 ;; Milestone 5 Exercise 11
 ;; Milestone 6 Exercise 14
+;; Milestone 7 Exercise 7
 ;;
 ;; Compiles Asm-pred-lang v7/assignments to Nested-asm-lang-fvars v7 by
 ;; replacing all abstract location with physical locations using the

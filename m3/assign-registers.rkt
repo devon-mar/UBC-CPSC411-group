@@ -11,6 +11,7 @@
 ;; Milestone 4 Exercise 13
 ;; Milestone 5 Exercise 10
 ;; Milestone 6 Exercise 12
+;; Milestone 7 Exercise 7
 ;;
 ;; Assign register or frame location to each local variable
 ;; Assumes current-assignable-registers parameter to be set

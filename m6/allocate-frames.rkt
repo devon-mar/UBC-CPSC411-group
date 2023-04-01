@@ -7,6 +7,7 @@
 (provide allocate-frames)
 
 ;; Milestone 6 Exercise 11
+;; Milestone 7 Exercise 7
 ;;
 ;; Compiles Asm-pred-lang-v7/pre-framed to Asm-pred-lang-v7/framed by
 ;; allocating frames for each non-tail call, and assigning all new-frame
