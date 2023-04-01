@@ -20,6 +20,8 @@
 
   ;; value exprs-lang-v7-value
   ;; -> exprs-unique-lang-v7-value
+  ;; Resolve names inside of (define name (lambda (params...) value)).
+  ;; Assumes dict contains name->label map for name.
   (define/contract (uniquify-define dict name params value)
     (-> dict? name? (listof name?) any/c any/c)
     (define new-dict (foldl (lambda (x acc) (dict-set acc x (fresh x))) dict params))
