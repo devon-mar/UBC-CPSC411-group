@@ -2,17 +2,17 @@
 
 (require
   cpsc411/compiler-lib
-  cpsc411/langs/v6)
+  cpsc411/langs/v7)
 
 (provide allocate-frames)
 
 ;; Milestone 6 Exercise 11
 ;;
-;; Compiles Asm-pred-lang-v6/pre-framed to Asm-pred-lang-v6/framed by
+;; Compiles Asm-pred-lang-v7/pre-framed to Asm-pred-lang-v7/framed by
 ;; allocating frames for each non-tail call, and assigning all new-frame
 ;; variables to frame variables in the new frame.
 (define/contract (allocate-frames p)
-  (-> asm-pred-lang-v6/pre-framed? asm-pred-lang-v6/framed?)
+  (-> asm-pred-lang-v7/pre-framed? asm-pred-lang-v7/framed?)
 
   (define fbp (current-frame-base-pointer-register))
   (define assignment/c (listof (list/c aloc? fvar?)))
@@ -21,13 +21,13 @@
   ;; Removes 'call-undead and 'new-frames, updates 'assignment with as
   ;; and updates 'locals with 'ocals.
   ;;
-  ;; p: asm-pred-lang-v6/pre-framed-info
-  ;; -> asm-pred-lang-v6/framed-info
+  ;; p: asm-pred-lang-v7/pre-framed-info
+  ;; -> asm-pred-lang-v7/framed-info
   (define/contract (pre-framed->framed-info info as locals)
     (-> info? assignment/c (listof aloc?) info?)
     (info-set
       (info-set
-        (info-remove (info-remove info 'call-undead) 'new-frames)
+        (info-remove (info-remove (info-remove info 'call-undead) 'new-frames) 'undead-out)
         'locals
         locals)
       'assignment
@@ -78,8 +78,8 @@
         (info-ref info 'locals)
         (apply append (info-ref info 'new-frames)))))
 
-  ;; p: asm-pred-lang-v6/pre-framed-proc
-  ;; -> asm-pred-lang-v6/framed-proc
+  ;; p: asm-pred-lang-v7/pre-framed-proc
+  ;; -> asm-pred-lang-v7/framed-proc
   (define/contract (allocate-frames-proc label info tail)
     (-> label? info? any/c any/c)
     (define fw (frame-size/words info))
@@ -89,8 +89,8 @@
        ,(pre-framed->framed-info info new-as new-locals)
        ,(allocate-frames-tail fw tail)))
 
-  ;; p: asm-pred-lang-v6/pre-framed-p
-  ;; -> asm-pred-lang-v6/framed-p
+  ;; p: asm-pred-lang-v7/pre-framed-p
+  ;; -> asm-pred-lang-v7/framed-p
   (define (allocate-frames-p p)
     (match p
       [`(module ,info (define ,labels ,infos ,tails) ... ,tail)
@@ -101,8 +101,8 @@
            ,@(map allocate-frames-proc labels infos tails)
            ,(allocate-frames-tail fw tail))]))
 
-  ;; p: asm-pred-lang-v6/pre-framed-pred
-  ;; -> asm-pred-lang-v6/framed-pred
+  ;; p: asm-pred-lang-v7/pre-framed-pred
+  ;; -> asm-pred-lang-v7/framed-pred
   (define (allocate-frames-pred fw p)
     (-> frame-words? any/c any/c)
     (match p
@@ -124,8 +124,8 @@
       [`(,_ ,_ ,_)
         p]))
 
-  ;; t: asm-pred-lang-v6/pre-framed-tail
-  ;; -> asm-pred-lang-v6/framed-tail
+  ;; t: asm-pred-lang-v7/pre-framed-tail
+  ;; -> asm-pred-lang-v7/framed-tail
   (define/contract (allocate-frames-tail fw t)
     (-> frame-words? any/c any/c)
     (match t
@@ -141,8 +141,8 @@
            ,(allocate-frames-tail fw t1)
            ,(allocate-frames-tail fw t2))]))
 
-  ;; e: asm-pred-lang-v6/pre-framed-effect
-  ;; -> asm-pred-lang-v6/framed-effect
+  ;; e: asm-pred-lang-v7/pre-framed-effect
+  ;; -> asm-pred-lang-v7/framed-effect
   (define (allocate-frames-effect fw e)
     (-> frame-words? any/c any/c)
     (match e
@@ -203,7 +203,11 @@
     (match b
       ['* (void)]
       ['+ (void)]
-      ['- (void)]))
+      ['- (void)]
+      ['bitwise-and (void)]
+      ['bitwise-ior (void)]
+      ['bitwise-xor (void)]
+      ['arithmetic-shift-right (void)]))
   
   ;; not used
   #;
@@ -257,7 +261,6 @@
           (call-undead ())
           ;; the reference implementation of assign-call-undead-variables
           ;; doesn't seem to remove undead-out...
-          #;
           (undead-out
            ((tmp-ra.4 rbp)
             (tmp-ra.4 fv1 rbp)
@@ -276,7 +279,6 @@
             (locals (y.2 x.1 z.3 nfv.3 nfv.2))
             ;; the reference implementation of assign-call-undead-variables
             ;; doesn't seem to remove undead-out...
-            #;
             (undead-out
              ((fv0 fv1 tmp-ra.1 rbp)
               (fv1 x.1 tmp-ra.1 rbp)
@@ -414,7 +416,6 @@
          ((new-frames (() ()))
           (locals (b.5))
           (call-undead (a.6 tmp-ra.9))
-            #;
           (undead-out
            ((tmp-ra.9 rbp)
             ((rax tmp-ra.9 rbp) ((r15 rbp) (r15 rbp)))
@@ -438,7 +439,6 @@
          (define L.foo.1
            ((new-frames ())
             (locals (tmp-ra.7))
-            #;
             (undead-out
              ((tmp-ra.7 rbp)
               (((tmp-ra.7 rbp) (tmp-ra.7 rbp) (tmp-ra.7 rbp))
@@ -456,7 +456,6 @@
          (define L.bar.2
            ((new-frames ())
             (locals (x.4 y.3 x.2 y.1 tmp-ra.8))
-            #;
             (undead-out
              ((rdi rsi tmp-ra.8 rbp)
               (rsi x.2 tmp-ra.8 rbp)
@@ -555,4 +554,35 @@
       (empty? (info-ref info-foo 'assignment))
       (empty? (info-ref info-bar 'assignment))
       (equal? (sort '((tmp-ra.9 fv0) (a.6 fv1)) assignment<?) (sort (info-ref info 'assignment) assignment<?))))
+
+  ;; Identity over bitwise binops
+  (check-equal?
+    (allocate-frames
+      `(module
+        ((new-frames (() ()))
+          (locals ())
+          (call-undead ())
+          (undead-out ())
+          (conflicts ())
+          (assignment ()))
+        (begin
+          (set! x.1 1)
+          (set! x.2 0)
+          (set! x.1 (bitwise-ior x.1 x.2))
+          (set! x.1 (bitwise-xor x.1 x.2))
+          (set! x.1 (bitwise-and x.1 x.2))
+          (set! x.1 (arithmetic-shift-right x.1 x.2))
+          (jump r15))))
+    `(module
+        ((locals ())
+         (conflicts ())
+         (assignment ()))
+        (begin
+          (set! x.1 1)
+          (set! x.2 0)
+          (set! x.1 (bitwise-ior x.1 x.2))
+          (set! x.1 (bitwise-xor x.1 x.2))
+          (set! x.1 (bitwise-and x.1 x.2))
+          (set! x.1 (arithmetic-shift-right x.1 x.2))
+          (jump r15))))
   )
