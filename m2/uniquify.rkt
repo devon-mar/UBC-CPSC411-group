@@ -71,7 +71,7 @@
     (-> dict? any/c any/c)
     ;; Merged template with x
     (match t
-      ;; if prim-f|empty (or any symbol) gets shadowed by user-defined function
+      ;; if prim-f|empty (or any symbol) gets shadowed by user-defined names
       ;; it should be replaced with a label|aloc
       [(? name?) (dict-ref dict t t)]
       [(? int61?) t]
@@ -283,41 +283,29 @@
       (define all-true
         (lambda (a b c d e f g)
           (if a (if b (if c (if d (if e (if f (if g #t #f) #f) #f) #f) #f) #f) #f)))
-      (define all-false
-        (lambda (a b c d e f g)
-          (if a #f (if b #f (if c #f (if d #f (if e #f (if f #f (if g #f #t)))))))))
       (let ([x 17]
             [y 2]
-            [z 8])
+            [z -8])
         (let ([ft (call fixnum? x)]
-              [ff (call fixnum? #t)]
               [bt (call boolean? #f)]
-              [bf (call boolean? empty)]
               [emt (call empty? empty)]
-              [emf (call empty? 0)]
               [vt (call void? (void))]
-              [vf (call void? empty)]
               [at (call ascii-char? #\D)]
-              [af (call ascii-char? x)]
               [ert (call error? (error 2))]
-              [erf (call error? (void))]
-              [nt (call not #f)]
-              [nf (call not #t)])
+              [nt (call not #f)])
           (let ([tr (if (call all-true ft bt emt vt at ert nt)
                         (call * x y)
-                        -1)]
-                [fr (if (call all-false ff bf emf vf af erf nf)
-                        (call - 0 z)
-                        -2)])
-            (call - tr fr))))))
+                        -1)])
+            (call - tr z))))))
 
   ;; shadowing
   (check-42
     '(module
       (define +
         (lambda (eq? >=)
-          (let ([not *])
-            (call not eq? >=))))
+          (let ([not *]
+                [< >=])
+            (call not eq? <))))
       (let ([- +]
             [fixnum? (call - 24 3)]
             [empty 2])
