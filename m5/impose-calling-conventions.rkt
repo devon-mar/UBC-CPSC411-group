@@ -92,24 +92,22 @@
   (define/contract (params->locs p)
     (-> (listof aloc?) dict?)
     (let f ([p p]
-            [next (current-parameter-registers)]
+            [regs (current-parameter-registers)]
+            [next-fv 0]
             [acc '()])
       (cond
         [(empty? p) acc]
-        [(empty? next)
+        [(empty? regs)
          (f 
            (cdr p)
-           1
-           (dict-set acc (car p) (make-fvar 0)))]
-        [(number? next)
-         (f 
-           (cdr p)
-           (add1 next)
-           (dict-set acc (car p) (make-fvar next)))]
+           regs
+           (add1 next-fv)
+           (dict-set acc (car p) (make-fvar next-fv)))]
         [(f
            (cdr p)
-           (cdr next)
-           (dict-set acc (car p) (car next)))])))
+           (cdr regs)
+           next-fv
+           (dict-set acc (car p) (car regs)))])))
 
   ;; Imposes callign conventions on a proc represented by label params and entry.
   ;;
