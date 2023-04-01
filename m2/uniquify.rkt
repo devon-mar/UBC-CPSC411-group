@@ -2,7 +2,7 @@
 
 (require
   cpsc411/compiler-lib
-  cpsc411/langs/v6)
+  cpsc411/langs/v7)
 
 (provide uniquify)
 
@@ -10,109 +10,94 @@
 ;; Milestone 4 Exercise 20
 ;; Milestone 5 Exercise 2
 ;; Milestone 6 Exercise 2
+;; Milestone 7 Exercise 3
 ;;
-;; Compiles Values-lang v6 to Values-unique-lang v6 by resolving all lexical
-;; identifiers to abstract locations.
+;; Compiles Exprs-Lang to Exprs-Unique-Lang by
+;; resolving top-level lexical identifiers into unique labels,
+;; and all other lexical identifiers into unique abstract locations
 (define/contract (uniquify p)
-  (-> values-lang-v6? values-unique-lang-v6?)
+  (-> exprs-lang-v7? exprs-unique-lang-v7?)
 
-  ;; tail: values-lang-v6-tail
-  ;; -> values-unique-lang-v6-tail
-  (define/contract (uniquify-define alocs name params tail)
+  ;; value values-lang-v6-value
+  ;; -> values-unique-lang-v6-value
+  (define/contract (uniquify-define dict name params value)
     (-> dict? name? (listof name?) any/c any/c)
-    (define new-alocs (foldl (lambda (x acc) (dict-set acc x (fresh x))) alocs params))
+    (define new-dict (foldl (lambda (x acc) (dict-set acc x (fresh x))) dict params))
     `(define
-       ,(dict-ref alocs name)
+       ,(dict-ref dict name)
        (lambda
-         ,(map (lambda (p) (dict-ref new-alocs p)) params)
-         ,(uniquify-tail new-alocs tail))))
+         ,(map (lambda (p) (dict-ref new-dict p)) params)
+         ,(uniquify-value new-dict value))))
 
-  ;; Replace all xs with alocs. The new name->aloc mappings will be passed
+  ;; Replace all xs with alocs. The new name->aloc|label mappings will be passed
   ;; as the first arg to f. The second arg to f will be body.
-  ;; The value of (f new-alocs body) will be used as the body in the returned let.
-  (define/contract (uniquify-let alocs xs vs f body)
+  ;; The value of (f new-dict body) will be used as the body in the returned let.
+  (define/contract (uniquify-let dict xs vs f body)
     (-> dict? (listof name?) (listof any/c) (-> dict? any/c any/c) any/c any/c)
-    (define new-alocs (foldl (lambda (x acc) (dict-set acc x (fresh x))) alocs xs))
+    (define new-dict (foldl (lambda (x acc) (dict-set acc x (fresh x))) dict xs))
     `(let
-       ,(map (lambda (x v) `[,(dict-ref new-alocs x) ,(uniquify-value alocs v)]) xs vs)
-       ,(f new-alocs body)))
+      ,(map (lambda (x v) `[,(dict-ref new-dict x) ,(uniquify-value dict v)]) xs vs)
+      ,(f new-dict body)))
 
-  ;; dict(name?, aloc?) values-lang-v6-p -> values-unique-lang-v6-p
-  (define (uniquify-p alocs p)
+  ;; dict(name?, aloc?|label?) values-lang-v6-p -> values-unique-lang-v6-p
+  (define (uniquify-p dict p)
     (-> dict? any/c any/c)
     (match p
-      [`(module (define ,x1s (lambda (,x2s ...) ,tails)) ... ,tail)
-        (define new-alocs (foldl (lambda (x acc) (dict-set acc x (fresh-label x))) alocs x1s))
-        `(module
-           ,@(map (lambda (name x2s tail) (uniquify-define new-alocs name x2s tail)) x1s x2s tails)
-           ,(uniquify-tail new-alocs tail))]))
+      [`(module (define ,x1s (lambda (,x2s ...) ,vs)) ... ,vt)
+       (define new-dict (foldl (lambda (x acc) (dict-set acc x (fresh-label x))) dict x1s))
+       `(module
+         ,@(map (lambda (name x2s value) (uniquify-define new-dict name x2s value)) x1s x2s vs)
+         ,(uniquify-value new-dict vt))]))
 
-  ;; dict(name?, aloc?) values-lang-v6-pred -> values-unique-lang-v6-pred
-  (define/contract (uniquify-pred alocs p)
+  ;; dict(name?, aloc?|label?) values-lang-v6-pred -> values-unique-lang-v6-pred
+  (define/contract (uniquify-pred dict p)
     (-> dict? any/c any/c)
     (match p
       [`(true)
-        p]
+       p]
       [`(false)
-        p]
+       p]
       [`(not ,pred)
-        `(not ,(uniquify-pred alocs pred))]
+       `(not ,(uniquify-pred dict pred))]
       [`(let ([,xs ,vs] ...) ,pred)
-        (uniquify-let alocs xs vs uniquify-pred pred)]
+       (uniquify-let dict xs vs uniquify-pred pred)]
       [`(if ,p1 ,p2 ,p3)
-        `(if
-           ,(uniquify-pred alocs p1)
-           ,(uniquify-pred alocs p2)
-           ,(uniquify-pred alocs p3))]
+       `(if
+         ,(uniquify-pred dict p1)
+         ,(uniquify-pred dict p2)
+         ,(uniquify-pred dict p3))]
       [`(,relop ,t1 ,t2)
-        `(,relop
-          ,(uniquify-tail alocs t1)
-          ,(uniquify-tail alocs t2))]))
+       `(,relop
+         ,(uniquify-triv dict t1)
+         ,(uniquify-triv dict t2))]))
 
-  ;; dict(name?, aloc?) values-lang-v6-tail -> values-unique-lang-v6-tail
-  (define/contract (uniquify-tail alocs t)
-    (-> dict? any/c any/c)
-    (match t
-      [`(let ([,xs ,vs] ...) ,tail)
-        (uniquify-let alocs xs vs uniquify-tail tail)]
-      [`(if ,p ,t1 ,t2)
-        `(if
-           ,(uniquify-pred alocs p)
-           ,(uniquify-tail alocs t1)
-           ,(uniquify-tail alocs t2))]
-      [`(call ,x ,ts ...)
-        `(call
-           ,(dict-ref alocs x)
-           ,@(map (lambda (t) (uniquify-triv alocs t)) ts))]
-      [_ (uniquify-value alocs t)]))
-
-  ;; dict(name?, aloc?) values-lang-v6-value -> values-unique-lang-v6-value
-  (define/contract (uniquify-value alocs v)
+  ;; dict(name?, aloc?|label?) values-lang-v6-value -> values-unique-lang-v6-value
+  (define/contract (uniquify-value dict v)
     (-> dict? any/c any/c)
     (match v
       [`(if ,p ,v1 ,v2)
-        `(if
-           ,(uniquify-pred alocs p)
-           ,(uniquify-value alocs v1)
-           ,(uniquify-value alocs v2))]
+       `(if
+         ,(uniquify-pred dict p)
+         ,(uniquify-value dict v1)
+         ,(uniquify-value dict v2))]
       [`(let ([,xs ,vs] ...) ,v)
-        (uniquify-let alocs xs vs uniquify-value v)]
-      [`(call ,x ,ts ...)
+       (uniquify-let dict xs vs uniquify-value v)]
+      [`(call ,x ,vs ...)
        `(call
-         ,(dict-ref alocs x)
-         ,@(map (lambda (t) (uniquify-triv alocs t)) ts))]
-      [`(,binop ,t1 ,t2)
-        `(,binop
-          ,(uniquify-triv alocs t1)
-          ,(uniquify-triv alocs t2))]
-      [_ (uniquify-triv alocs v)]))
+         ,(dict-ref dict x)
+         ,@(map (lambda (v) (uniquify-value dict v)) vs))]
+      [`(,binop ,v1 ,v2)
+       `(,binop
+         ,(uniquify-value dict v1)
+         ,(uniquify-value dict v2))]
+      [_ (uniquify-triv dict v)]))
 
-  ;; dict(name?, aloc?) values-lang-v6-triv -> values-unique-lang-v6-triv
-  (define/contract (uniquify-triv alocs t)
+  ;; dict(name?, aloc?|label?) values-lang-v6-triv -> values-unique-lang-v6-triv
+  (define/contract (uniquify-triv dict t)
     (-> dict? any/c any/c)
     (match t
       [(? int64?) t]
-      [(? name?) (dict-ref alocs t)]))
+      [(? name?) (dict-ref dict t)]))
 
   #;
   (define (uniquify-binop b)
@@ -139,7 +124,7 @@
 
   (define-check (check-42 p)
     (check-equal?
-      (interp-values-unique-lang-v6 (uniquify p))
+      (interp-exprs-unique-lang-v7 (uniquify p))
       42))
 
   ;; M5 tests
