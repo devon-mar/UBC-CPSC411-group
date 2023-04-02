@@ -2,17 +2,18 @@
 
 (require
   cpsc411/compiler-lib
-  cpsc411/langs/v6)
+  cpsc411/langs/v7)
 
 (provide optimize-predicates)
 
 ;; Milestone 4 Exercise 11
 ;; Milestone 5 Exercise 12
 ;; Milestone 6 Exercise 15
+;; Milestone 7 Exercise 7
 ;;
 ;; Optimize Nested-asm-lang-fvars programs by analyzing and simplifying predicates.
 (define/contract (optimize-predicates p)
-  (-> nested-asm-lang-fvars-v6? nested-asm-lang-fvars-v6?)
+  (-> nested-asm-lang-fvars-v7? nested-asm-lang-fvars-v7?)
 
   ;; env loc triv -> void
   ;; Update loc to triv in env if it is decided (integer),
@@ -37,7 +38,12 @@
     (match binop
       [`+ x64-add]
       [`* x64-mul]
-      [`- x64-sub]))
+      [`- x64-sub]
+      [`bitwise-and bitwise-and]
+      [`bitwise-ior bitwise-ior]
+      [`bitwise-xor bitwise-xor]
+      ;; arithmetic-shift shifts right for negative integers, hence convert second arg to negative
+      [`arithmetic-shift-right (lambda (x y) (arithmetic-shift x (- 0 y)))]))
 
   ;; opand env -> opand
   (define (convert-opand opand env)
@@ -179,8 +185,8 @@
   (define-check (check-equal-interp? orig expected)
     (check-equal? (optimize-predicates orig) expected)
     (check-equal?
-      (interp-nested-asm-lang-fvars-v6 (optimize-predicates orig))
-      (interp-nested-asm-lang-fvars-v6 orig)))
+      (interp-nested-asm-lang-fvars-v7 (optimize-predicates orig))
+      (interp-nested-asm-lang-fvars-v7 orig)))
 
   ;; check that optimization did not change the program
   ;; p -> void
@@ -779,4 +785,71 @@
         (set! rax (+ rax 5))
         (if (< rax 7) (set! rax 11) (set! rax 13))
         (jump fv0))))
+
+
+
+  ;; check bitwise-ior
+  (check-equal?
+    (optimize-predicates
+      `(module
+        (begin
+          (set! fv1 0)
+          (set! fv1 (bitwise-ior fv1 1))
+          (if (= fv1 1)
+              (begin (set! rax 1) (jump done))
+              (begin (set! rax 2) (jump done))))))
+    `(module
+      (begin
+        (set! fv1 0)
+        (set! fv1 (bitwise-ior fv1 1))
+        (begin (set! rax 1) (jump done)))))
+
+
+  ;; check bitwise-and
+  (check-equal?
+    (optimize-predicates
+      `(module
+        (begin
+          (set! fv1 2)
+          (set! fv1 (bitwise-and fv1 4))
+          (if (= fv1 0)
+              (begin (set! rax 1) (jump done))
+              (begin (set! rax 2) (jump done))))))
+    `(module
+      (begin
+        (set! fv1 2)
+        (set! fv1 (bitwise-and fv1 4))
+        (begin (set! rax 1) (jump done)))))
+
+ ;; check arithmetic-shift-right
+  (check-equal?
+    (optimize-predicates
+      `(module
+        (begin
+          (set! fv1 2)
+          (set! fv1 (arithmetic-shift-right fv1 1))
+          (if (= fv1 1)
+              (begin (set! rax 1) (jump done))
+              (begin (set! rax 2) (jump done))))))
+    `(module
+      (begin
+        (set! fv1 2)
+        (set! fv1 (arithmetic-shift-right fv1 1))
+        (begin (set! rax 1) (jump done)))))
+
+  ;; check bitwise-xor
+  (check-equal?
+    (optimize-predicates
+      `(module
+        (begin
+          (set! fv1 15)
+          (set! fv1 (bitwise-xor fv1 fv1))
+          (if (= fv1 0)
+              (begin (set! rax 1) (jump done))
+              (begin (set! rax 2) (jump done))))))
+    `(module
+      (begin
+        (set! fv1 15)
+        (set! fv1 (bitwise-xor fv1 fv1))
+        (begin (set! rax 1) (jump done)))))
   )
