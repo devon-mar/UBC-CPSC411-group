@@ -2,7 +2,7 @@
 
 (require
   cpsc411/compiler-lib
-  cpsc411/langs/v6)
+  cpsc411/langs/v7)
 
 (provide expose-basic-blocks)
 
@@ -13,7 +13,7 @@
 ;; Compile the nested-asm-lang to block-pred-lang, eliminating all
 ;; nested expressions by generating fresh basic blocks and jumps.
 (define/contract (expose-basic-blocks p)
-  (-> nested-asm-lang-v6? block-pred-lang-v6?)
+  (-> nested-asm-lang-v7? block-pred-lang-v7?)
 
   (define blocks (box '()))
 
@@ -25,7 +25,7 @@
   ;;
   ;; A begin will always be returned.
   ;;
-  ;; block-pred-lang-v6-effect block-pred-lang-v6-tail -> block-pred-lang-v6-tail
+  ;; block-pred-lang-v7-effect block-pred-lang-v7-tail -> block-pred-lang-v7-tail
   #;
   (define (cons-effect-tail effect tail)
     (match tail
@@ -50,8 +50,8 @@
   ;; instruction to the new label.
   ;;
   ;; label-base: symbol
-  ;; tail: block-pred-lang-v6-tail
-  ;; -> block-pred-lang-v6-tail
+  ;; tail: block-pred-lang-v7-tail
+  ;; -> block-pred-lang-v7-tail
   (define/contract (add-block! label-base tail)
     (-> symbol? any/c any/c)
     (define actual-label (fresh-label label-base))
@@ -61,8 +61,8 @@
   ;; Returns a block-pred-lang jump instruction to the new label.
   ;;
   ;; label: symbol
-  ;; tail: block-pred-lang-v6-tail
-  ;; -> block-pred-lang-v6-tail
+  ;; tail: block-pred-lang-v7-tail
+  ;; -> block-pred-lang-v7-tail
   (define/contract (add-label-block! label tail)
     (-> symbol? any/c any/c)
     (set-box!
@@ -85,17 +85,17 @@
 
   ;; Note: By Piazza @137 @92, we may assume labels in the provided program  will not be generated
   ;; by fresh-labels and so we do not need to reinvoke fresh-label.
-  ;; ((define label nested-asm-lang-v6-tail) ...) -> ((define label block-pred-lang-v6-tail) ...)
+  ;; ((define label nested-asm-lang-v7-tail) ...) -> ((define label block-pred-lang-v7-tail) ...)
   (define (expose-basic-blocks-asm-lang-block block)
     (match block
       [`(define ,label ,tail)
         `(define ,label ,(expose-basic-blocks-tail tail))]))
 
-  ;; ((define label nested-asm-lang-v6-tail) ...) -> ((define label block-pred-lang-v6-tail) ...)
+  ;; ((define label nested-asm-lang-v7-tail) ...) -> ((define label block-pred-lang-v7-tail) ...)
   (define (expose-basic-blocks-asm-lang-block-list block-list)
     (map expose-basic-blocks-asm-lang-block block-list))
 
-  ;; nested-asm-lang-v6-pred nested-asm-lang-v6-tail nested-asm-lang-v6-tail -> block-pred-lang-v6-tail
+  ;; nested-asm-lang-v7-pred nested-asm-lang-v7-tail nested-asm-lang-v7-tail -> block-pred-lang-v7-tail
   (define (expose-basic-blocks-pred p tail1 tail2)
     (match p
       [`(true)
@@ -125,7 +125,7 @@
            ,tail1
            ,tail2)]))
 
-  ;; nested-asm-lang-v6-tail -> block-pred-lang-v6-tail
+  ;; nested-asm-lang-v7-tail -> block-pred-lang-v7-tail
   (define (expose-basic-blocks-tail t)
     (match t
       [`(jump ,trg)
@@ -141,7 +141,7 @@
           (add-block! 't (expose-basic-blocks-tail t1))
           (add-block! 'f (expose-basic-blocks-tail t2)))]))
 
-  ;; nested-asm-lang-v6-effect nested-asm-lang-v6-tail -> block-pred-lang-v6-tail
+  ;; nested-asm-lang-v7-effect nested-asm-lang-v7-tail -> block-pred-lang-v7-tail
   (define (expose-basic-blocks-effect e tail)
     (match e
       [`(set! ,_ (,_ ,_ ,_))
@@ -166,8 +166,8 @@
        (add-label-block! label tail)
        (expose-basic-blocks-tail rtail)]))
 
-  ;; (listof nested-asm-lang-v6-effect) nested-asm-lang-v6-tail
-  ;; -> block-pred-lang-v6-tail
+  ;; (listof nested-asm-lang-v7-effect) nested-asm-lang-v7-tail
+  ;; -> block-pred-lang-v7-tail
   (define (expose-basic-blocks-effects effects tail)
     (match effects
       ['() tail]
@@ -199,7 +199,7 @@
 
   (define-check (check-42 p)
     (check-equal?
-      (interp-block-pred-lang-v6 (expose-basic-blocks p))
+      (interp-block-pred-lang-v7 (expose-basic-blocks p))
       42))
 
   ;; single jump - no value
