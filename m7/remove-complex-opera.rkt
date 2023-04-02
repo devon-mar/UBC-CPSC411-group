@@ -124,15 +124,20 @@
       (interp-values-bits-lang-v7 (remove-complex-opera* p))
       42))
 
+  ;; Check that compiled program is the same as the original program
+  ;; and interprets to 42
+  (define-check (check-no-change-42 p)
+    (define compiled (remove-complex-opera* p))
+    (check-equal? compiled p)
+    (check-equal?
+      (interp-values-bits-lang-v7 compiled)
+      42))
+
   ;; base case
   (check-42 '(module 42))
   (check-42 '(module (+ 37 5)))
   ;; no let for label in call
-  (check-equal?
-    (remove-complex-opera*
-      '(module
-        (define L.test.1 (lambda (a.1) (+ a.1 a.1)))
-        (call L.test.1 21)))
+  (check-no-change-42
     '(module
       (define L.test.1 (lambda (a.1) (+ a.1 a.1)))
       (call L.test.1 21)))
