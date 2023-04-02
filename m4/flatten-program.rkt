@@ -5,6 +5,7 @@
 (provide flatten-program)
 
 ;; Milestone 4 Exercise 6
+;; Milestone 7 Exercise 7
 ;;
 ;; Compile Block-asm-lang to Para-asm-lang
 ;; by flattening basic blocks into labeled instructions.

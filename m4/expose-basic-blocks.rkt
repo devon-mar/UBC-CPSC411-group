@@ -9,6 +9,7 @@
 ;; Milestone 4 Exercise 10
 ;; Milestone 5 Exercise 13
 ;; Milestone 6 Exercise 16
+;; Milestone 7 Exercise 7
 ;;
 ;; Compile the nested-asm-lang to block-pred-lang, eliminating all
 ;; nested expressions by generating fresh basic blocks and jumps.
