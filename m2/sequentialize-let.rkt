@@ -15,11 +15,11 @@
 ;; Compiles Values-unique-lang v7 to Imp-mf-lang v7 by picking a particular
 ;; order to implement let expressions using set!.
 (define/contract (sequentialize-let p)
-  (-> values-unique-lang-v7? imp-mf-lang-v7?)
+  (-> values-bits-lang-v7? imp-mf-lang-v7?)
 
   ;; Sequentialize a procedure with the given label, params and tail.
   ;;
-  ;; tail: values-unique-lang-v7-tail
+  ;; tail: values-bits-lang-v7-tail
   ;; -> imp-mf-lang-v7-proc
   (define/contract (sequentialize-let-proc label params tail)
     (-> label? (listof aloc?) any/c any/c)
@@ -27,7 +27,7 @@
        ,label
        (lambda ,params ,(sequentialize-let-tail tail))))
 
-  ;; values-unique-lang-v7-p -> imp-lang-v7-p
+  ;; values-bits-lang-v7-p -> imp-lang-v7-p
   (define (sequentialize-let-p p)
     (match p
       [`(module (define ,labels (lambda (,alocs ...) ,tails)) ... ,tail)
@@ -44,7 +44,7 @@
     (-> aloc? any/c list?)
     `(set! ,a ,(sequentialize-let-value v)))
 
-  ;; values-unique-lang-v7-pred -> imp-lang-v7-pred
+  ;; values-bits-lang-v7-pred -> imp-lang-v7-pred
   (define (sequentialize-let-pred p)
     (match p
       [`(true)
@@ -64,7 +64,7 @@
            ,(sequentialize-let-pred p3))]
       [`(,_ ,_ ,_) p]))
 
-  ;; values-unique-lang-v7-tail -> imp-lang-v7-tail
+  ;; values-bits-lang-v7-tail -> imp-lang-v7-tail
   (define (sequentialize-let-tail t)
     (match t
       [`(let ([,as ,vs] ...) ,tail)
@@ -80,7 +80,7 @@
       ;; value
       [_ (sequentialize-let-value t)]))
 
-  ;; values-unique-lang-v7-value -> imp-lang-v7-value
+  ;; values-bits-lang-v7-value -> imp-lang-v7-value
   (define (sequentialize-let-value v)
     (match v
       [`(let ([,as ,vs] ...) ,v)
@@ -145,7 +145,7 @@
 
   (define-check (check-42 p)
     (check-equal?
-      (interp-values-unique-lang-v7 (sequentialize-let p))
+      (interp-values-bits-lang-v7 (sequentialize-let p))
       42))
 
   ;; new m3 stuff
