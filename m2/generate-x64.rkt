@@ -337,9 +337,10 @@
   ;; Test arithmetic-shift-right
   (check-42
     '(begin
-       (set! rax 1)
+       (set! rax 32)
+       (set! rax (* rax 32))
        (set! rax (arithmetic-shift-right rax 5))
-       (set! rax (+ 10))))
+       (set! rax (+ rax 10))))
   
   ;; Test ior
   (check-42
