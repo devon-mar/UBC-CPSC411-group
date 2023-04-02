@@ -2,7 +2,7 @@
 
 (require
   cpsc411/compiler-lib
-  cpsc411/langs/v6)
+  cpsc411/langs/v7)
 
 (provide uncover-locals)
 
@@ -10,18 +10,19 @@
 ;; Milestone 4 Exercise 16
 ;; Milestone 5 Exercise 7
 ;; Milestone 6 Exercise 7
+;; Milestone 7 Exercise 7
 ;;
-;; Compiles Asm-pred-lang v6 to Asm-pred-lang v6/locals, analysing which abstract
+;; Compiles Asm-pred-lang v7 to Asm-pred-lang v7/locals, analysing which abstract
 ;; locations are used in the program and decorating the program with the
 ;; set of variables in an info field.
 (define/contract (uncover-locals p)
-  (-> asm-pred-lang-v6? asm-pred-lang-v6/locals?)
+  (-> asm-pred-lang-v7? asm-pred-lang-v7/locals?)
 
   ;; Returns a procedure with the 'locals info set.
-  ;; 
+  ;;
   ;; label: procedure label
   ;; tail: procedure tail
-  ;; -> asm-pred-lang-v6/locals-proc
+  ;; -> asm-pred-lang-v7/locals-proc
   (define (uncover-locals-proc label info tail)
     (-> label? info? any/c any/c)
     `(define
@@ -29,7 +30,7 @@
        ,(info-set info 'locals (set->list (uncover-locals-tail tail)))
        ,tail))
 
-  ;; asm-pred-lang-v6-p -> asm-pred-lang-v6/locals-p
+  ;; asm-pred-lang-v7-p -> asm-pred-lang-v7/locals-p
   (define (uncover-locals-p p)
     (match p
       [`(module ,info (define ,labels ,infos ,tails) ... ,tail)
@@ -38,7 +39,7 @@
            ,@(map uncover-locals-proc labels infos tails)
            ,tail)]))
 
-  ;; asm-pred-lang-v6-pred -> set
+  ;; asm-pred-lang-v7-pred -> set
   (define/contract (uncover-locals-pred p)
     (-> any/c set?)
     (match p
@@ -57,7 +58,7 @@
           (uncover-locals-loc l)
           (uncover-locals-opand o))]))
 
-  ;; asm-pred-lang-v6-tail -> set
+  ;; asm-pred-lang-v7-tail -> set
   (define/contract (uncover-locals-tail t)
     (-> any/c set?)
     (match t
@@ -74,7 +75,7 @@
           (uncover-locals-tail t1)
           (uncover-locals-tail t2))]))
 
-  ;; asm-pred-lang-v6-effect -> set
+  ;; asm-pred-lang-v7-effect -> set
   (define (uncover-locals-effect e)
     (match e
       [`(return-point ,_ ,tail)
@@ -88,7 +89,7 @@
           (uncover-locals-loc loc)
           (uncover-locals-triv triv))]
       ;; modified template - removed tail effect
-      [`(begin ,es ...) 
+      [`(begin ,es ...)
         (foldl
           set-union
           (set)
@@ -99,7 +100,7 @@
           (uncover-locals-effect e1)
           (uncover-locals-effect e2))]))
 
-  ;; asm-pred-lang-v6-opand -> set
+  ;; asm-pred-lang-v7-opand -> set
   (define/contract (uncover-locals-opand o)
     (-> any/c set?)
     (match o
@@ -107,14 +108,14 @@
       ;; loc
       [_ (uncover-locals-loc o)]))
 
-  ;; asm-pred-lang-v6-triv -> set
+  ;; asm-pred-lang-v7-triv -> set
   (define/contract (uncover-locals-triv t)
     (-> any/c set?)
     (match t
       [(? label?) (set)]
       [_ (uncover-locals-opand t)]))
 
-  ;; asm-pred-lang-v6-loc -> set
+  ;; asm-pred-lang-v7-loc -> set
   (define/contract (uncover-locals-loc l)
     (-> any/c set?)
     (match l
@@ -122,7 +123,7 @@
       ;; rloc
       [_ (set)]))
 
-  ;; asm-pred-lang-v6-trg -> set
+  ;; asm-pred-lang-v7-trg -> set
   (define/contract (uncover-locals-trg t)
     (-> any/c set?)
     (match t
@@ -135,8 +136,13 @@
   (define (uncover-locals-binop b)
     (match b
       ['* (void)]
-      ['+ (void)]))
-  
+      ['+ (void)]
+      ['- (void)]
+      ['bitwise-and (void)]
+      ['bitwise-ior (void)]
+      ['bitwise-xor (void)]
+      ['arithmetic-shift-right (void)]))
+
   #;
   (define (uncover-locals-relop r)
     (match r
@@ -307,7 +313,7 @@
                  (set! x.1 5))
              (if (begin (!= m.1 n.1)) (jump r15) (jump r15))))))
   (define m5-locals-2 (list->set '(a.1 b.1 c.1 d.1 e.1 f.1 g.1 h.1 i.1 j.1 k.1 l.1 v.1 x.1 y.1 z.1)))
-  (define m5-tail-2 
+  (define m5-tail-2
     '(begin
        (begin
          (set! x.1 0)

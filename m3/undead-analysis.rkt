@@ -2,7 +2,7 @@
 
 (require
   cpsc411/compiler-lib
-  cpsc411/langs/v6
+  cpsc411/langs/v7
   "../utils/compiler-utils.rkt")
 
 (provide undead-analysis)
@@ -11,11 +11,12 @@
 ;; Milestone 4 - Exercise 15
 ;; Milestone 5 - Exercise 8
 ;; Milestone 6 - Exercise 8
+;; Milestone 7 - Exercise 7
 ;;
 ;; Performs undeadness analysis, decorating the program with undead-set tree.
 ;; Only the info field of the program is modified.
 (define/contract (undead-analysis p)
-  (-> asm-pred-lang-v6/locals? asm-pred-lang-v6/undead?)
+  (-> asm-pred-lang-v7/locals? asm-pred-lang-v7/undead?)
 
   ;; call-undead for the current examining block
   (define call-undead (void))
@@ -23,7 +24,7 @@
   ;; Performs undeadness analysis, decorating the program with undead-set tree.
   ;; Only the info field of the program is modified.
   (define/contract (undead-analysis-p p)
-    (-> asm-pred-lang-v6/locals? asm-pred-lang-v6/undead?)
+    (-> asm-pred-lang-v7/locals? asm-pred-lang-v7/undead?)
     (match p
       [`(module ,info (define ,labels ,infos ,tails) ... ,tail)
        (set! call-undead (list))
@@ -196,7 +197,11 @@
     (match b
       ['* (void)]
       ['+ (void)]
-      ['- (void)]))
+      ['- (void)]
+      ['bitwise-and (void)]
+      ['bitwise-ior (void)]
+      ['bitwise-xor (void)]
+      ['arithmetic-shift-right (void)]))
 
   (undead-analysis-p p))
 
@@ -759,4 +764,23 @@
           (rax rbp)))))
     '(tmp-ra.4)
     (list '(tmp-ra.1)))
+
+  ;; bitwise & arithmetic-shift
+  (check-ust
+    '()
+    '(begin
+      (set! rax 42)
+      (set! rax (- rax 2))
+      (set! rax (bitwise-and rax 2))
+      (set! rax (bitwise-ior rax 31))
+      (set! rax (bitwise-xor rax 15))
+      (set! rax (arithmetic-shift-right rax 2))
+      (jump done))
+    '((rax)
+      (rax)
+      (rax)
+      (rax)
+      (rax)
+      ()
+      ()))
   )
