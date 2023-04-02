@@ -2,26 +2,27 @@
 
 (require
   cpsc411/compiler-lib
-  cpsc411/langs/v6)
+  cpsc411/langs/v7)
 
 (provide select-instructions)
 
 ;; Milestone 4 Exercise 17
 ;; Milestone 5 Exercise 5
 ;; Milestone 6 Exercise 6
+;; Milestone 7 Exercise 7
 ;;
-;; Compiles Imp-cmf-lang v6 to Asm-pred-lang v6, selecting appropriate
+;; Compiles Imp-cmf-lang v7 to Asm-pred-lang v7, selecting appropriate
 ;; sequences of abstract assembly instructions to implement the operations of
 ;; the source language.
 (define/contract (select-instructions p)
-  (-> imp-cmf-lang-v6? asm-pred-lang-v6?)
+  (-> imp-cmf-lang-v7? asm-pred-lang-v7?)
 
   ;; Selects appropriate sequence of abstract assembly instructions
   ;; to implement the operations in the given procedure represented
   ;; by label, info, and tail.
   ;;
-  ;; tail: imp-cmf-lang-v6-tail
-  ;; -> asm-pred-lang-v6-tail
+  ;; tail: imp-cmf-lang-v7-tail
+  ;; -> asm-pred-lang-v7-tail
   (define/contract (select-instructions-proc label info tail)
     (-> label? info? any/c any/c)
     `(define
@@ -29,7 +30,7 @@
        ,info
        ,(select-instructions-tail tail)))
 
-  ;; imp-cmf-lang-v6-p asm-pred-lang-v6-p
+  ;; imp-cmf-lang-v7-p asm-pred-lang-v7-p
   (define (select-instructions-p p)
     (match p
       [`(module ,info (define ,labels ,infos ,tails) ... ,tail)
@@ -38,7 +39,7 @@
            ,@(map select-instructions-proc labels infos tails)
            ,(select-instructions-tail tail))]))
 
-  ;; imp-cmf-lang-v6-pred asm-pred-lang-v6-pred
+  ;; imp-cmf-lang-v7-pred asm-pred-lang-v7-pred
   (define (select-instructions-pred p)
     (match p
       [`(true)
@@ -62,7 +63,7 @@
           o1
           (lambda (l) `(,r ,l ,o2)))]))
 
-  ;; imp-cmf-lang-v6-tail asm-tail-lang-v6-tail
+  ;; imp-cmf-lang-v7-tail asm-tail-lang-v7-tail
   (define (select-instructions-tail t)
     (match t
       [`(begin ,es ... ,t)
@@ -78,9 +79,9 @@
         t]))
 
 
-  ;; v: imp-cmf-lang-v6-value
-  ;; f: (asm-pred-lang-v6-triv -> asm-pred-lang-v6-effect)
-  ;; -> asm-pred-lang-v6-effect
+  ;; v: imp-cmf-lang-v7-value
+  ;; f: (asm-pred-lang-v7-triv -> asm-pred-lang-v7-effect)
+  ;; -> asm-pred-lang-v7-effect
   (define (select-instructions-value v f)
     (match v
       [`(,b ,o1 ,o2)
@@ -92,7 +93,7 @@
       ;; triv
       [_ (f v)]))
 
-  ;; imp-cmf-lang-v6-effect asm-effect-lang-v6-effect
+  ;; imp-cmf-lang-v7-effect asm-effect-lang-v7-effect
   (define (select-instructions-effect e)
     (match e
       [`(set! ,l ,v)
@@ -111,9 +112,9 @@
       [`(return-point ,l ,t)
         `(return-point ,l ,(select-instructions-tail t))]))
 
-  ;; o: imp-cmf-lang-v6-opand
-  ;; f: (-> asm-pred-lang-v6-loc asm-pred-lang-v6-pred)
-  ;; -> asm-pred-lang-v6-pred
+  ;; o: imp-cmf-lang-v7-opand
+  ;; f: (-> asm-pred-lang-v7-loc asm-pred-lang-v7-pred)
+  ;; -> asm-pred-lang-v7-pred
   (define (select-instructions-opand o f)
     (match o
       [(? int64?)
@@ -154,7 +155,11 @@
     (match b
       ['* (void)]
       ['+ (void)]
-      ['- (void)]))
+      ['- (void)]
+      ['bitwise-ior (void)]
+      ['bitwise-and (void)]
+      ['bitwise-xor (void)]
+      ['arithmetic-shift-right (void)]))
 
   ;; not used
   #;
@@ -173,20 +178,20 @@
   (require rackunit)
 
   (define-check (check-42p p)
-    (interp-asm-pred-lang-v6 (select-instructions p))
+    (interp-asm-pred-lang-v7 (select-instructions p))
     42)
 
-  ;; e: imp-cmf-lang-v6-effect
+  ;; e: imp-cmf-lang-v7-effect
   (define-check (check-42 e)
     (check-equal?
-      (interp-asm-pred-lang-v6 (select-instructions (boilerplate e)))
+      (interp-asm-pred-lang-v7 (select-instructions (boilerplate e)))
       42))
 
   ;; wrap e with boilerplate
   ;;
-  ;; e: imp-cmf-lang-v6-effect
+  ;; e: imp-cmf-lang-v7-effect
   (define/contract (boilerplate e)
-    (-> any/c imp-cmf-lang-v6?)
+    (-> any/c imp-cmf-lang-v7?)
     `(module
        ((new-frames ()))
        (begin (set! tmp-ra.1 r15)
