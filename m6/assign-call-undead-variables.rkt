@@ -62,7 +62,7 @@
                   (incompatible-fvars (car cu) cg as)))
             as)))))
 
-  ;; Removes 'undead-out and adds assignments.
+  ;; Adds assignments and removes assigned locals
   ;;
   ;; asm-pred-lang-v7/conflicts-info -> asm-pred-lang-v7/pre-framed-info
   (define/contract (update-info info)
@@ -234,6 +234,21 @@
       ;; the rest should remain unchanged
       (equal? '((nfv.2 nfv.3)) (info-ref info-swap 'new-frames))
       (equal? '(tmp-ra.1) (info-ref info-swap 'call-undead))
+      (equal?
+        '((fv0 fv1 tmp-ra.1 rbp)
+          (fv1 x.1 tmp-ra.1 rbp)
+          (y.2 x.1 tmp-ra.1 rbp)
+          ((y.2 x.1 tmp-ra.1 rbp)
+           ((tmp-ra.1 rax rbp) (rax rbp))
+           (((rax tmp-ra.1 rbp)
+             ((y.2 nfv.3 rbp)
+              (nfv.3 nfv.2 rbp)
+              (nfv.3 nfv.2 r15 rbp)
+              (nfv.3 nfv.2 r15 rbp)))
+            (z.3 tmp-ra.1 rbp)
+            (tmp-ra.1 rax rbp)
+            (rax rbp))))
+        (info-ref info-swap 'undead-out))
       (equal?
         '((y.2 (rbp tmp-ra.1 x.1 nfv.3))
           (x.1 (y.2 rbp tmp-ra.1 fv1))
