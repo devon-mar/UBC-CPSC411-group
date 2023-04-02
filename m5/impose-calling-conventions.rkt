@@ -2,20 +2,21 @@
 
 (require
   cpsc411/compiler-lib
-  cpsc411/langs/v6)
+  cpsc411/langs/v7)
 
 (provide impose-calling-conventions)
 
 ;; Milestone 5 Exercise 5
 ;; Milestone 6 Exercise 5
+;; Milestone 7 Exercise 7
 ;;
-;; Compiles Proc-imp-cmf-lang v6 to Imp-cmf-lang v6 by imposing calling
+;; Compiles Proc-imp-cmf-lang v7 to Imp-cmf-lang v7 by imposing calling
 ;; conventions on all calls (both tail and non-tail calls), and entry points.
 ;; The registers used to passing parameters are defined by
 ;; current-parameter-registers, and the registers used for returning are
 ;; defined by current-return-address-register and current-return-value-register.
 (define (impose-calling-conventions p)
-  (-> proc-imp-cmf-lang-v6? imp-cmf-lang-v6?)
+  (-> proc-imp-cmf-lang-v7? imp-cmf-lang-v7?)
 
   ;; for convenience...
   (define ra (current-return-address-register))
@@ -113,8 +114,8 @@
 
   ;; Imposes callign conventions on a proc represented by label params and entry.
   ;;
-  ;; entry: proc-imp-cmf-lang-v6-entry
-  ;; -> imp-cmf-lang-v6-proc
+  ;; entry: proc-imp-cmf-lang-v7-entry
+  ;; -> imp-cmf-lang-v7-proc
   (define/contract (impose-calling-conventions-proc label params entry)
     (-> label? (listof aloc?) any/c any/c)
     (define locs (params->locs params))
@@ -130,7 +131,7 @@
        ,(info-set '() 'new-frames (unbox nfvs-box))
        ,tail))
 
-  ;; proc-imp-cmf-lang-v6-p -> imp-cmf-lang-v6-p
+  ;; proc-imp-cmf-lang-v7-p -> imp-cmf-lang-v7-p
   (define (impose-calling-conventions-p p)
     (match p
       [`(module (define ,labels (lambda (,alocs ...) ,entries)) ... ,entry)
@@ -142,8 +143,8 @@
            ,tail)]))
 
   ;; nfvs-box: box? of nfvs
-  ;; e: proc-imp-cmf-lang-v6-entry
-  ;; -> imp-cmf-lang-v6-tail
+  ;; e: proc-imp-cmf-lang-v7-entry
+  ;; -> imp-cmf-lang-v7-tail
   (define/contract (impose-calling-conventions-entry nfvs-box e)
     (-> box? any/c any/c)
     (define tmp-ra (fresh 'tmp-ra))
@@ -152,8 +153,8 @@
        ,(impose-calling-conventions-tail nfvs-box tmp-ra e)))
 
   ;; nfvs-box: box? of nfvs
-  ;; p proc-imp-cmf-lang-v6-pred
-  ;; -> imp-cmf-lang-v6-pred
+  ;; p proc-imp-cmf-lang-v7-pred
+  ;; -> imp-cmf-lang-v7-pred
   (define/contract (impose-calling-conventions-pred nfvs-box p)
     (-> box? any/c any/c)
     (match p
@@ -177,8 +178,8 @@
 
   ;; nfvs-box: box? of nfvs
   ;; tmp-ra: aloc? holding the return address
-  ;; t: proc-imp-cmf-lang-v6-tail
-  ;; -> imp-cmf-lang-v6-tail
+  ;; t: proc-imp-cmf-lang-v7-tail
+  ;; -> imp-cmf-lang-v7-tail
   (define/contract (impose-calling-conventions-tail nfvs-box tmp-ra t)
     (-> box? aloc? any/c any/c)
     (match t
@@ -207,7 +208,7 @@
                (jump ,tmp-ra ,fbp ,rv))))]))
 
   ;; nfvs-box: box? of nfvs
-  ;; v: proc-imp-cmf-lang-v6-value
+  ;; v: proc-imp-cmf-lang-v7-value
   ;; f: (value -> tail/effect)
   ;; -> tail/effect
   (define/contract (impose-calling-conventions-value nfvs-box v f)
@@ -229,8 +230,8 @@
       [_ (f v)]))
 
   ;; nfvs-box: box? of nfvs
-  ;; e: proc-imp-cmf-lang-v6-effect
-  ;; -> imp-cmf-lang-v6-effect
+  ;; e: proc-imp-cmf-lang-v7-effect
+  ;; -> imp-cmf-lang-v7-effect
   (define/contract (impose-calling-conventions-effect nfvs-box e)
     (-> box? any/c any/c)
     (match e
@@ -272,7 +273,11 @@
     (match b
       ['* (void)]
       ['+ (void)]
-      ['- (void)]))
+      ['- (void)]
+      ['bitwise-ior (void)]
+      ['bitwise-and (void)]
+      ['bitwise-xor (void)]
+      ['arithmetic-shift-right (void)]))
 
   ;; not used
   #;
@@ -292,7 +297,7 @@
 
   (define-check (check-42 p)
     (check-equal?
-      (interp-imp-cmf-lang-v6 (impose-calling-conventions p))
+      (interp-imp-cmf-lang-v7 (impose-calling-conventions p))
       42))
 
   (define/contract (alocs? . as)
