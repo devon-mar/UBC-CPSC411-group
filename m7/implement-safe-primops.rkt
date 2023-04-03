@@ -199,6 +199,38 @@
   (check-42 '(module (call * 21 2)))
   (check-42 '(module (call - 50 8)))
 
+  (define-check (check-error-2 p)
+    (check-equal?
+      (interp-exprs-unsafe-data-lang-v7 (implement-safe-primops p))
+      '(error 2)))
+
+  (define-syntax-rule (binop-invalid-arg-type-tests binops ...)
+    (test-case
+      (format "binop-invalid-arg-type ~a" 'binop)
+      (begin
+        (check-error-2 '(module (call binops #t 2)))
+        (check-error-2 '(module (call binops 2 #t)))
+        (check-error-2 '(module (call binops #t #t)))
+
+        (check-error-2 '(module (call binops #f 2)))
+        (check-error-2 '(module (call binops 2 #f)))
+        (check-error-2 '(module (call binops #f #f)))
+
+        (check-error-2 '(module (call binops #\a 2)))
+        (check-error-2 '(module (call binops 2 #\a)))
+        (check-error-2 '(module (call binops #\a #\b)))
+
+        (check-error-2 '(module (call binops (void) 2)))
+        (check-error-2 '(module (call binops 2 (void))))
+        (check-error-2 '(module (call binops (void) (void))))
+
+        (check-error-2 '(module (call binops empty 2)))
+        (check-error-2 '(module (call binops 2 empty)))
+        (check-error-2 '(module (call binops empty empty)))) ...))
+
+  (binop-invalid-arg-type-tests * + - < <= > >=)
+
+
   (check-eval-true '(module (call < 1 2)))
   (check-eval-false '(module (call < 3 2)))
 
