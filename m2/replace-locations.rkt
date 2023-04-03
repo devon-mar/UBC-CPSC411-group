@@ -2,7 +2,7 @@
 
 (require
   cpsc411/compiler-lib
-  cpsc411/langs/v6)
+  cpsc411/langs/v7)
 
 (provide replace-locations)
 
@@ -10,14 +10,15 @@
 ;; Milestone 4 Exercise 12
 ;; Milestone 5 Exercise 11
 ;; Milestone 6 Exercise 14
+;; Milestone 7 Exercise 7
 ;;
-;; Compiles Asm-pred-lang v6/assignments to Nested-asm-lang-fvars v6 by
+;; Compiles Asm-pred-lang v7/assignments to Nested-asm-lang-fvars v7 by
 ;; replacing all abstract location with physical locations using the
 ;; assignment described in the assignment info field.
 (define/contract (replace-locations p)
-  (-> asm-pred-lang-v6/assignments? nested-asm-lang-fvars-v6?)
+  (-> asm-pred-lang-v7/assignments? nested-asm-lang-fvars-v7?)
 
-  ;; asm-pred-lang-v6/assignments-p -> nested-asm-lang-fvars-v6-p
+  ;; asm-pred-lang-v7/assignments-p -> nested-asm-lang-fvars-v7-p
   (define (replace-locations-p p)
     (match p
       [`(module ,info (define ,labels ,infos ,tails) ... ,tail)
@@ -25,15 +26,15 @@
            ,@(map replace-locations-proc labels infos tails)
            ,(replace-locations-tail (info-ref info 'assignment) tail))]))
 
-  ;; tail: asm-pred-lang-v6/assignments-tail
-  ;; -> nested-asm-lang-fvars-v6-proc
+  ;; tail: asm-pred-lang-v7/assignments-tail
+  ;; -> nested-asm-lang-fvars-v7-proc
   (define/contract (replace-locations-proc label info tail)
     (-> label? info? any/c any/c)
     `(define
        ,label
        ,(replace-locations-tail (info-ref info 'assignment) tail)))
 
-  ;; assignment asm-pred-lang-v6/assignments-pred -> nested-asm-lang-fvars-v6-pred
+  ;; assignment asm-pred-lang-v7/assignments-pred -> nested-asm-lang-fvars-v7-pred
   (define (replace-locations-pred as p)
     (match p
       [`(true)
@@ -56,7 +57,7 @@
           ,(replace-locations-loc as l)
           ,(replace-locations-opand as o))]))
 
-  ;; assignment asm-pred-lang-v6/assignments-tail -> nested-asm-lang-fvars-v6-tail
+  ;; assignment asm-pred-lang-v7/assignments-tail -> nested-asm-lang-fvars-v7-tail
   (define (replace-locations-tail as t)
     (match t
       [`(jump ,trg ,_ ...)
@@ -71,7 +72,7 @@
            ,(replace-locations-tail as t1)
            ,(replace-locations-tail as t2))]))
 
-  ;; assignment asm-pred-lang-v6/assignments-effect -> nested-asm-lang-fvars-v6-effect
+  ;; assignment asm-pred-lang-v7/assignments-effect -> nested-asm-lang-fvars-v7-effect
   (define (replace-locations-effect as e)
     (match e
       [`(set! ,loc (,binop ,loc ,opand))
@@ -93,26 +94,26 @@
       [`(return-point ,label ,tail)
         `(return-point ,label ,(replace-locations-tail as tail))]))
 
-  ;; assignment asm-pred-lang-v6/assignments-opand -> nested-asm-lang-fvars-v6-opand
+  ;; assignment asm-pred-lang-v7/assignments-opand -> nested-asm-lang-fvars-v7-opand
   (define (replace-locations-opand as o)
     (match o
       [(? int64?) o]
       [_ (replace-locations-loc as o)]))
 
-  ;; assignment asm-pred-lang-v6/assignments-triv -> nested-asm-lang-fvars-v6-triv
+  ;; assignment asm-pred-lang-v7/assignments-triv -> nested-asm-lang-fvars-v7-triv
   (define (replace-locations-triv as t)
     (match t
       [(? label?) t]
       [_ (replace-locations-opand as t)]))
 
-  ;; assignment asm-pred-lang-v6/assignments-loc -> nested-asm-lang-fvars-v6-loc
+  ;; assignment asm-pred-lang-v7/assignments-loc -> nested-asm-lang-fvars-v7-loc
   (define (replace-locations-loc as l)
     (-> info? any/c (or/c register? fvar?))
     (match l
       [(? aloc?) (info-ref as l)]
       [_ l]))
 
-  ;; assignment asm-pred-lang-v6/assignments-trg -> nested-asm-lang-fvars-v6-trg
+  ;; assignment asm-pred-lang-v7/assignments-trg -> nested-asm-lang-fvars-v7-trg
   (define (replace-locations-trg as t)
     (match t
       [(? label?) t]
@@ -124,7 +125,11 @@
     (match b
       ['* (void)]
       ['+ (void)]
-      ['- (void)]))
+      ['- (void)]
+      ['bitwise-and (void)]
+      ['bitwise-ior (void)]
+      ['bitwise-xor (void)]
+      ['arithmetic-shift-right (void)]))
   
   ;; not used
   #;
@@ -158,7 +163,7 @@
   ;; es: (listof effect)
   (define-check (check-42p p)
     (check-equal?
-      (interp-nested-asm-lang-fvars-v6 (replace-locations p))
+      (interp-nested-asm-lang-fvars-v7 (replace-locations p))
       42))
 
   (define rax (current-return-value-register))

@@ -3,7 +3,7 @@
 (require
   cpsc411/compiler-lib
   cpsc411/graph-lib
-  cpsc411/langs/v6)
+  cpsc411/langs/v7)
 
 (provide assign-registers)
 
@@ -11,11 +11,12 @@
 ;; Milestone 4 Exercise 13
 ;; Milestone 5 Exercise 10
 ;; Milestone 6 Exercise 12
+;; Milestone 7 Exercise 7
 ;;
 ;; Assign register or frame location to each local variable
 ;; Assumes current-assignable-registers parameter to be set
 (define/contract (assign-registers p)
-  (-> asm-pred-lang-v6/framed? asm-pred-lang-v6/spilled?)
+  (-> asm-pred-lang-v7/framed? asm-pred-lang-v7/spilled?)
 
   ;; (list aloc ...) (list (aloc (loc ...))) -> (values aloc (list aloc ...) (list (aloc (aloc...))...))
   ;; removes low degree abstract location from aloc-list and return tuple of
@@ -94,7 +95,7 @@
 (module+ test
   (require
     rackunit
-    cpsc411/langs/v6
+    cpsc411/langs/v7
     "../utils/gen-utils.rkt")
 
   (define t1

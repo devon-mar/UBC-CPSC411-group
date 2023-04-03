@@ -3,15 +3,16 @@
 (require
   cpsc411/compiler-lib
   cpsc411/graph-lib
-  cpsc411/langs/v6)
+  cpsc411/langs/v7)
 
 (provide assign-frame-variables)
 
 ;; Milestone 6 Exercise 13
+;; Milestone 7 Exercise 7
 ;;
 ;; Assign frame location to each local variable
 (define/contract (assign-frame-variables p)
-  (-> asm-pred-lang-v6/spilled? asm-pred-lang-v6/assignments?)
+  (-> asm-pred-lang-v7/spilled? asm-pred-lang-v7/assignments?)
 
   ;; (list aloc ...) (list (aloc (loc ...))) -> (values aloc (list aloc ...) (list (aloc (aloc...))...))
   ;; removes low degree abstract location from aloc-list and return tuple of
@@ -97,7 +98,7 @@
 (module+ test
   (require
     rackunit
-    cpsc411/langs/v6
+    cpsc411/langs/v7
     "../utils/gen-utils.rkt")
 
   (define t2
