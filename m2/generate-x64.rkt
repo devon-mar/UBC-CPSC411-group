@@ -43,7 +43,7 @@
         (format "~a ~a, ~a" (binop->ins b) reg (generate-x64-loc loc))]
       [`(set! ,reg ,triv)
         #:when (and (register? reg) (triv? triv))
-        (format "mov ~a, ~a" reg triv)]
+        (format "mov ~a, ~a" reg (generate-x64-triv triv))]
       [`(set! ,reg ,loc)
         #:when (register? reg)
         (format "mov ~a, ~a" reg (generate-x64-loc loc))]
@@ -51,33 +51,32 @@
         #:when (int32? int32)
         (format "mov ~a, ~a" (addr->x64 addr) int32)]
       [`(set! ,addr ,trg)
-        (format "mov ~a, ~a" (addr->x64 addr) trg)]
+        (format "mov ~a, ~a" (addr->x64 addr) (generate-x64-trg trg))]
       [`(with-label ,label ,s)
-        (format "~a:~n~a" label (generate-x64-s s))]
+        (format "~a:~n~a" (sanitize-label label) (generate-x64-s s))]
       [`(jump ,trg)
-        (format "jmp ~a" trg)]
+        (format "jmp ~a" (generate-x64-trg trg))]
       [`(compare ,reg ,opand)
         (format "cmp ~a, ~a" reg opand)]
       [`(jump-if ,relop ,label)
-        (format "~a ~a" (relop->x64-jmp relop) label)]))
+        (format "~a ~a" (relop->x64-jmp relop) (sanitize-label label))]))
 
-  ;; not used
-  #;
+  ;; paren-x64-v7-trg -> string
+  ;; If the trg is a label, santize it. Otherwise return t
   (define (generate-x64-trg t)
     (match t
       [(? register?)
-        (void)]
+        t]
       [(? label?)
-       (void)]))
+       (sanitize-label t)]))
 
-  ;; not used
-  #;
+  ;; paren-x64-v7-triv -> string
   (define (generate-x64-triv t)
     (match t
       [(? int64?)
-       (void)]
+       t]
       [trg 
-        (void)]))
+        (generate-x64-trg t)]))
 
   ;; not used
   #;
@@ -327,6 +326,7 @@
        (set! rax 50)
        (set! rax (- rax 8))))
 
+  ;; M7 test
   ;; Test xor
   (check-42
     '(begin
@@ -354,4 +354,10 @@
     `(begin
        (set! rax 42)
        (set! rax (bitwise-and rax ,32-ones))))
+
+  ;; Should not throw error if the label is correctly formatted
+  (check-42
+    `(begin
+       (with-label L.$!!@#*main.2 (set! rbp L.$!!@#*main.2))
+       (set! rax 42)))
 )
