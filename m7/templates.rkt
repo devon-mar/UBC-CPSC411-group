@@ -216,3 +216,115 @@
        (void)]))
 
   (void))
+
+(define/contract (exprs-lang-v7-template p)
+  (-> exprs-lang-v7? any/c)
+
+  (define/contract (prim-f? p)
+    (-> any/c boolean?)
+    (or (binop? p) (unop? p)))
+
+  (define/contract (binop? b)
+    (-> any/c boolean?)
+    (and
+      (memq b '(* + - < eq? <= > >=))
+      #t))
+
+  (define/contract (unop? u)
+    (-> any/c boolean?)
+    (and
+      (memq u '(fixnum?
+                boolean?
+                empty?
+                void?
+                ascii-char?
+                error?
+                not))
+      #t))
+
+  (define (exprs-lang-v7-template-p p)
+    (match p
+      [`(module (define ,xs (lambda (,params ...) ,values)) ... ,value)
+        (void)]))
+
+  (define (exprs-lang-v7-template-value v)
+    (match v
+      [`(let ([,xs ,vs] ...) ,v)
+        (void)]
+      [`(if ,v1 ,v2 ,v3)
+        (void)]
+      [`(call ,v1 ,vs ...)
+        (void)]
+      [triv
+        (void)]))
+
+  (define (exprs-lang-v7-template-triv t)
+    (match t
+      [(? int61?)
+       (void)]
+      [#t
+       (void)]
+      [#f
+       (void)]
+      ['empty
+       (void)]
+      ['(void)
+       (void)]
+      [`(error ,uint8)
+       (void)]
+      [(? ascii-char-literal?)
+       (void)]
+      [x
+        (void)]))
+
+  (define (exprs-lang-v7-template-x x)
+    (match x
+      [(? prim-f?)
+       (void)]
+      [(? name?)
+       (void)]))
+
+  (define (exprs-lang-v7-template-prim-f p)
+    (match p
+      [(? binop?)
+       (void)]
+      [(? unop?)
+       (void)]))
+
+  (define (exprs-lang-v7-template-unop u)
+    (match u
+      ['fixnum?
+       (void)]
+      ['boolean?
+       (void)]
+      ['empty?
+       (void)]
+      ['void?
+       (void)]
+      ['ascii-char?
+       (void)]
+      ['error?
+       (void)]
+      ['not
+       (void)]))
+
+  (define (exprs-lang-v7-template-binop b)
+    (match b
+      ['*
+       (void)]
+      ['+
+       (void)]
+      ['-
+       (void)]
+      ['<
+       (void)]
+      ['eq?
+       (void)]
+      ['<=
+       (void)]
+      ['>
+       (void)]
+      ['>=
+       (void)]))
+
+  (void))
