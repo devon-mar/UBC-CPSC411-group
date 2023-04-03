@@ -2,7 +2,7 @@
 
 (require
   cpsc411/compiler-lib
-  cpsc411/langs/v6)
+  cpsc411/langs/v7)
 
 (provide resolve-predicates)
 
@@ -11,7 +11,7 @@
 ;; Compiles preds in if statements to equivalent if statements or into
 ;; equivalent instructions
 (define/contract (resolve-predicates p)
-  (-> block-pred-lang-v6? block-asm-lang-v6?)
+  (-> block-pred-lang-v7? block-asm-lang-v7?)
 
   ;; effect -> effect
   (define (convert-effect e)
