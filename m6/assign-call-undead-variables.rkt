@@ -2,18 +2,19 @@
 
 (require
   cpsc411/compiler-lib
-  cpsc411/langs/v6
+  cpsc411/langs/v7
   cpsc411/graph-lib)
 
 (provide assign-call-undead-variables)
 
 ;; Milestone 6 Exercise 10
+;; Milestone 7 Exercise 7
 ;;
-;; Compiles Asm-pred-lang-v6/conflicts to Asm-pred-lang-v6/pre-framed by
+;; Compiles Asm-pred-lang-v7/conflicts to Asm-pred-lang-v7/pre-framed by
 ;; pre-assigning all variables in the call-undead sets to frame variables.
 ;; Only info is modified.
 (define/contract (assign-call-undead-variables p)
-  (-> asm-pred-lang-v6/conflicts? asm-pred-lang-v6/pre-framed?)
+  (-> asm-pred-lang-v7/conflicts? asm-pred-lang-v7/pre-framed?)
 
   ;; Return a set of frame variables that are incompatible with x.
   ;;
@@ -61,17 +62,17 @@
                   (incompatible-fvars (car cu) cg as)))
             as)))))
 
-  ;; Removes 'undead-out and adds assignments.
+  ;; Adds assignments and removes assigned locals
   ;;
-  ;; asm-pred-lang-v6/conflicts-info -> asm-pred-lang-v6/pre-framed-info
+  ;; asm-pred-lang-v7/conflicts-info -> asm-pred-lang-v7/pre-framed-info
   (define/contract (update-info info)
     (-> info? info?)
     (define assignments (info->assignment info))
     (info-set
       (info-set
-        (info-remove info 'undead-out)
+        info
         'locals
-        (foldl 
+        (foldl
           (lambda (a locals) (set-remove locals (first a)))
           (info-ref info 'locals)
           assignments))
@@ -82,7 +83,7 @@
   ;; Assigns call undead variables for a procedure with the given label,
   ;; info, and tail. Only the info field is modified in the returned procedure.
   ;;
-  ;; -> asm-pred-lang-v6/pre-framed-procedure
+  ;; -> asm-pred-lang-v7/pre-framed-procedure
   (define/contract (assign-call-undead-variables-proc label info tail)
     (-> label? info? any/c any/c)
     `(define
@@ -105,7 +106,7 @@
 (module+ test
   (require rackunit)
 
-  ;; values-lang-v6: '(module 42)
+  ;; values-lang-v7: '(module 42)
   (check-match
     (assign-call-undead-variables
       '(module
@@ -228,11 +229,26 @@
       (equal? '((tmp-ra.1 fv2)) (info-ref info-swap 'assignment))
       ;; locals should be updated
       (equal? (list->set '(y.2 x.1 z.3 nfv.3 nfv.2)) (list->set (info-ref info-swap 'locals)))
-      ;; new-frames, locals, call-undead, conflicts, assignment
-      (= 5 (length info-swap))
+      ;; new-frames, locals, undead-out, call-undead, conflicts, assignment
+      (= 6 (length info-swap))
       ;; the rest should remain unchanged
       (equal? '((nfv.2 nfv.3)) (info-ref info-swap 'new-frames))
       (equal? '(tmp-ra.1) (info-ref info-swap 'call-undead))
+      (equal?
+        '((fv0 fv1 tmp-ra.1 rbp)
+          (fv1 x.1 tmp-ra.1 rbp)
+          (y.2 x.1 tmp-ra.1 rbp)
+          ((y.2 x.1 tmp-ra.1 rbp)
+           ((tmp-ra.1 rax rbp) (rax rbp))
+           (((rax tmp-ra.1 rbp)
+             ((y.2 nfv.3 rbp)
+              (nfv.3 nfv.2 rbp)
+              (nfv.3 nfv.2 r15 rbp)
+              (nfv.3 nfv.2 r15 rbp)))
+            (z.3 tmp-ra.1 rbp)
+            (tmp-ra.1 rax rbp)
+            (rax rbp))))
+        (info-ref info-swap 'undead-out))
       (equal?
         '((y.2 (rbp tmp-ra.1 x.1 nfv.3))
           (x.1 (y.2 rbp tmp-ra.1 fv1))
@@ -578,13 +594,13 @@
   (and
       (empty? (info-ref info-foo 'assignment))
       (equal? '(tmp-ra.15) (info-ref info-foo 'locals))
-      ;; new-frames, locals, call-undead, conflicts, assignment
-      (= 5 (length info-foo))
+      ;; new-frames, locals, undead-out, call-undead, conflicts, assignment
+      (= 6 (length info-foo))
 
       (empty? (info-ref info-bar 'assignment))
       (equal? '(tmp-ra.16) (info-ref info-bar 'locals))
-      ;; new-frames, locals, call-undead, conflicts, assignment
-      (= 5 (length info-bar))
+      ;; new-frames, locals, undead-out, call-undead, conflicts, assignment
+      (= 6 (length info-bar))
 
       (equal?
         ;; this might be a bit fragile...
@@ -605,6 +621,6 @@
       (equal?
         (list->set '(bar1.12 x.11 tmp1.14 tmp2.13))
         (list->set (info-ref info 'locals)))
-      ;; new-frames, locals, call-undead, conflicts, assignment
-      (= 5 (length info))))
+      ;; new-frames, locals, undead-out, call-undead, conflicts, assignment
+      (= 6 (length info))))
   )

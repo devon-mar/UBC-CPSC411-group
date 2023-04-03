@@ -3,7 +3,7 @@
 (require
   cpsc411/compiler-lib
   cpsc411/graph-lib
-  cpsc411/langs/v6)
+  cpsc411/langs/v7)
 
 (provide conflict-analysis)
 
@@ -11,10 +11,11 @@
 ;; Milestone 4 Exercise 14
 ;; Milestone 5 Exercise 9
 ;; Milestone 6 Exercise 9
+;; Milestone 7 Exercise 7
 ;;
 ;; Create a conflict graph for the Asm-lang program with the undead-set tree
 (define/contract (conflict-analysis p)
-  (-> asm-pred-lang-v6/undead? asm-pred-lang-v6/conflicts?)
+  (-> asm-pred-lang-v7/undead? asm-pred-lang-v7/conflicts?)
 
   (define conflict-graph (void))
 
@@ -147,7 +148,7 @@
 
   ;; Check that a program and undead-out compiles into a program w/ conflicts
   ;; by compiling with conflict-analysis
-  ;; asm-pred-lang-v6/locals undead-set-tree/rloc conflicts -> void
+  ;; asm-pred-lang-v7/locals undead-set-tree/rloc conflicts -> void
   (define-check (check-conflict program undead-out conflicts-tail)
     (match program
       [`(module ,info ,procs ... ,tail)
@@ -158,7 +159,7 @@
 
   ;; Check that a program w/ procs & undead-out compiles into
   ;; a program w/ procs & conflicts by compiling with conflict-analysis
-  ;; asm-pred-lang-v6/undead conflicts (List-of conflicts) -> void
+  ;; asm-pred-lang-v7/undead conflicts (List-of conflicts) -> void
   (define-check (check-conflict-proc program conflicts-tail conflicts-procs)
     ;; get fields from original program
     (define-values (main-info main-tail proc-labels proc-infos proc-tails)
@@ -182,31 +183,31 @@
   ;; conflict-analysis tests
   (check-conflict
     '(module
-        ((new-frames ()) (locals ()) (call-undead ()))
-        (begin (jump done)))
+      ((new-frames ()) (locals ()) (call-undead ()))
+      (begin (jump done)))
     '(())
     '())
 
   ; No conflicts
   (check-conflict
     '(module
-        ((new-frames ()) (locals (x.1 x.2)) (call-undead ()))
-        (begin (set! x.2 12) (set! x.1 x.2) (set! rax x.1) (jump done)))
+      ((new-frames ()) (locals (x.1 x.2)) (call-undead ()))
+      (begin (set! x.2 12) (set! x.1 x.2) (set! rax x.1) (jump done)))
     '((x.2) (x.1) () ())
     '((x.1 ()) (x.2 ())))
 
   ; One-to-one conflict
   (check-conflict
     '(module
-        ((new-frames ())
-         (locals (x.1 x.2))
-         (call-undead ()))
+      ((new-frames ())
+       (locals (x.1 x.2))
+       (call-undead ()))
+      (begin
+        (set! x.1 5)
         (begin
-          (set! x.1 5)
-          (begin
-            (set! x.2 10)
-            (set! x.1 (+ x.1 x.2)))
-          (jump done)))
+          (set! x.2 10)
+          (set! x.1 (+ x.1 x.2)))
+        (jump done)))
     '((x.1)
       ((x.1 x.2)
        ())
@@ -216,15 +217,15 @@
   ; Move optimization
   (check-conflict
     '(module
-        ((new-frames ())
-         (locals (x.1 x.2 x.3))
-         (call-undead ()))
-        (begin
-          (set! x.1 5)
-          (set! x.2 x.1)
-          (set! x.3 x.1)
-          (set! rax x.2)
-          (jump done)))
+      ((new-frames ())
+       (locals (x.1 x.2 x.3))
+       (call-undead ()))
+      (begin
+        (set! x.1 5)
+        (set! x.2 x.1)
+        (set! x.3 x.1)
+        (set! rax x.2)
+        (jump done)))
     '((x.1)
       (x.1 x.2)
       (x.2)
@@ -235,16 +236,16 @@
   ; No move optimization for binop
   (check-conflict
     '(module
-        ((new-frames ())
-         (locals (x.1 x.2 x.3))
-         (call-undead ()))
-        (begin
-          (set! x.1 5)
-          (set! x.2 x.1)
-          (set! x.2 (+ x.2 x.1))
-          (set! x.3 x.1)
-          (set! rax x.2)
-          (jump done)))
+      ((new-frames ())
+       (locals (x.1 x.2 x.3))
+       (call-undead ()))
+      (begin
+        (set! x.1 5)
+        (set! x.2 x.1)
+        (set! x.2 (+ x.2 x.1))
+        (set! x.3 x.1)
+        (set! rax x.2)
+        (jump done)))
     '((x.1)
       (x.1 x.2)
       (x.1 x.2)
@@ -613,4 +614,40 @@
           (ra.13 x.9 rax tmp.17 factn-1.11 r15 nfv.16 new-n.10 tmp.15 tmp.14))
         (r15 (x.9 rbp nfv.16))
         (rax (rbp ra.13)))))
+
+  ;; bitwise & arithmetic-shift
+  (check-conflict
+    '(module
+      ((new-frames ()) (locals ()) (call-undead ()))
+      (begin
+        (set! rax 1)
+        (set! rcx 2)
+        (set! rdx 3)
+        (set! rax (- rax rcx))
+        (set! rax (bitwise-and rax rdx))
+        (set! rsi 4)
+        (set! rax (bitwise-ior rax rsi))
+        (set! rdi 5)
+        (set! r8 6)
+        (set! rax (bitwise-xor rax rdi))
+        (set! rax (arithmetic-shift-right rax r8))
+        (jump done)))
+    '((rax)
+      (rcx rax)
+      (rcx rdx rax)
+      (rdx rax)
+      (rax)
+      (rsi rax)
+      (rax)
+      (rdi rax)
+      (rdi r8 rax)
+      (r8 rax)
+      ()
+      ())
+    '((rax (rcx rdx rsi rdi r8))
+      (rcx (rax rdx))
+      (rdx (rax rcx))
+      (rsi (rax))
+      (rdi (rax r8))
+      (r8 (rax rdi))))
   )
