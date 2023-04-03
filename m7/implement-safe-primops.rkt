@@ -6,6 +6,10 @@
 
 (provide implement-safe-primops)
 
+;; Milestone 7 Exercise 4
+;;
+;; Implement safe primitive operations by inserting procedure definitions for
+;; each primitive operation which perform dynamic tag checking, to ensure type safety.
 (define/contract (implement-safe-primops p)
   (-> exprs-unique-lang-v7? exprs-unsafe-data-lang-v7?)
 
