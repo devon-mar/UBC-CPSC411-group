@@ -1,18 +1,19 @@
 #lang racket
 (require
   cpsc411/compiler-lib
-  cpsc411/langs/v6)
+  cpsc411/langs/v7)
 
 (provide generate-x64)
 
 ;; Milestone 2 Exercise 12
 ;; Milestone 4 Exercise 1
 ;; Milestone 6 Exercise 19
+;; Milestone 7 Exercise 9
 ;;
-;; Compile the Paren-x64 v6 program into a valid sequence of x64 instructions,
+;; Compile the Paren-x64 v7 program into a valid sequence of x64 instructions,
 ;; represented as a string.
 (define/contract (generate-x64 p)
-  (-> paren-x64-v6? string?)
+  (-> paren-x64-v7? string?)
 
   (define/contract (trg? t)
     (-> any/c boolean?)
@@ -22,7 +23,7 @@
     (-> any/c boolean?)
     (or (trg? t) (int64? t)))
 
-  ;; paren-x64-v6-p -> string?
+  ;; paren-x64-v7-p -> string?
   (define (generate-x64-p p)
     (match p
       [`(begin ,s ...)
@@ -31,7 +32,7 @@
           ""
           (map generate-x64-s s))]))
 
-  ;; paren-x64-v6-s -> string?
+  ;; paren-x64-v7-s -> string?
   (define/contract (generate-x64-s s)
     (-> any/c string?)
     (match s
@@ -42,7 +43,7 @@
         (format "~a ~a, ~a" (binop->ins b) reg (generate-x64-loc loc))]
       [`(set! ,reg ,triv)
         #:when (and (register? reg) (triv? triv))
-        (format "mov ~a, ~a" reg triv)]
+        (format "mov ~a, ~a" reg (generate-x64-triv triv))]
       [`(set! ,reg ,loc)
         #:when (register? reg)
         (format "mov ~a, ~a" reg (generate-x64-loc loc))]
@@ -50,33 +51,32 @@
         #:when (int32? int32)
         (format "mov ~a, ~a" (addr->x64 addr) int32)]
       [`(set! ,addr ,trg)
-        (format "mov ~a, ~a" (addr->x64 addr) trg)]
+        (format "mov ~a, ~a" (addr->x64 addr) (generate-x64-trg trg))]
       [`(with-label ,label ,s)
-        (format "~a:~n~a" label (generate-x64-s s))]
+        (format "~a:~n~a" (sanitize-label label) (generate-x64-s s))]
       [`(jump ,trg)
-        (format "jmp ~a" trg)]
+        (format "jmp ~a" (generate-x64-trg trg))]
       [`(compare ,reg ,opand)
         (format "cmp ~a, ~a" reg opand)]
       [`(jump-if ,relop ,label)
-        (format "~a ~a" (relop->x64-jmp relop) label)]))
+        (format "~a ~a" (relop->x64-jmp relop) (sanitize-label label))]))
 
-  ;; not used
-  #;
+  ;; paren-x64-v7-trg -> string
+  ;; If the trg is a label, santize it. Otherwise return t
   (define (generate-x64-trg t)
     (match t
       [(? register?)
-        (void)]
+        t]
       [(? label?)
-       (void)]))
+       (sanitize-label t)]))
 
-  ;; not used
-  #;
+  ;; paren-x64-v7-triv -> string
   (define (generate-x64-triv t)
     (match t
       [(? int64?)
-       (void)]
+       t]
       [trg 
-        (void)]))
+        (generate-x64-trg t)]))
 
   ;; not used
   #;
@@ -87,7 +87,7 @@
       [(? register?)
        (void)]))
 
-  ;; paren-x64-v6-loc -> string?
+  ;; paren-x64-v7-loc -> string?
   (define/contract (generate-x64-loc l)
     (-> any/c string?)
     (match l
@@ -96,23 +96,27 @@
 
   ;; Returns the displacement mode operand for the given addr
   ;;
-  ;; paren-x64-v6-addr -> x64 displacement mode operand string
+  ;; paren-x64-v7-addr -> x64 displacement mode operand string
   (define (addr->x64 a)
     (match a
       [`(,fbp - ,dispoffset)
         (format "QWORD [~a - ~a]" fbp dispoffset)]))
 
-  ;; paren-x64-v6-binop -> string?
+  ;; paren-x64-v7-binop -> string?
   (define/contract (binop->ins b)
     (-> symbol? string?)
     (match b
       ['* "imul"]
       ['+ "add"]
-      ['- "sub"]))
+      ['- "sub"]
+      ['bitwise-and "and"]
+ 	 	  ['bitwise-ior "or"]
+ 	 	  ['bitwise-xor "xor"]
+ 	 	  ['arithmetic-shift-right "sar"]))
 
   ;; Returns the appropriate x64 jump instructions for the relop r.
   ;;
-  ;; paren-x64-v6-relop -> string?
+  ;; paren-x64-v7-relop -> string?
   (define/contract (relop->x64-jmp r)
     (-> symbol? string?)
     (match r
@@ -321,4 +325,39 @@
     '(begin
        (set! rax 50)
        (set! rax (- rax 8))))
-  )
+
+  ;; M7 test
+  ;; Test xor
+  (check-42
+    '(begin
+       (set! rax 50)
+       (set! rax (bitwise-xor rax rax))
+       (set! rax (+ rax 42))))
+  
+  ;; Test arithmetic-shift-right
+  (check-42
+    '(begin
+       (set! rax 32)
+       (set! rax (* rax 32))
+       (set! rax (arithmetic-shift-right rax 5))
+       (set! rax (+ rax 10))))
+  
+  ;; Test ior
+  (check-42
+    '(begin
+       (set! rax 10)
+       (set! rax (bitwise-ior rax 32))))
+
+  ;; Test and
+  (define 32-ones (max-int 32))
+  (check-42
+    `(begin
+       (set! rax 42)
+       (set! rax (bitwise-and rax ,32-ones))))
+
+  ;; Should not throw error if the label is correctly formatted
+  (check-42
+    `(begin
+       (with-label L.$!!@#*main.2 (set! rbp L.$!!@#*main.2))
+       (set! rax 42)))
+)
