@@ -2,19 +2,20 @@
 
 (require
   cpsc411/compiler-lib
-  cpsc411/langs/v6)
+  cpsc411/langs/v7)
 
 (provide patch-instructions)
 
 ;; Milestone 2 Exercise 10
 ;; Milestone 4 Exercise 5
 ;; Milestone 6 Exercise 18
+;; Milestone 7 Exercise 8
 ;;
-;; Compile the Para-asm-lang v6 to Paren-x64 v6 by patching instructions that
+;; Compile the Para-asm-lang v7 to Paren-x64 v7 by patching instructions that
 ;; have no x64 analogue into to a sequence of instructions and an auxiliary
 ;; register from current-patch-instructions-registers.
 (define/contract (patch-instructions p)
-  (-> para-asm-lang-v6? paren-x64-v6?)
+  (-> para-asm-lang-v7? paren-x64-v7?)
 
   (define (big-int? i)
     (-> any/c boolean?)
@@ -39,7 +40,7 @@
   ;; Syntax:
   ;; (use-tmp
   ;;   ([value (or/c boolean? (-> any/c boolean?)) ...])
-  ;;   (-> value/register? pare-x64-v6-s))
+  ;;   (-> value/register? pare-x64-v7-s))
   ;;
   ;; value must be able to go in the RHS of a set!
   ;; f will be called with N args where N is the number of values given to use-tmp.
@@ -77,7 +78,7 @@
   (define (patch-instructions-s s)
     (match s
       [`(set! ,loc (,b ,loc ,o))
-        ;; para-asm-lang-v6        | Need tmp for o?
+        ;; para-asm-lang-v7        | Need tmp for o?
         ;; ------------------------|----------
         ;; loc/reg  opand/int32    | N
         ;; loc/reg  opand/int64    | Y
@@ -95,7 +96,7 @@
             `((set! ,r (,b ,r ,o))
               ,@(if (addr? loc) `((set! ,loc ,r)) '()))))]
       [`(set! ,loc ,triv)
-        ;; para-asm-lang-v6             | Need tmp?
+        ;; para-asm-lang-v7             | Need tmp?
         ;; -----------------------------|----------
         ;; loc/reg  triv/opand/int64    | N
         ;; loc/reg  triv/opand/loc/reg  | N
@@ -180,7 +181,11 @@
     (match b
       ['* (void)]
       ['+ (void)]
-      ['- (void)]))
+      ['- (void)]
+      ['bitwise-and (void)]
+ 	 		['bitwise-ior (void)]
+ 	 	  ['bitwise-xor (void)]
+ 	 	  ['arithmetic-shift-right (void)]))
 
   ;; relop -> relop
   (define (invert-relop r)
@@ -198,11 +203,12 @@
   (require rackunit)
 
   (define big-int (add1 (max-int 32)))
+  (define 64-bit-int (max-int 64))
   (define rax (current-return-value-register))
 
   (define-check (check-42 p)
     (check-equal?
-      (interp-paren-x64-v6 (patch-instructions p))
+      (interp-paren-x64-v7 (patch-instructions p))
       42))
 
   (define/contract (fbp o)
@@ -398,6 +404,29 @@
        (set! rdi L.done.1)
        (set! ,rax 0)
        (set! r9 10)
+       (compare r9 4)
+       ;; relop!=/true
+       (jump-if != rsi)
+       (set! ,rax (+ ,rax 1))
+       (with-label L.a.1 (compare r9 r9))
+       ;; relop!=/false
+       ;; (jump-if relop trg/loc/reg)
+       (jump-if != rdi)
+       (set! ,rax (+ ,rax 10))
+       (with-label L.done.1 (set! ,rax (+ ,rax 32)))))
+
+  ;; Verify bitwise operations with 64-bit integers
+  (check-42
+    `(begin
+       (set! rsi L.a.1)
+       (set! rdi L.done.1)
+       (set! ,rax 0)
+       (set! r9 10)
+       (set! r9 (bitwise-xor r9 r9))          ;; set to 0
+       (set! r9 (bitwise-ior r9 2))           ;; set to 2
+       (set! r9 (arithmetic-shift-right r9 2));; multiply by 4
+       (set! r9 (bitwise-ior r9 2))           ;; add 2 since lower 2 bits are 0
+       (set! r9 (bitwise-and r9 ,64-bit-int)) ;; bitwise-and with 64 bit all-ones integer
        (compare r9 4)
        ;; relop!=/true
        (jump-if != rsi)
