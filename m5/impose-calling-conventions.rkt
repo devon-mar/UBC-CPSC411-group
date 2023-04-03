@@ -46,19 +46,20 @@
     (-> box? exact-nonnegative-integer? (listof (or/c register? aloc?)))
     (define-values (locs nfvs)
       (let f ([n n]
-              [next (current-parameter-registers)])
+              [regs (current-parameter-registers)]
+              [next-fv 0])
         (cond
           [(zero? n) (values '() '())]
-          [(empty? next)
-           (define-values (rest-locs rest-nfvs) (f (sub1 n) next))
+          [(empty? regs)
+           (define-values (rest-locs rest-nfvs) (f (sub1 n) regs (add1 next-fv)))
            (define nfv (fresh 'nfv))
            (values
              (cons nfv rest-locs)
              (cons nfv rest-nfvs))]
           [else
-            (define-values (rest-locs rest-nfvs) (f (sub1 n) (cdr next)))
+            (define-values (rest-locs rest-nfvs) (f (sub1 n) (cdr regs) next-fv))
             (values
-              (cons (car next) rest-locs)
+              (cons (car regs) rest-locs)
               rest-nfvs)])))
     (add-nfvs! nfvs-box nfvs)
     locs)
@@ -70,20 +71,17 @@
   (define/contract (args->locs/tail n)
     (-> exact-nonnegative-integer? (listof (or/c register? fvar?)))
     (let f ([n n]
-            [next (current-parameter-registers)])
+            [regs (current-parameter-registers)]
+            [next-fv 0])
       (cond
         [(zero? n) '()]
-        [(empty? next)
+        [(empty? regs)
          (cons
-           (make-fvar 0)
-           (f (sub1 n) 1))]
-        [(number? next)
-         (cons
-           (make-fvar next)
-           (f (sub1 n) (add1 next)))]
+           (make-fvar next-fv)
+           (f (sub1 n) regs (add1 next-fv)))]
         [(cons
-           (car next)
-           (f (sub1 n) (cdr next)))])))
+           (car regs)
+           (f (sub1 n) (cdr regs) next-fv))])))
 
   ;; Maps each paramameter to a loc. All frame variable locs (if any) will be
   ;; at the end of the list.
