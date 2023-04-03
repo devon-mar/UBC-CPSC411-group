@@ -10,6 +10,8 @@
 ;;
 ;; Implement safe primitive operations by inserting procedure definitions for
 ;; each primitive operation which perform dynamic tag checking, to ensure type safety.
+;;
+;; Any type errors will return (error 2).
 (define/contract (implement-safe-primops p)
   (-> exprs-unique-lang-v7? exprs-unsafe-data-lang-v7?)
 
@@ -21,6 +23,7 @@
 
   ;; Return a definition of a safe primop that calls
   ;; f if all arguments correspond to the types in types.
+  ;; If the arguments are of the wrong type, (error 2) is returned.
   (define (make-safe-primop label f types)
     (define vs (map (lambda (_) (fresh 'tmp)) types))
     `(define ,label
