@@ -348,6 +348,7 @@
        (set! rax 10)
        (set! rax (bitwise-ior rax 32))))
 
+  ;; Test and
   (define 32-ones (max-int 32))
   (check-42
     `(begin
