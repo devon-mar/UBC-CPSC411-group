@@ -78,11 +78,11 @@
                      [tagp (datum->syntax #'type (string->symbol (format "current-~a-tag" (syntax->datum #'type))))]
                      [maskp (datum->syntax #'type (string->symbol (format "current-~a-mask" (syntax->datum #'type))))])
          ;; generates a exprs-bits-lang-v7-pred to check if v is of type name
-         #'(define/contract (name v)
-           (-> int64? any/c)
-           `(if (= (bitwise-and ,v ,(maskp)) ,(tagp))
-              ,(current-true-ptr)
-              ,(current-false-ptr))))]))
+         #'(define (name v)
+             (-> any/c any/c)
+             `(if (= (bitwise-and ,v ,(maskp)) ,(tagp))
+                ,(current-true-ptr)
+                ,(current-false-ptr))))]))
   (make-unop->pred fixnum)
   (make-unop->pred boolean)
   (make-unop->pred empty)
@@ -189,6 +189,7 @@
            ,(current-false-ptr))]))
 
 
+  ;; exprs-unsafe-data-lang-v7-unop (listof exprs-bits-lang-v7-value) -> exprs-bits-lang-v7-pred
   (define (specify-representation-unop u vs)
     (define v (car vs))
     (match u
@@ -320,7 +321,7 @@
         (interp-exprs-bits-lang-v7
           (specify-representation '(module (unop fs))))
         (current-false-ptr)
-        (format  "expected false: (~a ~a)" 'unop 'fs)) ...))
+        (format "expected false: (~a ~a)" 'unop 'fs)) ...))
 
   ;; unop/fixnum?
   (unop-test fixnum? 1 #t #f empty (void) #\a (error 1))
