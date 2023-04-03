@@ -2,7 +2,7 @@
 
 (require
   cpsc411/compiler-lib
-  cpsc411/langs/v6)
+  cpsc411/langs/v7)
 
 (provide normalize-bind)
 
@@ -10,18 +10,19 @@
 ;; Milestone 4 Exercise 19
 ;; Milestone 5 Exercise 4
 ;; Milestone 6 Exercise 4
+;; Milestone 7 Exercise 7
 ;;
-;; Compiles Imp-mf-lang v6 to Imp-cmf-lang v6, pushing set! under begin so that
+;; Compiles Imp-mf-lang v7 to Imp-cmf-lang v7, pushing set! under begin so that
 ;; the right-hand-side of each set! is simple value-producing operation.
 (define/contract (normalize-bind p)
-  (-> imp-mf-lang-v6? proc-imp-cmf-lang-v6?)
+  (-> imp-mf-lang-v7? proc-imp-cmf-lang-v7?)
 
   ;; Pushes a (set! ,aloc ,value) under a begin so that
   ;; the right-hand-size of each set! is a simple value producing operation.
   ;;
-  ;; aloc: imp-mf-lang-v6-aloc?
-  ;; value: imp-mf-lang-v6-value
-  ;; -> proc-imp-cmf-lang-v6-effect
+  ;; aloc: imp-mf-lang-v7-aloc?
+  ;; value: imp-mf-lang-v7-value
+  ;; -> proc-imp-cmf-lang-v7-effect
   (define/contract (normalize-bind-set aloc value)
     (-> aloc? any/c any/c)
     (match value
@@ -35,15 +36,15 @@
           ,(normalize-bind-set aloc vf))]
       [_ `(set! ,aloc ,value)]))
 
-  ;; tail: imp-mf-lang-v6-tail?
-  ;; -> proc-imp-cmf-lang-v6-proc
+  ;; tail: imp-mf-lang-v7-tail?
+  ;; -> proc-imp-cmf-lang-v7-proc
   (define/contract (normalize-bind-proc label params tail)
     (-> label? (listof aloc?) any/c any/c)
     `(define
        ,label
        (lambda ,params ,(normalize-bind-tail tail))))
 
-  ;; imp-mf-lang-v6-p -> proc-imp-cmf-lang-v6-p
+  ;; imp-mf-lang-v7-p -> proc-imp-cmf-lang-v7-p
   (define (normalize-bind-p p)
     (match p
       [`(module (define ,labels (lambda (,alocs ...) ,tails)) ... ,tail)
@@ -51,7 +52,7 @@
            ,@(map normalize-bind-proc labels alocs tails)
            ,(normalize-bind-tail tail))]))
 
-  ;; imp-mf-lang-v6-pred -> proc-imp-cmf-lang-v6-pred
+  ;; imp-mf-lang-v7-pred -> proc-imp-cmf-lang-v7-pred
   (define (normalize-bind-pred p)
     (match p
       [`(true)
@@ -71,7 +72,7 @@
            ,(normalize-bind-pred p3))]
       [`(,_ ,_ ,_) p]))
 
-  ;; imp-mf-lang-v6-tail -> proc-imp-cmf-lang-v6-tail
+  ;; imp-mf-lang-v7-tail -> proc-imp-cmf-lang-v7-tail
   (define (normalize-bind-tail t)
     (match t
       [`(begin ,es ... ,tail)
@@ -87,7 +88,7 @@
       ;; value
       [_ (normalize-bind-value t)]))
 
-  ;; imp-mf-lang-v6-value -> proc-imp-cmf-lang-v6-value
+  ;; imp-mf-lang-v7-value -> proc-imp-cmf-lang-v7-value
   (define (normalize-bind-value v)
     (match v
       [`(begin ,es ... ,v)
@@ -104,7 +105,7 @@
       ;; triv
       [_ v]))
 
-  ;; imp-mf-lang-v6-effect -> proc-imp-cmf-lang-v6-effect
+  ;; imp-mf-lang-v7-effect -> proc-imp-cmf-lang-v7-effect
   (define (normalize-bind-effect e)
     (match e
       [`(set! ,a ,v)
@@ -143,7 +144,11 @@
     (match b
       ['* (void)]
       ['+ (void)]
-      ['- (void)]))
+      ['- (void)]
+      ['bitwise-ior (void)]
+      ['bitwise-and (void)]
+      ['bitwise-xor (void)]
+      ['arithmetic-shift-right (void)]))
 
   ;; not used
   #;
@@ -245,7 +250,7 @@
   ;; M3 tests
 	(define-check (check-42 p)
 		(check-equal?
-			(interp-imp-cmf-lang-v6 (normalize-bind p))
+			(interp-imp-cmf-lang-v7 (normalize-bind p))
 			42))
 
   (check-42
