@@ -1,15 +1,16 @@
 #lang racket
 
-(require cpsc411/langs/v6)
+(require cpsc411/langs/v7)
 
 (provide flatten-program)
 
 ;; Milestone 4 Exercise 6
+;; Milestone 7 Exercise 7
 ;;
 ;; Compile Block-asm-lang to Para-asm-lang
 ;; by flattening basic blocks into labeled instructions.
 (define/contract (flatten-program p)
-  (-> block-asm-lang-v6? para-asm-lang-v6?)
+  (-> block-asm-lang-v7? para-asm-lang-v7?)
 
   ;; Unused
   #;
@@ -18,7 +19,7 @@
       [`(set! ,_ ,_) e]
       [`(set! ,_ (,_ ,_ ,_)) e]))
 
-  ;; (Block-Asm-Lang-v6 tail) -> (List-of (Para-Asm-Lang-v6 s))
+  ;; (Block-Asm-Lang-v7 tail) -> (List-of (Para-Asm-Lang-v7 s))
   (define (flatten-tail t)
     (match t
       [`(jump ,_) (list t)]
@@ -29,7 +30,7 @@
          (jump-if ,relop ,trg1)
          (jump ,trg2))]))
 
-  ;; (Block-Asm-Lang-v6 b) -> (List-of (Para-Asm-Lang-v6 s))
+  ;; (Block-Asm-Lang-v7 b) -> (List-of (Para-Asm-Lang-v7 s))
   (define (flatten-b b)
     (match b
       [`(define ,label ,tail)

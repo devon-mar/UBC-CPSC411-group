@@ -2,21 +2,22 @@
 
 (require
   cpsc411/compiler-lib
-  cpsc411/langs/v6)
+  cpsc411/langs/v7)
 
 (provide implement-fvars)
 
 ;; Milestone 2 Exercise 11
 ;; Milestone 4 Exercise 4
 ;; Milestone 6 Exercise 17
+;; Milestone 7 Exercise 7
 ;;
 ;; Reifies fvars into displacement mode operands.
 (define/contract (implement-fvars p)
-  (-> nested-asm-lang-fvars-v6? nested-asm-lang-v6?)
+  (-> nested-asm-lang-fvars-v7? nested-asm-lang-v7?)
 
   (define offset 0)
 
-  ;; nested-asm-lang-fvars-v6-p nested-asm-lang-v6-p
+  ;; nested-asm-lang-fvars-v7-p nested-asm-lang-v7-p
   (define (implement-fvars-p p)
     (match p
       [`(module (define ,labels ,tails) ... ,tail)
@@ -26,8 +27,8 @@
            ,@(map implement-fvars-proc labels tails)
            ,new-tail)]))
 
-  ;; tail: nested-asm-lang-fvars-v6-tail
-  ;; -> nested-asm-lang-v6-tail
+  ;; tail: nested-asm-lang-fvars-v7-tail
+  ;; -> nested-asm-lang-v7-tail
   (define/contract (implement-fvars-proc label tail)
     (-> label? any/c any/c)
     (set! offset 0)
@@ -35,7 +36,7 @@
        ,label
        ,(implement-fvars-tail tail)))
 
-  ;; nested-asm-lang-fvars-v6-pred nested-asm-lang-v6-pred
+  ;; nested-asm-lang-fvars-v7-pred nested-asm-lang-v7-pred
   (define (implement-fvars-pred p)
     (match p
       [`(true)
@@ -58,7 +59,7 @@
           ,(implement-fvars-opand o1)
           ,(implement-fvars-opand o2))]))
 
-  ;; nested-asm-lang-fvars-v6-tail nested-asm-lang-v6-tail
+  ;; nested-asm-lang-fvars-v7-tail nested-asm-lang-v7-tail
   (define (implement-fvars-tail t)
     (match t
       [`(jump ,trg)
@@ -73,7 +74,7 @@
            ,(implement-fvars-tail t1)
            ,(implement-fvars-tail t2))]))
 
-  ;; nested-asm-lang-fvars-v6-effect nested-asm-lang-v6-effect
+  ;; nested-asm-lang-fvars-v7-effect nested-asm-lang-v7-effect
   (define (implement-fvars-effect e)
     (match e
       [`(set! ,l (,b ,l ,o))
@@ -81,6 +82,7 @@
         (begin0
         `(set! ,loc (,b ,loc ,(implement-fvars-opand o)))
         (when (and (equal? l (current-frame-base-pointer-register)) (number? o))
+        ;; Assumption: bitwise operations will not be used on the frame base pointer register
           (set! offset ((match b ['- -] ['+ +]) offset o))))]
       [`(set! ,l ,t)
         `(set!
@@ -99,7 +101,7 @@
            ,l
            ,(implement-fvars-tail t))]))
 
-  ;; nested-asm-lang-fvars-v6-opand nested-asm-lang-v6-opand
+  ;; nested-asm-lang-fvars-v7-opand nested-asm-lang-v7-opand
   (define (implement-fvars-opand o)
     (match o
       [(? int64?) o]
@@ -115,13 +117,13 @@
     (-> fvar? any/c)
     `(,(current-frame-base-pointer-register) - ,(+ (* (fvar->index f) (current-word-size-bytes)) offset)))
 
-  ;; nested-asm-lang-fvars-v6-loc nested-asm-lang-v6-loc
+  ;; nested-asm-lang-fvars-v7-loc nested-asm-lang-v7-loc
   (define (implement-fvars-loc l)
     (match l
       [(? register?) l]
       [(? fvar?) (implement-fvars-fvar l)]))
 
-  ;; nested-asm-lang-fvars-v6-trg nested-asm-lang-v6-trg
+  ;; nested-asm-lang-fvars-v7-trg nested-asm-lang-v7-trg
   (define (implement-fvars-trg t)
     (match t
       [(? label?) t]
@@ -269,4 +271,24 @@
                  (set! rbp (+ rbp 40)))
                (jump (rbp - 32))))))
        (begin (set! (rbp - 8) 7) (set! (rbp - 0) 4) (jump L.swap.1))))
+
+    ;; Identity on bitwise operations
+    (check-equal?
+    (implement-fvars
+      `(module
+         (begin
+           (set! rax 2)
+           (set! rax (arithmetic-shift-right rax 1))
+           (set! rax (bitwise-and rax 1))
+           (set! rax (bitwise-ior rax 2))
+           (set! rax (bitwise-xor rax rax))
+           (jump r15))))
+    `(module
+         (begin
+           (set! rax 2)
+           (set! rax (arithmetic-shift-right rax 1))
+           (set! rax (bitwise-and rax 1))
+           (set! rax (bitwise-ior rax 2))
+           (set! rax (bitwise-xor rax rax))
+           (jump r15))))
   )
