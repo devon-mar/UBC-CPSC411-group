@@ -1,5 +1,4 @@
-# CPSC 411 Milestone 8 Skeleton
-This branch provides the skeleton for CPSC 411 Milestone 8.
+# CPSC 411 Milestone 8 Skeleton This branch provides the skeleton for CPSC 411 Milestone 8.
 
 When submitting, you should ensure the name of the `compiler.rkt` file and the
 provides from that file are the same as in this commit.
@@ -173,4 +172,4 @@ For versions of the skeletons from prior versions of the course, see the tags.
 | 11       | `flatten-program`              | `m4/flatten-program.rkt`              |
 | 12       | `patch-instructions`           | `m2/patch-instructions.rkt`           |
 | 13       | `implement-mops`               | `m8/implement-mops.rkt`               |
-| 14       | `generate-x64`                 | `m2/generate-x64`                     |
+| 14       | `generate-x64`                 | `m2/generate-x64.rkt`                 |
