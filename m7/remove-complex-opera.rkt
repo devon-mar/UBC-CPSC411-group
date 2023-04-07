@@ -2,17 +2,21 @@
 
 (require
   cpsc411/compiler-lib
-  cpsc411/langs/v7)
+  cpsc411/langs/v8
+  "../utils/gen-utils.rkt")
 
 (provide remove-complex-opera*)
 
+;; Milestone 7 Exercise 6
+;; Milestone 8 Exercise 5
+;;
 ;; Performs the monadic form transformation,
 ;; unnesting all non-trivial operators and operands to binops,
 ;; and calls making data flow explicit and simple to implement imperatively
 (define/contract (remove-complex-opera* p)
-  (-> exprs-bits-lang-v7? values-bits-lang-v7?)
+  (-> exprs-bits-lang-v8? values-bits-lang-v8?)
 
-  ;; exprs-bits-lang-v7-p -> values-bits-lang-v7-p
+  ;; exprs-bits-lang-v8-p -> values-bits-lang-v8-p
   (define (remove-complex-opera-p p)
     (match p
       [`(module (define ,ls (lambda (,as ...) ,vs)) ... ,value)
@@ -20,12 +24,12 @@
           ,@(map remove-complex-opera-proc ls as vs)
           ,(remove-complex-opera-value value))]))
 
-  ;; label (List-of aloc) exprs-bits-lang-v7-value -> values-bits-lang-v7-proc
-  ;; values-bits-lang-v7-proc ::= (define label (lambda (aloc ...) tail))
+  ;; label (List-of aloc) exprs-bits-lang-v8-value -> values-bits-lang-v8-proc
+  ;; values-bits-lang-v8-proc ::= (define label (lambda (aloc ...) tail))
   (define (remove-complex-opera-proc label alocs value)
     `(define ,label (lambda ,alocs ,(remove-complex-opera-value value))))
 
-  ;; exprs-bits-lang-v7-pred -> values-bits-lang-v7-pred
+  ;; exprs-bits-lang-v8-pred -> values-bits-lang-v8-pred
   (define (remove-complex-opera-pred p)
     (match p
       [`(true) p]
@@ -42,6 +46,10 @@
          ,(remove-complex-opera-pred pred)
          ,(remove-complex-opera-pred p1)
          ,(remove-complex-opera-pred p2))]
+      [`(begin ,effects ... ,pred)
+       `(begin
+         ,@(map remove-complex-opera-effect effects)
+         ,(remove-complex-opera-pred pred))]
       [`(,relop ,v1 ,v2)
        (use-let-values
          opand?
@@ -49,10 +57,29 @@
          (lambda (os)
            `(,relop ,(first os) ,(second os))))]))
 
-  ;; exprs-bits-lang-v7-value -> values-bits-lang-v7-value
+  ;; exprs-bits-lang-v8-value -> values-bits-lang-v8-value
   (define (remove-complex-opera-value v)
     (match v
+      [`(mref ,v1 ,v2)
+       ;; needs (mref aloc opand)
+       (use-let-values
+         aloc?
+         (list (remove-complex-opera-value v1))
+         (lambda (as)
+           (use-let-values
+             opand?
+             (list (remove-complex-opera-value v2))
+             (lambda (os)
+               `(mref ,(first as) ,(first os))))))]
+      [`(alloc ,value)
+       ;; needs (alloc opand)
+       (use-let-values
+         opand?
+         (list (remove-complex-opera-value value))
+         (lambda (os)
+           `(alloc ,(first os))))]
  	 	  [`(call ,vc ,vs ...)
+       ;; needs (call triv opand ...)
        (use-let-values
          triv?
          (list (remove-complex-opera-value vc))
@@ -71,7 +98,12 @@
          ,(remove-complex-opera-pred pred)
          ,(remove-complex-opera-value v1)
          ,(remove-complex-opera-value v2))]
+      [`(begin ,effects ... ,value)
+       `(begin
+         ,@(map remove-complex-opera-effect effects)
+         ,(remove-complex-opera-value value))]
       [`(,binop ,v1 ,v2)
+       ;; needs (binop opand opand)
        (use-let-values
          opand?
          (map remove-complex-opera-value (list v1 v2))
@@ -79,29 +111,45 @@
            `(,binop ,(first os) ,(second os))))]
       [triv triv]))
 
-  ;; (exprs-bits-lang-v7-value -> boolean)
-  ;; (List-of exprs-bits-lang-v7-value)
-  ;; ((List-of exprs-bits-lang-v7-value) -> values-bits-lang-v7-value)
-  ;; -> values-bits-lang-v7-value
+  ;; exprs-bits-lang-v8-effect -> values-bits-lang-v8-effect
+  (define (remove-complex-opera-effect e)
+    (match e
+      [`(mset! ,v1 ,v2 ,v3)
+       ;; needs (mset! aloc opand value)
+       (use-let-values
+         aloc?
+         (list (remove-complex-opera-value v1))
+         (lambda (as)
+           (use-let-values
+             opand?
+             (list (remove-complex-opera-value v2))
+             (lambda (os)
+               `(mset!
+                 ,(first as)
+                 ,(first os)
+                 ,(remove-complex-opera-value v3))))))]
+      [`(begin ,effects ...) ;; modified template - removed effect
+       `(begin ,@(map remove-complex-opera-effect effects))]))
+
+  ;; (exprs-bits-lang-v8-value -> boolean)
+  ;; (List-of exprs-bits-lang-v8-value)
+  ;; ((List-of exprs-bits-lang-v8-value) -> values-bits-lang-v8-value|effect)
+  ;; -> values-bits-lang-v8-value|effect
   ;; Use lets to bind unsupported values to alocs
   ;; by taking in a check? that checks whether a value is supported in Values Bits Lang,
-  ;; a list of supported/unsupported values that are inside of the outer value
-  ;; and a function that will create the outer value from a list of supported values
+  ;; a list of supported/unsupported values that are inside of the outer structure
+  ;; and a function that will create the outer structure from a list of supported values
   (define (use-let-values check? vs fn)
-    (cond
-      [(empty? vs) (fn '())]
-      [(check? (first vs))
-       (use-let-values
-         check?
-         (rest vs)
-         (lambda (rest) (fn (cons (first vs) rest))))]
-      [else
-       (define new-aloc (fresh))
-       `(let ([,new-aloc ,(first vs)])
-         ,(use-let-values
-           check?
-           (rest vs)
-           (lambda (rest) (fn (cons new-aloc rest)))))]))
+    (define-values (args aloc-vs)
+      (for/fold ([args '()] [aloc-vs '()]) ([v vs])
+        (if (check? v)
+            (values (append-e args v) aloc-vs)
+            (let ([new-aloc (fresh)])
+              (values (append-e args new-aloc)
+                      (append-e aloc-vs (list new-aloc v)))))))
+    (if (empty? aloc-vs)
+        (fn args)
+        `(let ,aloc-vs ,(fn args))))
 
   ;; any -> boolean
   ;; Returns true iff o is a opand in Values Bits Lang
@@ -121,7 +169,7 @@
   ;; Check that the compiled program interprets to 42
   (define-check (check-42 p)
     (check-equal?
-      (interp-values-bits-lang-v7 (remove-complex-opera* p))
+      (interp-values-bits-lang-v8 (remove-complex-opera* p))
       42))
 
   ;; Check that compiled program is the same as the original program
@@ -130,7 +178,7 @@
     (define compiled (remove-complex-opera* p))
     (check-equal? compiled p)
     (check-equal?
-      (interp-values-bits-lang-v7 compiled)
+      (interp-values-bits-lang-v8 compiled)
       42))
 
   ;; base case
@@ -201,4 +249,34 @@
                         (call L.test.1 200))])
            (+ x.1 y.2))
          2)))
+
+  ;; begin in pred
+  (check-42
+    '(module
+      (let ([x.1 (alloc 8)])
+        (if (begin (mset! x.1 0 42) (true))
+            (mref x.1 0)
+            -1))))
+
+  ;; begin in value/effect
+  (check-42
+    '(module
+      (let ([x.1 (alloc 16)])
+        (begin
+          (begin (mset! x.1 8 42))
+          (mref x.1 8)))))
+
+  ;; alloc, mref, mset
+  (check-42
+    '(module
+      (let ([x.1 (alloc (* 8 2))]
+            [y.1 (alloc (if (false) 8 32))])
+        (begin
+          (mset!
+            (let () x.1)
+            (begin
+              (mset! (if (true) y.1 -1) (- 2 2) (let ([x.1 8]) x.1))
+              (mref (if (not (not (false))) -1 y.1) (let ([y.1 0]) y.1)))
+            (* 2 21))
+          (mref (let () x.1) (* 2 4))))))
   )
