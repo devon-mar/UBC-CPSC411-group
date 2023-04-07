@@ -17,9 +17,9 @@
   #;
   (define (flatten-s s)
     (match s
-      [`(set! ,loc ,triv) s]
       [`(set! ,loc_1 (mref ,loc_2 ,index)) s]
       [`(set! ,loc_1 (,binop ,loc_1 ,opand)) s]
+      [`(set! ,loc ,triv) s]
       [`(mset! ,loc ,index ,triv) s]))
 
   ;; (Block-Asm-Lang-v8 tail) -> (List-of (Para-Asm-Lang-v8 s))

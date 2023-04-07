@@ -17,9 +17,9 @@
   ;; s -> s
   (define (convert-s s)
     (match s
-      [`(set! ,loc ,triv) s]
       [`(set! ,loc_1 (mref ,loc_2 ,index)) s]
       [`(set! ,loc_1 (,binop ,loc_1 ,opand)) s]
+      [`(set! ,loc ,triv) s]
       [`(mset! ,loc ,index ,triv) s]))
 
   ;; tail -> tail
