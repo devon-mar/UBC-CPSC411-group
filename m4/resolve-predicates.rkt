@@ -2,30 +2,33 @@
 
 (require
   cpsc411/compiler-lib
-  cpsc411/langs/v7)
+  cpsc411/langs/v8)
 
 (provide resolve-predicates)
 
 ;; Milestone 4 Exercise 9
+;; Milestone 8 Exercise 11
 ;;
 ;; Compiles preds in if statements to equivalent if statements or into
 ;; equivalent instructions
 (define/contract (resolve-predicates p)
-  (-> block-pred-lang-v7? block-asm-lang-v7?)
+  (-> block-pred-lang-v8? block-asm-lang-v8?)
 
-  ;; effect -> effect
-  (define (convert-effect e)
-    (match e
-      [`(set! ,loc ,triv) e]
-      [`(set! ,loc_1 (,binop ,loc_1 ,opand)) e]))
+  ;; s -> s
+  (define (convert-s s)
+    (match s
+      [`(set! ,loc ,triv) s]
+      [`(set! ,loc_1 (mref ,loc_2 ,index)) s]
+      [`(set! ,loc_1 (,binop ,loc_1 ,opand)) s]
+      [`(mset! ,loc ,index ,triv) s]))
 
   ;; tail -> tail
   (define (convert-tail t)
     (match t
       [`(jump ,trg) `(jump ,trg)]
-      [`(begin ,effects ... ,tail)
+      [`(begin ,s ... ,tail)
        `(begin
-          ,@(map convert-effect effects)
+          ,@(map convert-s s)
           ,(convert-tail tail))]
       [`(if ,pred ,t1 ,t2) (convert-if pred t1 t2)]))
 
@@ -157,5 +160,21 @@
   (check-equal? (resolve-predicates in7) out7)
   (check-equal? (resolve-predicates in8) out8)
   (check-equal? (resolve-predicates in9) out9)
-  (check-equal? (resolve-predicates in10) out10))
+  (check-equal? (resolve-predicates in10) out10)
+
+  ;; Check that the compiled program interprets to 42
+  (define-check (check-42 p)
+    (check-equal?
+      (interp-block-asm-lang-v8 (resolve-predicates p))
+      42))
+
+  ;; mref, mset!
+  (check-42
+    '(module
+      (define L.main.1
+        (begin
+          (mset! r12 8 42)
+          (set! rax (mref r12 8))
+          (jump done)))))
+  )
 

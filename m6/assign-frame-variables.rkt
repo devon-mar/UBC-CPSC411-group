@@ -3,16 +3,17 @@
 (require
   cpsc411/compiler-lib
   cpsc411/graph-lib
-  cpsc411/langs/v7)
+  cpsc411/langs/v8)
 
 (provide assign-frame-variables)
 
 ;; Milestone 6 Exercise 13
 ;; Milestone 7 Exercise 7
+;; Milestone 8 Exercise 11
 ;;
 ;; Assign frame location to each local variable
 (define/contract (assign-frame-variables p)
-  (-> asm-pred-lang-v7/spilled? asm-pred-lang-v7/assignments?)
+  (-> asm-pred-lang-v8/spilled? asm-pred-lang-v8/assignments?)
 
   ;; (list aloc ...) (list (aloc (loc ...))) -> (values aloc (list aloc ...) (list (aloc (aloc...))...))
   ;; removes low degree abstract location from aloc-list and return tuple of
@@ -45,7 +46,7 @@
           [(? register?) fvar-list]
           [(? fvar?) (append fvar-list (list c))]
           [(? aloc?)
-           (define prev 
+           (define prev
               (if
                 (dict-has-key? prev-assignment c)
                 (first (dict-ref prev-assignment c))
@@ -98,7 +99,7 @@
 (module+ test
   (require
     rackunit
-    cpsc411/langs/v7
+    cpsc411/langs/v8
     "../utils/gen-utils.rkt")
 
   (define t2
@@ -150,7 +151,7 @@
         (jump r15)))
     (equal? (list->set (map first assignments)) (list->set (map first `((p.1 fv0) (t.6 fv1) (z.5 fv2) (y.4 fv3) (x.3 fv1) (w.2 fv4) (v.1 fv0))))))
 
-  (check-equal? (assign-frame-variables '(module 
+  (check-equal? (assign-frame-variables '(module
                                           ((locals (x.1))
                                            (conflicts ((x.1 ())))
                                            (assignment ()))
@@ -166,7 +167,7 @@
   ;; check does not assign to conflicting register
   (check-match
     (assign-frame-variables
-      '(module 
+      '(module
           ((locals (x.1 x.2))
            (conflicts ((x.1 (fv0 r15 x.2)) (r15 (x.1 x.2)) (fv0 (x.1)) (x.2 (r15 x.1))))
            (assignment ()))
@@ -183,7 +184,7 @@
   ;; check does not assign to already assigned frame veriable in assignments
   (check-match
     (assign-frame-variables
-      '(module 
+      '(module
           ((locals (x.1 x.2))
            (conflicts ((x.1 (fv0 r15 x.2 x.3)) (r15 (x.1 x.2)) (fv0 (x.1)) (x.2 (r15 x.1 x.3)) (x.3 (x.1 x.2))))
            (assignment ((x.3 fv0))))
@@ -199,7 +200,7 @@
   ;; check that it preserves existing register assignments
   (check-match
     (assign-frame-variables
-      '(module 
+      '(module
           ((locals (x.1 x.2))
            (conflicts ((x.1 (fv0 r15 x.2 x.3)) (r15 (x.1 x.2)) (fv0 (x.1)) (x.2 (r15 x.1 x.3)) (x.3 (x.1 x.2))))
            (assignment ((x.3 rax))))
@@ -222,7 +223,7 @@
           (define L.test.2 ((locals (x.1 x.3)) (conflicts ((x.1 (x.3)) (x.3 (x.1)))) (assignment ())) (jump r15))
           (define L.test.3 ((locals ()) (conflicts ()) (assignment ())) (jump r15))
           (jump r15)))
-    `(module 
+    `(module
         ((assignment ,assignment))
         (define L.test.1 ((assignment ,assignment1))
                         (jump r15))
