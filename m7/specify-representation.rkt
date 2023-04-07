@@ -2,7 +2,9 @@
 
 (require
   cpsc411/compiler-lib
-  cpsc411/langs/v7)
+  cpsc411/langs/v7
+
+  (for-syntax racket/syntax))
 
 (provide specify-representation)
 
@@ -50,23 +52,24 @@
   ;; v/c: contract for input value
   (define-syntax (make-tag-func stx)
     (syntax-case stx ()
+      [(_ type v/c) #`(make-tag-func type v/c values values)]
       [(_ type v/c to-int from-int)
-       (with-syntax ([tag (datum->syntax #'type (string->symbol (format "tag-~a" (syntax->datum #'type))))]
-                     [untag (datum->syntax #'type (string->symbol (format "untag-~a" (syntax->datum #'type))))]
-                     [shiftp (datum->syntax #'type (string->symbol (format "current-~a-shift" (syntax->datum #'type))))]
-                     [tagp (datum->syntax #'type (string->symbol (format "current-~a-tag" (syntax->datum #'type))))]
-                     [maskp (datum->syntax #'type (string->symbol (format "current-~a-mask" (syntax->datum #'type))))])
+       (with-syntax ([tag (format-id #'type "tag-~a" #'type)]
+                     [untag (format-id #'type "untag-~a" #'type)]
+                     [shiftp (format-id #'type "current-~a-shift" #'type)]
+                     [tagp (format-id #'type "current-~a-tag" #'type)]
+                     [maskp (format-id #'type "current-~a-mask" #'type)])
 
          #'(begin
              (define/contract (tag i)
-                 (-> v/c int64?)
-                 (bitwise-ior (arithmetic-shift (to-int i) (shiftp)) (tagp)))
+               (-> v/c int64?)
+               (bitwise-ior (arithmetic-shift (to-int i) (shiftp)) (tagp)))
              (define/contract (untag i)
-                 (-> int64? v/c)
-                 (from-int (arithmetic-shift i (* -1 (shiftp)))))))]))
+               (-> int64? v/c)
+               (from-int (arithmetic-shift i (* -1 (shiftp)))))))]))
 
-  (make-tag-func fixnum int61? identity identity)
-  (make-tag-func error uint8? identity identity)
+  (make-tag-func fixnum int61?)
+  (make-tag-func error uint8?)
   (make-tag-func ascii-char ascii-char-literal? char->integer integer->char)
 
   ;; Generates a function of the form (name?->pred v)
@@ -74,9 +77,9 @@
   (define-syntax (make-unop->pred stx)
     (syntax-case stx ()
       [(_ type)
-       (with-syntax ([name (datum->syntax #'type (string->symbol (format "~a?->pred" (syntax->datum #'type))))]
-                     [tagp (datum->syntax #'type (string->symbol (format "current-~a-tag" (syntax->datum #'type))))]
-                     [maskp (datum->syntax #'type (string->symbol (format "current-~a-mask" (syntax->datum #'type))))])
+       (with-syntax ([name (format-id #'type "~a?->pred" #'type)]
+                     [tagp (format-id #'type "current-~a-tag" #'type)]
+                     [maskp (format-id #'type "current-~a-mask" #'type)])
          ;; generates a exprs-bits-lang-v7-pred to check if v is of type name
          #'(define (name v)
              (-> any/c any/c)
