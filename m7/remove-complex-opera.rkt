@@ -253,9 +253,14 @@
   ;; begin in pred
   (check-42
     '(module
-      (let ([x.1 (alloc 8)])
-        (if (begin (mset! x.1 0 42) (true))
-            (mref x.1 0)
+      (let ([x.1 (alloc 8)]
+            [y.1 (alloc 16)])
+        (if (begin
+              (mset! x.1 0 (* 7 6))
+              (begin
+                (mset! y.1 (+ 6 2) (* 6 6))
+                (true)))
+            (mref x.1 (- 36 (mref y.1 8)))
             -1))))
 
   ;; begin in value/effect
@@ -263,8 +268,8 @@
     '(module
       (let ([x.1 (alloc 16)])
         (begin
-          (begin (mset! x.1 8 42))
-          (mref x.1 8)))))
+          (begin (mset! x.1 (let () 8) 42))
+          (mref x.1 (+ (* 2 2) 4))))))
 
   ;; alloc, mref, mset
   (check-42
