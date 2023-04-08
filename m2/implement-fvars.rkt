@@ -2,7 +2,7 @@
 
 (require
   cpsc411/compiler-lib
-  cpsc411/langs/v7)
+  cpsc411/langs/v8)
 
 (provide implement-fvars)
 
@@ -10,14 +10,15 @@
 ;; Milestone 4 Exercise 4
 ;; Milestone 6 Exercise 17
 ;; Milestone 7 Exercise 7
+;; Milestone 8 Exercise 11
 ;;
 ;; Reifies fvars into displacement mode operands.
 (define/contract (implement-fvars p)
-  (-> nested-asm-lang-fvars-v7? nested-asm-lang-v7?)
+  (-> nested-asm-lang-fvars-v8? nested-asm-lang-v8?)
 
   (define offset 0)
 
-  ;; nested-asm-lang-fvars-v7-p nested-asm-lang-v7-p
+  ;; nested-asm-lang-fvars-v8-p -> nested-asm-lang-v8-p
   (define (implement-fvars-p p)
     (match p
       [`(module (define ,labels ,tails) ... ,tail)
@@ -27,8 +28,8 @@
            ,@(map implement-fvars-proc labels tails)
            ,new-tail)]))
 
-  ;; tail: nested-asm-lang-fvars-v7-tail
-  ;; -> nested-asm-lang-v7-tail
+  ;; tail: nested-asm-lang-fvars-v8-tail
+  ;; -> nested-asm-lang-v8-tail
   (define/contract (implement-fvars-proc label tail)
     (-> label? any/c any/c)
     (set! offset 0)
@@ -36,7 +37,7 @@
        ,label
        ,(implement-fvars-tail tail)))
 
-  ;; nested-asm-lang-fvars-v7-pred nested-asm-lang-v7-pred
+  ;; nested-asm-lang-fvars-v8-pred -> nested-asm-lang-v8-pred
   (define (implement-fvars-pred p)
     (match p
       [`(true)
@@ -59,7 +60,7 @@
           ,(implement-fvars-opand o1)
           ,(implement-fvars-opand o2))]))
 
-  ;; nested-asm-lang-fvars-v7-tail nested-asm-lang-v7-tail
+  ;; nested-asm-lang-fvars-v8-tail -> nested-asm-lang-v8-tail
   (define (implement-fvars-tail t)
     (match t
       [`(jump ,trg)
@@ -74,9 +75,15 @@
            ,(implement-fvars-tail t1)
            ,(implement-fvars-tail t2))]))
 
-  ;; nested-asm-lang-fvars-v7-effect nested-asm-lang-v7-effect
+  ;; nested-asm-lang-fvars-v8-effect -> nested-asm-lang-v8-effect
   (define (implement-fvars-effect e)
     (match e
+      [`(set! ,l1 (mref ,l2 ,i))
+       `(set!
+         ,(implement-fvars-loc l1)
+         (mref
+           ,(implement-fvars-loc l2)
+           ,(implement-fvars-index i)))]
       [`(set! ,l (,b ,l ,o))
         (define loc (implement-fvars-loc l))
         (begin0
@@ -88,6 +95,11 @@
         `(set!
            ,(implement-fvars-loc l)
            ,(implement-fvars-triv t))]
+      [`(mset! ,l ,i ,t)
+       `(mset!
+         ,(implement-fvars-loc l)
+         ,(implement-fvars-index i)
+         ,(implement-fvars-triv t))]
       ;; modified template - removed tail effect
       [`(begin ,es ...)
         `(begin ,@(map implement-fvars-effect es))]
@@ -101,7 +113,7 @@
            ,l
            ,(implement-fvars-tail t))]))
 
-  ;; nested-asm-lang-fvars-v7-opand nested-asm-lang-v7-opand
+  ;; nested-asm-lang-fvars-v8-opand -> nested-asm-lang-v8-opand
   (define (implement-fvars-opand o)
     (match o
       [(? int64?) o]
@@ -113,21 +125,30 @@
       [_ (implement-fvars-opand t)]))
 
   ;; Return the displacement mode operand for fvar f.
+  ;; fvar -> addr
   (define/contract (implement-fvars-fvar f)
     (-> fvar? any/c)
-    `(,(current-frame-base-pointer-register) - ,(+ (* (fvar->index f) (current-word-size-bytes)) offset)))
+    (define doffset
+      (+ (* (fvar->index f) (current-word-size-bytes)) offset))
+    `(,(current-frame-base-pointer-register) - ,doffset))
 
-  ;; nested-asm-lang-fvars-v7-loc nested-asm-lang-v7-loc
+  ;; nested-asm-lang-fvars-v8-loc -> nested-asm-lang-v8-loc
   (define (implement-fvars-loc l)
     (match l
       [(? register?) l]
       [(? fvar?) (implement-fvars-fvar l)]))
 
-  ;; nested-asm-lang-fvars-v7-trg nested-asm-lang-v7-trg
+  ;; nested-asm-lang-fvars-v8-trg -> nested-asm-lang-v8-trg
   (define (implement-fvars-trg t)
     (match t
       [(? label?) t]
       [_ (implement-fvars-loc t)]))
+
+  ;; nested-asm-lang-fvars-v8-index -> nested-asm-lang-v8-index
+  (define (implement-fvars-index i)
+    (match i
+      [(? int64?) i]
+      [_ (implement-fvars-loc i)]))
 
   (implement-fvars-p p))
 
@@ -272,8 +293,8 @@
                (jump (rbp - 32))))))
        (begin (set! (rbp - 8) 7) (set! (rbp - 0) 4) (jump L.swap.1))))
 
-    ;; Identity on bitwise operations
-    (check-equal?
+  ;; Identity on bitwise operations
+  (check-equal?
     (implement-fvars
       `(module
          (begin
@@ -291,4 +312,36 @@
            (set! rax (bitwise-ior rax 2))
            (set! rax (bitwise-xor rax rax))
            (jump r15))))
+
+  ;; Check that the compiled program interprets to 42
+  (define-check (check-42 p)
+    (check-equal?
+      (interp-nested-asm-lang-v8 (implement-fvars p))
+      42))
+
+  ;; mref mset
+  (check-42
+    '(module
+      (define L.test.1
+        (begin
+          (set! rcx (mref r12 rcx))
+          (set! rax (* rax rcx))
+          (jump done)))
+      (begin
+        (set! rcx 64)
+        (set! rdx -1)
+        (set! fv0 r12)
+        (set! fv1 16)
+        (set! fv2 -92)
+        (set! fv3 24)
+        (mset! fv0 fv1 fv2)
+        (mset! r12 fv3 L.test.1)
+        (mset! r12 32 -134)
+        (mset! r12 rcx rdx)
+        (set! fv4 (mref fv0 fv1))
+        (set! rax (mref r12 32))
+        (set! rax (- rax fv4))
+        (set! rdx (mref r12 fv3))
+        (jump rdx))))
+
   )
