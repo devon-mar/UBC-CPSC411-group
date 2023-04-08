@@ -146,11 +146,13 @@
   ;; nested-asm-lang-v8-effect nested-asm-lang-v8-tail -> block-pred-lang-v8-tail
   (define (expose-basic-blocks-effect e tail)
     (match e
-      [`(set! ,_ (,_ ,_ ,_)) ;; combined template (binop/mref)
+      [`(set! ,_loc1 (mref ,_loc2 ,_index))
         (make-begin (list e) tail)]
-      [`(set! ,_ ,_)
+      [`(set! ,_loc1 (,_binop ,_loc1 ,_opand))
         (make-begin (list e) tail)]
-      [`(mset! ,_ ,_ ,_)
+      [`(set! ,_loc ,_triv)
+        (make-begin (list e) tail)]
+      [`(mset! ,_loc ,_index ,_triv)
         (make-begin (list e) tail)]
       [`(begin ,effects ... ,effect)
         (for/foldr ([acc-tail (expose-basic-blocks-effect effect tail)])

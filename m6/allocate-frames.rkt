@@ -21,7 +21,7 @@
   (define frame-words? exact-nonnegative-integer?)
 
   ;; Removes 'call-undead and 'new-frames, updates 'assignment with as
-  ;; and updates 'locals with 'ocals.
+  ;; and updates 'locals with locals in info
   ;;
   ;; p: asm-pred-lang-v8/pre-framed-info
   ;; -> asm-pred-lang-v8/framed-info
@@ -123,7 +123,7 @@
            ,(allocate-frames-pred fw p1)
            ,(allocate-frames-pred fw p2)
            ,(allocate-frames-pred fw p3))]
-      [`(,_ ,_ ,_)
+      [`(,_relop ,_loc ,_opand)
         p]))
 
   ;; t: asm-pred-lang-v8/pre-framed-tail
