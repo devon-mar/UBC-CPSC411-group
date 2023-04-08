@@ -117,12 +117,12 @@
   (define (implement-fvars-opand o)
     (match o
       [(? int64?) o]
-      [_ (implement-fvars-loc o)]))
+      [loc (implement-fvars-loc loc)]))
 
   (define (implement-fvars-triv t)
     (match t
       [(? label?) t]
-      [_ (implement-fvars-opand t)]))
+      [opand (implement-fvars-opand opand)]))
 
   ;; Return the displacement mode operand for fvar f.
   ;; fvar -> addr
@@ -142,13 +142,13 @@
   (define (implement-fvars-trg t)
     (match t
       [(? label?) t]
-      [_ (implement-fvars-loc t)]))
+      [loc (implement-fvars-loc loc)]))
 
   ;; nested-asm-lang-fvars-v8-index -> nested-asm-lang-v8-index
   (define (implement-fvars-index i)
     (match i
       [(? int64?) i]
-      [_ (implement-fvars-loc i)]))
+      [loc (implement-fvars-loc loc)]))
 
   (implement-fvars-p p))
 
