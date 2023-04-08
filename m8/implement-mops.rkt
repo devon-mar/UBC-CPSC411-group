@@ -44,6 +44,7 @@
 (module+ test
   (require rackunit)
 
+  ;; Check that the compiled program interprets to 42
   (define-check (check-42 p)
     (check-equal?
       (interp-paren-x64-v8 (implement-mops p))
