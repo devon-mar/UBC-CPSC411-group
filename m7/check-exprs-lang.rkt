@@ -2,16 +2,17 @@
 
 (require
   cpsc411/compiler-lib
-  cpsc411/langs/v7)
+  cpsc411/langs/v8)
 
 (provide check-exprs-lang)
 
 ;; Milestone 7 Exercise 2
+;; Milestone 8 Exercise 1
 ;;
-;; Checks that a Exprs-lang v7 program is well typed (only that procedures are
+;; Checks that a Exprs-lang v8 program is well typed (only that procedures are
 ;; called with the right number of arguments), and well scoped.
 (define/contract (check-exprs-lang p)
-  (-> any/c exprs-lang-v7?)
+  (-> any/c exprs-lang-v8?)
 
   ;; -> hash?
   (define-syntax-rule (make-proc-arities-dict [procs arities] ...)
@@ -39,34 +40,50 @@
       [void? 1]
       [ascii-char? 1]
       [error? 1]
-      [not 1]))
+      [not 1]
+      [pair? 1]
+      [vector? 1]
+      [cons 2]
+      [car 1]
+      [cdr 1]
+      [make-vector 1]
+      [vector-length 1]
+      [vector-set! 3]
+      [vector-ref 2]))
 
   (define/contract (prim-f? p)
     (-> any/c boolean?)
-    (or (binop? p) (unop? p)))
-
-  (define/contract (binop? b)
-    (-> any/c boolean?)
     (and
-      (memq b '(* + - < eq? <= > >=))
-      #t))
-
-  (define/contract (unop? u)
-    (-> any/c boolean?)
-    (and
-      (memq u '(fixnum?
+      (memq p '(*
+                +
+                -
+                <
+                <=
+                >
+                >=
+                eq?
+                fixnum?
                 boolean?
                 empty?
                 void?
                 ascii-char?
                 error?
-                not))
+                not
+                pair?
+                vector?
+                cons
+                car
+                cdr
+                make-vector
+                vector-length
+                vector-set!
+                vector-ref))
       #t))
 
   ;; Throws an error if the procedure represented by
   ;; x params and value is invalid.
-  (define/contract (check-exprs-lang-proc env x params value)
-    (-> generic-set? name? (listof any/c) any/c void?)
+  (define/contract (check-exprs-lang-proc env params value)
+    (-> generic-set? (listof any/c) any/c void?)
     (unless (andmap name? params)
       (error "invalid xs in procedure params " params))
     (check-duplicate-bindings params)
@@ -79,7 +96,7 @@
     (when (and (check-duplicates names) #t)
       (error "duplicate parallel bindings found")))
 
-  ;; Throws an error if p is an invalid exprs-lang-v7-p.
+  ;; Throws an error if p is an invalid exprs-lang-v8-p.
   (define (check-exprs-lang-p p)
     (match p
       [`(module (define ,xs (lambda (,params ...) ,values)) ... ,value)
@@ -90,16 +107,15 @@
               [p params])
           (hash-set! proc-arities x (length p)))
 
-        (for ([x xs]
-              [params params]
+        (for ([params params]
               [v values])
-          (check-exprs-lang-proc xs x params v))
+          (check-exprs-lang-proc xs params v))
 
         (check-exprs-lang-value xs value)
         p]
       [_ (error "invalid module ")]))
 
-  ;; Throws an error if p is an invalid exprs-lang-v7-value.
+  ;; Throws an error if p is an invalid exprs-lang-v8-value.
   (define/contract (check-exprs-lang-value env v)
     (-> generic-set? any/c void?)
     (match v
@@ -124,7 +140,7 @@
           (check-exprs-lang-value env v))]
       [_ (check-exprs-lang-triv env v)]))
 
-  ;; Throws an error if p is an invalid exprs-lang-v7-triv.
+  ;; Throws an error if p is an invalid exprs-lang-v8-triv.
   (define/contract (check-exprs-lang-triv env t)
     (-> generic-set? any/c void?)
     (match t
@@ -145,7 +161,7 @@
        (void)]
       [_ (check-exprs-lang-x env t)]))
 
-  ;; Throws an error if p is an invalid exprs-lang-v7-x
+  ;; Throws an error if p is an invalid exprs-lang-v8-x
   (define/contract (check-exprs-lang-x env x)
     (-> generic-set? any/c void?)
     (match x
@@ -159,30 +175,6 @@
   #;
   (define (check-exprs-lang-prim-f p)
     (match p
-      [(? binop?)
-       (void)]
-      [(? unop?)
-       (void)]))
-
-  ;; not used
-  #;
-  (define/contract (check-exprs-lang-unop u)
-    (-> any/c void?)
-    (match u
-      ['fixnum? (void)]
-      ['boolean? (void)]
-      ['empty? (void)]
-      ['void? (void)]
-      ['ascii-char? (void)]
-      ['error? (void)]
-      ['not (void)]
-      [_ (error "invalid unop: " u)]))
-
-  ;; not used
-  #;
-  (define/contract (check-exprs-lang-binop b)
-    (-> any/c void?)
-    (match b
       ['*
        (void)]
       ['+
@@ -191,15 +183,46 @@
        (void)]
       ['<
        (void)]
-      ['eq?
-       (void)]
       ['<=
        (void)]
       ['>
        (void)]
       ['>=
        (void)]
-      [_ (error "invalid binop: " b)]))
+      ['eq?
+       (void)]
+      ['fixnum?
+       (void)]
+      ['boolean?
+       (void)]
+      ['empty?
+       (void)]
+      ['void?
+       (void)]
+      ['ascii-char?
+       (void)]
+      ['error?
+       (void)]
+      ['not
+       (void)]
+      ['pair?
+       (void)]
+      ['vector?
+       (void)]
+      ['cons
+       (void)]
+      ['car
+       (void)]
+      ['cdr
+       (void)]
+      ['make-vector
+       (void)]
+      ['vector-length
+       (void)]
+      ['vector-set!
+       (void)]
+      ['vector-ref
+       (void)]))
 
   (check-exprs-lang-p p))
 
@@ -208,7 +231,7 @@
 
   (define-check (check-valid p)
     (check-equal? (check-exprs-lang p) p)
-    (check-true (exprs-lang-v7? p)))
+    (check-true (exprs-lang-v8? p)))
 
   (define-check (check-invalid p)
     (check-exn exn:fail? (lambda () (check-exprs-lang p) p)))
@@ -238,7 +261,7 @@
         (check-invalid `(module (call prim-fs ,@(range (add1 arity)))))
         (check-invalid `(module (call prim-fs))))
       ...))
-  (prim-f-tests 2 * + - < eq? <= > >=)
+  (prim-f-tests 2 * + - < eq? <= > >= cons vector-ref)
   (prim-f-tests 1
     fixnum?
  	 	boolean?
@@ -246,7 +269,14 @@
  	 	void?
  	 	ascii-char?
  	 	error?
+    pair?
+    vector?
+    car
+    cdr
+    make-vector
+    vector-length
  	 	not)
+  (prim-f-tests 3 vector-set!)
 
   ;; not a uint8
   (check-invalid '(module (error 100000)))
@@ -316,7 +346,6 @@
        (let ([z 1]
              [x z])
          x)))
-
 
   (check-valid
     '(module
