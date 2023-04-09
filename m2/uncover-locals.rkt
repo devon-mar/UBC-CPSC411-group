@@ -2,7 +2,7 @@
 
 (require
   cpsc411/compiler-lib
-  cpsc411/langs/v7)
+  cpsc411/langs/v8)
 
 (provide uncover-locals)
 
@@ -11,18 +11,19 @@
 ;; Milestone 5 Exercise 7
 ;; Milestone 6 Exercise 7
 ;; Milestone 7 Exercise 7
+;; Milestone 8 Exercise 11
 ;;
-;; Compiles Asm-pred-lang v7 to Asm-pred-lang v7/locals, analysing which abstract
+;; Compiles Asm-pred-lang v8 to Asm-pred-lang v8/locals, analysing which abstract
 ;; locations are used in the program and decorating the program with the
 ;; set of variables in an info field.
 (define/contract (uncover-locals p)
-  (-> asm-pred-lang-v7? asm-pred-lang-v7/locals?)
+  (-> asm-pred-lang-v8? asm-pred-lang-v8/locals?)
 
   ;; Returns a procedure with the 'locals info set.
   ;;
   ;; label: procedure label
   ;; tail: procedure tail
-  ;; -> asm-pred-lang-v7/locals-proc
+  ;; -> asm-pred-lang-v8/locals-proc
   (define (uncover-locals-proc label info tail)
     (-> label? info? any/c any/c)
     `(define
@@ -30,7 +31,7 @@
        ,(info-set info 'locals (set->list (uncover-locals-tail tail)))
        ,tail))
 
-  ;; asm-pred-lang-v7-p -> asm-pred-lang-v7/locals-p
+  ;; asm-pred-lang-v8-p -> asm-pred-lang-v8/locals-p
   (define (uncover-locals-p p)
     (match p
       [`(module ,info (define ,labels ,infos ,tails) ... ,tail)
@@ -39,7 +40,7 @@
            ,@(map uncover-locals-proc labels infos tails)
            ,tail)]))
 
-  ;; asm-pred-lang-v7-pred -> set
+  ;; asm-pred-lang-v8-pred -> set
   (define/contract (uncover-locals-pred p)
     (-> any/c set?)
     (match p
@@ -58,7 +59,7 @@
           (uncover-locals-loc l)
           (uncover-locals-opand o))]))
 
-  ;; asm-pred-lang-v7-tail -> set
+  ;; asm-pred-lang-v8-tail -> set
   (define/contract (uncover-locals-tail t)
     (-> any/c set?)
     (match t
@@ -75,11 +76,21 @@
           (uncover-locals-tail t1)
           (uncover-locals-tail t2))]))
 
-  ;; asm-pred-lang-v7-effect -> set
+  ;; asm-pred-lang-v8-effect -> set
   (define (uncover-locals-effect e)
     (match e
       [`(return-point ,_ ,tail)
         (uncover-locals-tail tail)]
+      [`(set! ,loc1 (mref ,loc2 ,index))
+        (set-union
+          (uncover-locals-loc loc1)
+          (uncover-locals-loc loc2)
+          (uncover-locals-index index))]
+      [`(mset! ,loc ,index ,triv)
+        (set-union
+          (uncover-locals-loc loc)
+          (uncover-locals-index index)
+          (uncover-locals-triv triv))]
       [`(set! ,loc (,_ ,loc ,opand))
         (set-union
           (uncover-locals-loc loc)
@@ -100,7 +111,7 @@
           (uncover-locals-effect e1)
           (uncover-locals-effect e2))]))
 
-  ;; asm-pred-lang-v7-opand -> set
+  ;; asm-pred-lang-v8-opand -> set
   (define/contract (uncover-locals-opand o)
     (-> any/c set?)
     (match o
@@ -108,14 +119,23 @@
       ;; loc
       [_ (uncover-locals-loc o)]))
 
-  ;; asm-pred-lang-v7-triv -> set
+
+  ;; asm-pred-lang-v8-index -> set
+  (define/contract (uncover-locals-index i)
+    (-> any/c set?)
+    (match i
+      [(? int64?) (set)]
+      ;; loc
+      [_ (uncover-locals-loc i)]))
+
+  ;; asm-pred-lang-v8-triv -> set
   (define/contract (uncover-locals-triv t)
     (-> any/c set?)
     (match t
       [(? label?) (set)]
       [_ (uncover-locals-opand t)]))
 
-  ;; asm-pred-lang-v7-loc -> set
+  ;; asm-pred-lang-v8-loc -> set
   (define/contract (uncover-locals-loc l)
     (-> any/c set?)
     (match l
@@ -123,7 +143,7 @@
       ;; rloc
       [_ (set)]))
 
-  ;; asm-pred-lang-v7-trg -> set
+  ;; asm-pred-lang-v8-trg -> set
   (define/contract (uncover-locals-trg t)
     (-> any/c set?)
     (match t
@@ -406,4 +426,23 @@
     (equal? tail m5-tail-1)
     (equal? bar-tail m5-tail-2)
     (equal? (list->set (info-ref bar-info 'locals)) m5-locals-2)
-    (equal? (list->set (info-ref info 'locals)) m5-locals-1))))
+    (equal? (list->set (info-ref info 'locals)) m5-locals-1)))
+    
+    
+  ;; Check mops are handled correctly
+  (check-match
+  (uncover-locals
+    `(module ((new-frames ()))
+        (begin
+          (mset! a.1 b.1 c.1)
+          (set! f.1 (mref d.1 e.1))
+          (jump f.1))))
+  `(module
+      ,info
+      (begin
+          (mset! a.1 b.1 c.1)
+          (set! f.1 (mref d.1 e.1))
+          (jump f.1)))
+  (and
+    (equal? (list->set (info-ref info 'locals)) (set 'a.1 'b.1 'c.1 'e.1 'd.1 'f.1))))
+)
