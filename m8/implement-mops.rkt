@@ -19,6 +19,7 @@
 
   ;; paren-x64-mops-v8-reg paren-x64-mops-v8-index
   ;; -> paren-x64-v8-addr
+  ;; Convert reg + index into index mode operand
   (define (reg-index->addr reg index)
     `(,reg + ,index))
 
