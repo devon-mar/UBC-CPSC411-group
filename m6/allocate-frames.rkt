@@ -2,8 +2,7 @@
 
 (require
   cpsc411/compiler-lib
-  cpsc411/langs/v8
-  "../utils/gen-utils.rkt")
+  cpsc411/langs/v8)
 
 (provide allocate-frames)
 
@@ -159,7 +158,8 @@
         e]
       [`(begin ,es ... ,et)
         `(begin
-           ,@(map (lambda (e) (allocate-frames-effect fw e)) (append-e es et)))]
+           ,@(map (lambda (e) (allocate-frames-effect fw e))
+               (append es (list et))))]
       [`(if ,p ,e1 ,e2)
         `(if
            ,(allocate-frames-pred fw p)
