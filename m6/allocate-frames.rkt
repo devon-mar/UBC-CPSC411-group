@@ -2,7 +2,8 @@
 
 (require
   cpsc411/compiler-lib
-  cpsc411/langs/v8)
+  cpsc411/langs/v8
+  "../utils/gen-utils.rkt")
 
 (provide allocate-frames)
 
@@ -131,7 +132,7 @@
   (define/contract (allocate-frames-tail fw t)
     (-> frame-words? any/c any/c)
     (match t
-      [`(jump ,_ ,_ ...)
+      [`(jump ,_trg ,_loc ...)
         t]
       [`(begin ,es ... ,t)
         `(begin
@@ -148,15 +149,17 @@
   (define (allocate-frames-effect fw e)
     (-> frame-words? any/c any/c)
     (match e
-      [`(set! ,_ (,_ ,_ ,_)) ;; combined template (binop/mref)
+      [`(set! ,_loc1 (mref ,_loc2 ,_index))
         e]
-      [`(set! ,_ ,_)
+      [`(set! ,_loc1 (,_binop ,_loc1 ,_opand))
         e]
-      [`(mset! ,_ ,_ ,_)
+      [`(set! ,_loc ,_triv)
         e]
-      ;; modified template - moved tail effect since we assume valid input.
-      [`(begin ,es ...)
-        `(begin ,@(map (lambda (e) (allocate-frames-effect fw e)) es))]
+      [`(mset! ,_loc ,_index ,_triv)
+        e]
+      [`(begin ,es ... ,et)
+        `(begin
+           ,@(map (lambda (e) (allocate-frames-effect fw e)) (append-e es et)))]
       [`(if ,p ,e1 ,e2)
         `(if
            ,(allocate-frames-pred fw p)
