@@ -1,7 +1,6 @@
 #lang racket
 
 (require
-  cpsc411/compiler-lib
   cpsc411/langs/v8)
 
 (provide implement-mops)
@@ -43,10 +42,11 @@
  	 	  ;; (mset! reg_1 index trg)
       [`(mset! ,reg ,index ,int32-or-trg)
        `(set! ,(reg-index->addr reg index) ,int32-or-trg)]
-      [`(with-label ,_ ,_) s]
-      [`(jump ,_) s]
-      [`(compare ,_ ,_) s]
-      [`(jump-if ,_ ,_) s]))
+      [`(with-label ,label ,st)
+       `(with-label ,label ,(implement-mops-s st))]
+      [`(jump ,_trg) s]
+      [`(compare ,_reg ,_opand) s]
+      [`(jump-if ,_relop ,_label) s]))
 
   ;; all other templates removed
 
@@ -82,4 +82,11 @@
        (set! rax (mref r12 8))
        (set! r8 (mref r12 rdx))
        (jump r8)))
+
+  ;; with-label
+  (check-42
+    '(begin
+       (with-label L.test.1 (mset! r12 24 42))
+       (with-label L.test.2 (set! rax (mref r12 24)))
+       (with-label L.test.3 (jump done))))
   )
