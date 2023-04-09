@@ -55,8 +55,8 @@
            ,(implement-fvars-pred p1)
            ,(implement-fvars-pred p2)
            ,(implement-fvars-pred p3))]
-      [`(,r ,o1 ,o2)
-        `(,r
+      [`(,relop ,o1 ,o2)
+        `(,relop
           ,(implement-fvars-opand o1)
           ,(implement-fvars-opand o2))]))
 
@@ -100,9 +100,8 @@
          ,(implement-fvars-loc l)
          ,(implement-fvars-index i)
          ,(implement-fvars-triv t))]
-      ;; modified template - removed tail effect
-      [`(begin ,es ...)
-        `(begin ,@(map implement-fvars-effect es))]
+      [`(begin ,es ... ,et)
+        `(begin ,@(map implement-fvars-effect (append es (list et))))]
       [`(if ,p ,e1 ,e2)
         `(if
            ,(implement-fvars-pred p)
