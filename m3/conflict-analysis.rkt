@@ -3,7 +3,7 @@
 (require
   cpsc411/compiler-lib
   cpsc411/graph-lib
-  cpsc411/langs/v7)
+  cpsc411/langs/v8)
 
 (provide conflict-analysis)
 
@@ -12,10 +12,11 @@
 ;; Milestone 5 Exercise 9
 ;; Milestone 6 Exercise 9
 ;; Milestone 7 Exercise 7
+;; Milestone 8 Exercise 11
 ;;
 ;; Create a conflict graph for the Asm-lang program with the undead-set tree
 (define/contract (conflict-analysis p)
-  (-> asm-pred-lang-v7/undead? asm-pred-lang-v7/conflicts?)
+  (-> asm-pred-lang-v8/undead? asm-pred-lang-v8/conflicts?)
 
   (define conflict-graph (void))
 
@@ -69,7 +70,13 @@
        (conflict-effect effect1 ust1)
        (conflict-effect effect2 ust2)]
       [(cons `(return-point ,_ ,tail) `((,_ ...) ,ust))
-       (conflict-tail tail ust)]))
+       (conflict-tail tail ust)]
+      [(cons `(set! ,loc1 (mref ,loc2 ,idx)) undead-out)
+        ;; mops do not assign registers or frame variables 
+        (void)]
+      [(cons `(mset! ,loc ,idx ,triv) undead-out)
+        ;; mops do not assign registers or frame variables 
+        (void)]))
 
   ;; Updates conflict graph for the locs in the pred
   ;; pred undead-set-tree/rloc -> void
@@ -148,7 +155,7 @@
 
   ;; Check that a program and undead-out compiles into a program w/ conflicts
   ;; by compiling with conflict-analysis
-  ;; asm-pred-lang-v7/locals undead-set-tree/rloc conflicts -> void
+  ;; asm-pred-lang-v8/locals undead-set-tree/rloc conflicts -> void
   (define-check (check-conflict program undead-out conflicts-tail)
     (match program
       [`(module ,info ,procs ... ,tail)
@@ -159,7 +166,7 @@
 
   ;; Check that a program w/ procs & undead-out compiles into
   ;; a program w/ procs & conflicts by compiling with conflict-analysis
-  ;; asm-pred-lang-v7/undead conflicts (List-of conflicts) -> void
+  ;; asm-pred-lang-v8/undead conflicts (List-of conflicts) -> void
   (define-check (check-conflict-proc program conflicts-tail conflicts-procs)
     ;; get fields from original program
     (define-values (main-info main-tail proc-labels proc-infos proc-tails)
@@ -650,4 +657,37 @@
       (rsi (rax))
       (rdi (rax r8))
       (r8 (rax rdi))))
+
+  (check-conflict 
+    `(module
+      ((new-frames ())
+       (locals (x.1 x.2))
+       (call-undead ()))
+      (begin 
+        (begin ;; Allocate array of size 3 to x.1
+          (set! x.1 ,(current-heap-base-pointer-register))
+          (set! ,(current-heap-base-pointer-register) (+ ,(current-heap-base-pointer-register) 3)))
+        (mset! x.1 0 2)
+        (set! x.2 (mref x.1 0))
+        (begin
+          (set! x.2 10)
+          (set! x.1 (+ x.1 x.2)))
+        (jump r15))) 
+    `(((r12 r15 x.1) (r15 x.1)) (x.1 r15) (x.1 r15) ((x.2 x.1 r15) (r15)) ()) 
+    `((x.2 (r15 x.1)) (x.1 (x.2 r15 r12)) (r12 (x.1 r15)) (r15 (x.2 x.1 r12))))
+
+  ;; verify x.3 has empty conflict graph with just mref
+  (check-conflict
+    `(module
+      ((new-frames ())
+       (locals (x.1 x.2 x.3))
+       (call-undead ()))
+      (begin 
+        (set! x.2 (mref x.3 0))
+        (begin
+          (set! x.2 10)
+          (set! x.1 (+ x.1 x.2)))
+        (jump r15)))
+    `((x.1 r15) ((x.2 x.1 r15) (r15)) ())
+    `((x.3 ()) (x.2 (r15 x.1)) (x.1 (r15 x.2)) (r15 (x.1 x.2))))
   )
