@@ -44,73 +44,74 @@
         p]
       [`(false)
         p]
-      [`(not ,p)
-        `(not ,(implement-fvars-pred p))]
-      [`(begin ,es ... ,p)
+      [`(not ,pred)
+        `(not ,(implement-fvars-pred pred))]
+      [`(begin ,effects ... ,pred)
         `(begin
-           ,@(map implement-fvars-effect es)
-           ,(implement-fvars-pred p))]
-      [`(if ,p1 ,p2 ,p3)
+           ,@(map implement-fvars-effect effects)
+           ,(implement-fvars-pred pred))]
+      [`(if ,pred1 ,pred2 ,pred3)
         `(if
-           ,(implement-fvars-pred p1)
-           ,(implement-fvars-pred p2)
-           ,(implement-fvars-pred p3))]
-      [`(,relop ,o1 ,o2)
+           ,(implement-fvars-pred pred1)
+           ,(implement-fvars-pred pred2)
+           ,(implement-fvars-pred pred3))]
+      [`(,relop ,opand1 ,opand2)
         `(,relop
-          ,(implement-fvars-opand o1)
-          ,(implement-fvars-opand o2))]))
+          ,(implement-fvars-opand opand1)
+          ,(implement-fvars-opand opand2))]))
 
   ;; nested-asm-lang-fvars-v8-tail -> nested-asm-lang-v8-tail
   (define (implement-fvars-tail t)
     (match t
       [`(jump ,trg)
         `(jump ,(implement-fvars-trg trg))]
-      [`(begin ,es ... ,t)
+      [`(begin ,effects ... ,tail)
         `(begin
-           ,@(map implement-fvars-effect es)
-           ,(implement-fvars-tail t))]
-      [`(if ,p ,t1 ,t2)
+           ,@(map implement-fvars-effect effects)
+           ,(implement-fvars-tail tail))]
+      [`(if ,pred ,tail1 ,tail2)
         `(if
-           ,(implement-fvars-pred p)
-           ,(implement-fvars-tail t1)
-           ,(implement-fvars-tail t2))]))
+           ,(implement-fvars-pred pred)
+           ,(implement-fvars-tail tail1)
+           ,(implement-fvars-tail tail2))]))
 
   ;; nested-asm-lang-fvars-v8-effect -> nested-asm-lang-v8-effect
   (define (implement-fvars-effect e)
     (match e
-      [`(set! ,l1 (mref ,l2 ,i))
+      [`(set! ,loc1 (mref ,loc2 ,index))
        `(set!
-         ,(implement-fvars-loc l1)
+         ,(implement-fvars-loc loc1)
          (mref
-           ,(implement-fvars-loc l2)
-           ,(implement-fvars-index i)))]
-      [`(set! ,l (,b ,l ,o))
-        (define loc (implement-fvars-loc l))
+           ,(implement-fvars-loc loc2)
+           ,(implement-fvars-index index)))]
+      [`(set! ,loc (,binop ,loc ,opand))
+        (define nloc (implement-fvars-loc loc))
         (begin0
-        `(set! ,loc (,b ,loc ,(implement-fvars-opand o)))
-        (when (and (equal? l (current-frame-base-pointer-register)) (number? o))
+        `(set! ,nloc (,binop ,nloc ,(implement-fvars-opand opand)))
+        (when (and (equal? loc (current-frame-base-pointer-register)) (number? opand))
         ;; Assumption: bitwise operations will not be used on the frame base pointer register
-          (set! offset ((match b ['- -] ['+ +]) offset o))))]
-      [`(set! ,l ,t)
+          (set! offset ((match binop ['- -] ['+ +]) offset opand))))]
+      [`(set! ,loc ,triv)
         `(set!
-           ,(implement-fvars-loc l)
-           ,(implement-fvars-triv t))]
-      [`(mset! ,l ,i ,t)
+           ,(implement-fvars-loc loc)
+           ,(implement-fvars-triv triv))]
+      [`(mset! ,loc ,index ,triv)
        `(mset!
-         ,(implement-fvars-loc l)
-         ,(implement-fvars-index i)
-         ,(implement-fvars-triv t))]
-      [`(begin ,es ... ,et)
-        `(begin ,@(map implement-fvars-effect (append es (list et))))]
-      [`(if ,p ,e1 ,e2)
+         ,(implement-fvars-loc loc)
+         ,(implement-fvars-index index)
+         ,(implement-fvars-triv triv))]
+      [`(begin ,effects ... ,effectt)
+        `(begin
+           ,@(map implement-fvars-effect (append effects (list effectt))))]
+      [`(if ,pred ,effect1 ,effect2)
         `(if
-           ,(implement-fvars-pred p)
-           ,(implement-fvars-effect e1)
-           ,(implement-fvars-effect e2))]
-      [`(return-point ,l ,t)
+           ,(implement-fvars-pred pred)
+           ,(implement-fvars-effect effect1)
+           ,(implement-fvars-effect effect2))]
+      [`(return-point ,label ,tail)
         `(return-point
-           ,l
-           ,(implement-fvars-tail t))]))
+           ,label
+           ,(implement-fvars-tail tail))]))
 
   ;; nested-asm-lang-fvars-v8-opand -> nested-asm-lang-v8-opand
   (define (implement-fvars-opand o)
