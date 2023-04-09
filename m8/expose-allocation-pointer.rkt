@@ -9,16 +9,18 @@
 (define/contract (expose-allocation-pointer p)
   (asm-alloc-lang-v8? -> asm-pred-lang-v8? any/c)
 
+  ;; p -> p
   (define (expose-allocation-pointer-p p)
     (match p
-      [`(module ,info ,procs ... ,tail)
-        (void)]))
-  
-  (define (expose-allocation-pointer-proc p)
-    (match p
-      [`(define ,label ,info ,tail)
+      [`(module ,info (define ,labels ,infos ,tails) ... ,tail)
         (void)]))
 
+  ;; label info tail -> proc
+  ;; proc ::= (define label info tail)
+  (define (expose-allocation-pointer-proc label info tail)
+    (void))
+
+  ;; pred -> pred
   (define (expose-allocation-pointer-pred p)
     (match p
       [`(true)
@@ -34,6 +36,7 @@
       [`(,r ,opand1 ,opand2)
         (void)]))
 
+  ;; tail -> tail
   (define (expose-allocation-pointer-tail t)
     (match t
       [`(jump ,trg ,locs ...)
@@ -43,6 +46,7 @@
       [`(if ,pred ,tail1 ,tail2)
         (void)]))
 
+  ;; effect -> effect
   (define (expose-allocation-pointer-effect e)
     (match e
       [`(set! ,loc (alloc ,idx))
