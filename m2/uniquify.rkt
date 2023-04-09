@@ -2,7 +2,7 @@
 
 (require
   cpsc411/compiler-lib
-  cpsc411/langs/v7)
+  cpsc411/langs/v8)
 
 (provide uniquify)
 
@@ -11,15 +11,16 @@
 ;; Milestone 5 Exercise 2
 ;; Milestone 6 Exercise 2
 ;; Milestone 7 Exercise 3
+;; Milestone 8 Exercise 2
 ;;
 ;; Compiles Exprs-Lang to Exprs-Unique-Lang by
 ;; resolving top-level lexical identifiers into unique labels,
 ;; and all other lexical identifiers into unique abstract locations
 (define/contract (uniquify p)
-  (-> exprs-lang-v7? exprs-unique-lang-v7?)
+  (-> exprs-lang-v8? exprs-unique-lang-v8?)
 
-  ;; value exprs-lang-v7-value
-  ;; -> exprs-unique-lang-v7-value
+  ;; value exprs-lang-v8-value
+  ;; -> exprs-unique-lang-v8-value
   ;; Resolve names inside of (define name (lambda (params...) value)).
   ;; Assumes dict contains name->label map for name.
   (define/contract (uniquify-define dict name params value)
@@ -41,7 +42,7 @@
       ,(map (lambda (x v) `[,(dict-ref new-dict x) ,(uniquify-value dict v)]) xs vs)
       ,(f new-dict body)))
 
-  ;; dict(name?, aloc?|label?) exprs-lang-v7-p -> exprs-unique-lang-v7-p
+  ;; dict(name?, aloc?|label?) exprs-lang-v8-p -> exprs-unique-lang-v8-p
   (define/contract (uniquify-p dict p)
     (-> dict? any/c any/c)
     (match p
@@ -51,7 +52,7 @@
          ,@(map (lambda (name x2s value) (uniquify-define new-dict name x2s value)) x1s x2s vs)
          ,(uniquify-value new-dict vt))]))
 
-  ;; dict(name?, aloc?|label?) exprs-lang-v7-value -> exprs-unique-lang-v7-value
+  ;; dict(name?, aloc?|label?) exprs-lang-v8-value -> exprs-unique-lang-v8-value
   (define/contract (uniquify-value dict v)
     (-> dict? any/c any/c)
     (match v
@@ -68,7 +69,7 @@
          ,@(map (lambda (v) (uniquify-value dict v)) vs))]
       [_ (uniquify-triv dict v)]))
 
-  ;; dict(name?, aloc?|label?) exprs-lang-v7-triv -> exprs-unique-lang-v7-triv
+  ;; dict(name?, aloc?|label?) exprs-lang-v8-triv -> exprs-unique-lang-v8-triv
   (define/contract (uniquify-triv dict t)
     (-> dict? any/c any/c)
     ;; Merged template with x
@@ -86,27 +87,32 @@
       [prim-f prim-f]))
 
   #;
-  (define (uniquify-binop b)
+  (define (uniquify-primop b)
     (match b
       ['* (void)]
       ['+ (void)]
       ['- (void)]
-      ['eq? (void)]
       ['< (void)]
       ['<= (void)]
       ['>= (void)]
-      ['> (void)]))
-
-  #;
-  (define (uniquify-unop u)
-    (match u
+      ['> (void)])
+      ['eq? (void)]
       ['fixnum? (void)]
       ['boolean? (void)]
       ['empty? (void)]
       ['void? (void)]
       ['ascii-char? (void)]
       ['error? (void)]
-      ['not (void)]))
+      ['not (void)]
+      ['pair? (void)]
+      ['vector? (void)]
+      ['cons (void)]
+      ['car (void)]
+      ['cdr (void)]
+      ['make-vector (void)]
+      ['vector-length (void)]
+      ['vector-set! (void)]
+      ['vector-ref (void)])
 
   (uniquify-p '() p))
 
@@ -117,7 +123,7 @@
   ;; Check that compiled program interprets to 42
   (define-check (check-42 p)
     (check-equal?
-      (interp-exprs-unique-lang-v7 (uniquify p))
+      (interp-exprs-unique-lang-v8 (uniquify p))
       42))
 
   ;; M5 tests
