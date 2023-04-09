@@ -18,12 +18,12 @@
 (define/contract (patch-instructions p)
   (-> para-asm-lang-v8? paren-x64-mops-v8?)
 
-  (define (big-int? i)
+  (define/contract (big-int? i)
     (-> any/c boolean?)
     (and (int64? i)
          (not (int32? i))))
 
-  (define (addr? a)
+  (define/contract (addr? a)
     (-> any/c boolean?)
     (match a
       [`(,fbp - ,dispoffset)
@@ -32,6 +32,7 @@
         #t]
       [_ #f]))
 
+  ;; para-asm-lang-v8 -> paren-x64-mops-v8
   (define (patch-instructions-p p)
     (match p
       [`(begin ,s ...)
@@ -42,7 +43,7 @@
   ;; (use-tmp
   ;;   ([value (or/c boolean? (-> any/c boolean?)) ...])
   ;;   (-> value/register? paren-x64-mops-v8-s)
-  ;;   resolver-function ...)
+  ;;   resolver-function)
   ;;
   ;; value must be able to go in the RHS of a set!
   ;; f will be called with N args where N is the number of values given to use-tmp.
@@ -51,14 +52,16 @@
   (define-syntax use-tmp
     (syntax-rules ()
       [(use-tmp ([vs bs ...] ...) f)
-       (use-tmp-impl
-         (list vs ...)
-         (list (list bs ...) ...)
-         f
-         (lambda _ (error "no more patch registers")))]
+       (use-tmp ([vs bs ...] ...) f (lambda _ (error "no more patch registers")))]
       [(use-tmp ([vs bs ...] ...) f r)
        (use-tmp-impl (list vs ...) (list (list bs ...) ...) f r)]))
-  ;; see above; do not call directly!
+  ;; (List-of triv)
+  ;; (List-of boolean|(any -> boolean))
+  ;; (triv -> boolean)
+  ;; ((List-of triv) (List-of paren-x64-mops-v8-s)
+  ;;  -> (List-of triv) (List-of paren-x64-mops-v8-s) (List-of reg))
+  ;; -> (List-of paren-x64-mops-v8-s)
+  ;; Use tmp registers for unsupported 's'. See above; do not call directly!
   (define (use-tmp-impl vs bs f resolve)
     ;; Return a concrete boolean value from bs and v.
     (define/contract (eval-bs bs v)
@@ -87,8 +90,8 @@
            (cdr regs))]
         [else (values (append new-vs (list v)) s regs)])))
 
-  ;; (List-of reg|int32) (List-of paren-x64-mops-v8-s)
-  ;; -> (List-of reg|int32) (List-of paren-x64-mops-v8-s) (List-of reg)
+  ;; (List-of triv) (List-of paren-x64-mops-v8-s)
+  ;; -> (List-of triv) (List-of paren-x64-mops-v8-s) (List-of reg)
   ;; Resolve running out of patch-instructions-registers in patching memset!
   ;; by adding the reg and the index together and freeing a patch register
   (define (resolve-memset-patch new-vs s)
@@ -113,6 +116,7 @@
             (set! ,loc ,tmp)))
         (fn loc)))
 
+  ;; para-asm-lang-v8-s -> paren-x64-mops-v8-s
   (define (patch-instructions-s s)
     (match s
       [`(set! ,loc1 (mref ,loc2 ,index))
