@@ -4,6 +4,8 @@
   cpsc411/compiler-lib
   cpsc411/langs/v8)
 
+(provide expose-allocation-pointer)
+
 ;; Milestone 8 Exercise 10
 ;;
 ;; Compiles asm-alloc-lang-v8 to asm-pred-lang-v8
