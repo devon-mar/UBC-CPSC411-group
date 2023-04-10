@@ -7,7 +7,7 @@
 ;; Milestone 8 Exercise 10
 ;;
 ;; Compiles asm-alloc-lang-v8 to asm-pred-lang-v8
-;; Converts alloc effects into 
+;; Converts alloc effects into simple set!'s
 (define/contract (expose-allocation-pointer p)
   (-> asm-alloc-lang-v8? asm-pred-lang-v8?)
 
@@ -183,8 +183,6 @@
               (set! rax (- rax 8))
               (jump r15)))))
     )
-
-
 
 ;; Check parameterization works
 (check-equal?
