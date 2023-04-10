@@ -2,21 +2,22 @@
 
 (require
   cpsc411/compiler-lib
-  cpsc411/langs/v7)
+  cpsc411/langs/v8)
 
 (provide impose-calling-conventions)
 
 ;; Milestone 5 Exercise 5
 ;; Milestone 6 Exercise 5
 ;; Milestone 7 Exercise 7
+;; Milestone 8 Exercise 8
 ;;
-;; Compiles Proc-imp-cmf-lang v7 to Imp-cmf-lang v7 by imposing calling
+;; Compiles Proc-imp-cmf-lang v8 to Imp-cmf-lang v8 by imposing calling
 ;; conventions on all calls (both tail and non-tail calls), and entry points.
 ;; The registers used to passing parameters are defined by
 ;; current-parameter-registers, and the registers used for returning are
 ;; defined by current-return-address-register and current-return-value-register.
 (define (impose-calling-conventions p)
-  (-> proc-imp-cmf-lang-v7? imp-cmf-lang-v7?)
+  (-> proc-imp-cmf-lang-v8? imp-cmf-lang-v8?)
 
   ;; for convenience...
   (define ra (current-return-address-register))
@@ -110,8 +111,8 @@
 
   ;; Imposes callign conventions on a proc represented by label params and entry.
   ;;
-  ;; entry: proc-imp-cmf-lang-v7-entry
-  ;; -> imp-cmf-lang-v7-proc
+  ;; entry: proc-imp-cmf-lang-v8-entry
+  ;; -> imp-cmf-lang-v8-proc
   (define/contract (impose-calling-conventions-proc label params entry)
     (-> label? (listof aloc?) any/c any/c)
     (define locs (params->locs params))
@@ -127,7 +128,7 @@
        ,(info-set '() 'new-frames (unbox nfvs-box))
        ,tail))
 
-  ;; proc-imp-cmf-lang-v7-p -> imp-cmf-lang-v7-p
+  ;; proc-imp-cmf-lang-v8-p -> imp-cmf-lang-v8-p
   (define (impose-calling-conventions-p p)
     (match p
       [`(module (define ,labels (lambda (,alocs ...) ,entries)) ... ,entry)
@@ -139,8 +140,8 @@
            ,tail)]))
 
   ;; nfvs-box: box? of nfvs
-  ;; e: proc-imp-cmf-lang-v7-entry
-  ;; -> imp-cmf-lang-v7-tail
+  ;; e: proc-imp-cmf-lang-v8-entry
+  ;; -> imp-cmf-lang-v8-tail
   (define/contract (impose-calling-conventions-entry nfvs-box e)
     (-> box? any/c any/c)
     (define tmp-ra (fresh 'tmp-ra))
@@ -149,8 +150,8 @@
        ,(impose-calling-conventions-tail nfvs-box tmp-ra e)))
 
   ;; nfvs-box: box? of nfvs
-  ;; p proc-imp-cmf-lang-v7-pred
-  ;; -> imp-cmf-lang-v7-pred
+  ;; p proc-imp-cmf-lang-v8-pred
+  ;; -> imp-cmf-lang-v8-pred
   (define/contract (impose-calling-conventions-pred nfvs-box p)
     (-> box? any/c any/c)
     (match p
@@ -174,8 +175,8 @@
 
   ;; nfvs-box: box? of nfvs
   ;; tmp-ra: aloc? holding the return address
-  ;; t: proc-imp-cmf-lang-v7-tail
-  ;; -> imp-cmf-lang-v7-tail
+  ;; t: proc-imp-cmf-lang-v8-tail
+  ;; -> imp-cmf-lang-v8-tail
   (define/contract (impose-calling-conventions-tail nfvs-box tmp-ra t)
     (-> box? aloc? any/c any/c)
     (match t
@@ -204,12 +205,16 @@
                (jump ,tmp-ra ,fbp ,rv))))]))
 
   ;; nfvs-box: box? of nfvs
-  ;; v: proc-imp-cmf-lang-v7-value
+  ;; v: proc-imp-cmf-lang-v8-value
   ;; f: (value -> tail/effect)
   ;; -> tail/effect
   (define/contract (impose-calling-conventions-value nfvs-box v f)
     (-> box? any/c (-> any/c any/c) any/c)
     (match v
+      ;; (mref aloc opand)
+      [`(mref ,_ ,_) (f v)]
+      ;; (alloc opand)
+      [`(alloc ,_) (f v)]
       [`(call ,t ,os ...)
         (define rp-label (fresh-label 'rp))
         (define locs (args->locs/non-tail nfvs-box (length os)))
@@ -221,13 +226,15 @@
                (set! ,ra ,rp-label)
                (jump ,t ,fbp, ra ,@locs)))
            ,(f rv))]
+      ;; (binop opand opand)
       [`(,_ ,_ ,_)
         (f v)]
+      ;; triv
       [_ (f v)]))
 
   ;; nfvs-box: box? of nfvs
-  ;; e: proc-imp-cmf-lang-v7-effect
-  ;; -> imp-cmf-lang-v7-effect
+  ;; e: proc-imp-cmf-lang-v8-effect
+  ;; -> imp-cmf-lang-v8-effect
   (define/contract (impose-calling-conventions-effect nfvs-box e)
     (-> box? any/c any/c)
     (match e
@@ -236,6 +243,9 @@
           nfvs-box
           v
           (lambda (v) `(set! ,a ,v)))]
+
+      ;; (mset! ,aloc ,opand ,triv)
+      [`(mset! ,_ ,_ ,_) e]
       ;; modified template - removed tail e since we assume valid input
       [`(begin ,es ...)
         `(begin ,@(map (lambda (e) (impose-calling-conventions-effect nfvs-box e)) es))]
@@ -293,7 +303,7 @@
 
   (define-check (check-42 p)
     (check-equal?
-      (interp-imp-cmf-lang-v7 (impose-calling-conventions p))
+      (interp-imp-cmf-lang-v8 (impose-calling-conventions p))
       42))
 
   (define/contract (alocs? . as)
@@ -713,4 +723,11 @@
       (not (check-duplicates (apply append (info-ref info 'new-frames))))
       (not (check-duplicates (apply append (info-ref info-foo 'new-frames))))))
 
+  ;; M8 test
+  (check-42
+    '(module
+       (begin
+         (set! x.1 (alloc 8))
+         (mset! x.1 0 42)
+         (mref x.1 0))))
   )
