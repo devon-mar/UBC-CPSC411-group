@@ -68,7 +68,7 @@
   ;; tail env -> tail
   (define (convert-tail t env)
     (match t
-      [`(jump ,_) t]
+      [`(jump ,_trg) t]
       [`(begin ,effects ... ,tail)
        (define new-effects (convert-effect-list effects env))
        `(begin
@@ -133,7 +133,7 @@
   ;; effect env -> effect
   (define (convert-effect e env)
     (match e
-      [`(set! ,loc_1 (mref ,_ ,_))
+      [`(set! ,loc_1 (mref ,_loc2 ,_index))
        (env-remove! env loc_1)
        e]
       [`(set! ,loc_1 (,binop ,loc_1 ,opand))
@@ -142,7 +142,7 @@
       [`(set! ,loc ,triv)
        (env-update! env loc (convert-triv triv env))
        e]
-      [`(mset! ,_ ,_ ,_)
+      [`(mset! ,_loc ,_index ,_triv)
        e]
       [`(begin ,effects ...)
        `(begin ,@(convert-effect-list effects env))]
