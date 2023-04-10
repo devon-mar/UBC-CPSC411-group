@@ -829,7 +829,7 @@
            42
            0))))
 
-  ;; check length when length is a aloc
+  ;; check vector length when length is an aloc
   (check-42
     '(module
        (let ([x.1 42])
