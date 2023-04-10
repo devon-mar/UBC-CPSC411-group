@@ -828,4 +828,11 @@
          (if (void? (unsafe-vector-set! v.1 0 42))
            42
            0))))
+
+  ;; check length when length is a aloc
+  (check-42
+    '(module
+       (let ([x.1 42])
+         (let ([v.1 (unsafe-make-vector x.1)])
+           (unsafe-vector-length v.1)))))
   )
