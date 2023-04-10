@@ -129,7 +129,6 @@
 
   (expose-allocation-pointer-p p))
 
-
 (module+ test
   (require rackunit)
 
