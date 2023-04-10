@@ -73,7 +73,7 @@
       [`(begin ,effects ... ,effect)
         `(begin
           ,@(map expose-allocation-pointer-effect effects)
-          (expose-allocation-pointer-effect effect))]
+          ,(expose-allocation-pointer-effect effect))]
       [`(if ,p ,e1 ,e2)
         `(if
           ,(expose-allocation-pointer-pred p)
