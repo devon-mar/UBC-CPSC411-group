@@ -107,7 +107,7 @@
              (define (untag i)
                (if (int64? i)
                  (from-int (arithmetic-shift i (* -1 (shiftp))))
-                 `(arithmetic-shift-right ,i ,(* -1 (shiftp)))))))]))
+                 `(arithmetic-shift-right ,i ,(shiftp))))))]))
 
   (make-tag-func fixnum int61?)
   (make-tag-func error uint8?)
