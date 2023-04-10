@@ -2,19 +2,20 @@
 
 (require
   cpsc411/compiler-lib
-  cpsc411/langs/v7
+  cpsc411/langs/v8
   cpsc411/graph-lib)
 
 (provide assign-call-undead-variables)
 
 ;; Milestone 6 Exercise 10
 ;; Milestone 7 Exercise 7
+;; Milestone 8 Exercise 11
 ;;
-;; Compiles Asm-pred-lang-v7/conflicts to Asm-pred-lang-v7/pre-framed by
+;; Compiles Asm-pred-lang-v8/conflicts to Asm-pred-lang-v8/pre-framed by
 ;; pre-assigning all variables in the call-undead sets to frame variables.
 ;; Only info is modified.
 (define/contract (assign-call-undead-variables p)
-  (-> asm-pred-lang-v7/conflicts? asm-pred-lang-v7/pre-framed?)
+  (-> asm-pred-lang-v8/conflicts? asm-pred-lang-v8/pre-framed?)
 
   ;; Return a set of frame variables that are incompatible with x.
   ;;
@@ -64,7 +65,7 @@
 
   ;; Adds assignments and removes assigned locals
   ;;
-  ;; asm-pred-lang-v7/conflicts-info -> asm-pred-lang-v7/pre-framed-info
+  ;; asm-pred-lang-v8/conflicts-info -> asm-pred-lang-v8/pre-framed-info
   (define/contract (update-info info)
     (-> info? info?)
     (define assignments (info->assignment info))
@@ -83,7 +84,7 @@
   ;; Assigns call undead variables for a procedure with the given label,
   ;; info, and tail. Only the info field is modified in the returned procedure.
   ;;
-  ;; -> asm-pred-lang-v7/pre-framed-procedure
+  ;; -> asm-pred-lang-v8/pre-framed-procedure
   (define/contract (assign-call-undead-variables-proc label info tail)
     (-> label? info? any/c any/c)
     `(define
@@ -106,7 +107,7 @@
 (module+ test
   (require rackunit)
 
-  ;; values-lang-v7: '(module 42)
+  ;; values-lang-v8: '(module 42)
   (check-match
     (assign-call-undead-variables
       '(module

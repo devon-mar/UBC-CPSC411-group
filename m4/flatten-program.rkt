@@ -1,36 +1,39 @@
 #lang racket
 
-(require cpsc411/langs/v7)
+(require cpsc411/langs/v8)
 
 (provide flatten-program)
 
 ;; Milestone 4 Exercise 6
 ;; Milestone 7 Exercise 7
+;; Milestone 8 Exercise 11
 ;;
 ;; Compile Block-asm-lang to Para-asm-lang
 ;; by flattening basic blocks into labeled instructions.
 (define/contract (flatten-program p)
-  (-> block-asm-lang-v7? para-asm-lang-v7?)
+  (-> block-asm-lang-v8? para-asm-lang-v8?)
 
   ;; Unused
   #;
-  (define (flatten-effect e)
-    (match e
-      [`(set! ,_ ,_) e]
-      [`(set! ,_ (,_ ,_ ,_)) e]))
+  (define (flatten-s s)
+    (match s
+      [`(set! ,loc_1 (mref ,loc_2 ,index)) s]
+      [`(set! ,loc_1 (,binop ,loc_1 ,opand)) s]
+      [`(set! ,loc ,triv) s]
+      [`(mset! ,loc ,index ,triv) s]))
 
-  ;; (Block-Asm-Lang-v7 tail) -> (List-of (Para-Asm-Lang-v7 s))
+  ;; (Block-Asm-Lang-v8 tail) -> (List-of (Para-Asm-Lang-v8 s))
   (define (flatten-tail t)
     (match t
       [`(jump ,_) (list t)]
-      [`(begin ,effect ... ,tail)
-       (append effect (flatten-tail tail))]
+      [`(begin ,s ... ,tail)
+       (append s (flatten-tail tail))]
       [`(if (,relop ,loc ,opand) (jump ,trg1) (jump ,trg2))
        `((compare ,loc ,opand)
          (jump-if ,relop ,trg1)
          (jump ,trg2))]))
 
-  ;; (Block-Asm-Lang-v7 b) -> (List-of (Para-Asm-Lang-v7 s))
+  ;; (Block-Asm-Lang-v8 b) -> (List-of (Para-Asm-Lang-v8 s))
   (define (flatten-b b)
     (match b
       [`(define ,label ,tail)
@@ -119,4 +122,25 @@
       (with-label L.test.5 (compare rdx r9))
       (jump-if = L.test.4)
       (jump L.test.2)))
+
+  ;; Check that the compiled program interprets to 42
+  (define-check (check-42 p)
+    (check-equal?
+      (interp-para-asm-lang-v8 (flatten-program p))
+      42))
+
+  ;; mref, mset!
+  (check-42
+    '(module
+      (define L.main.1
+        (begin
+          (mset! r12 16 6)
+          (set! rdx (mref r12 16))
+          (jump L.test.1)))
+      (define L.test.1
+        (begin
+          (set! rdx (* rdx 7))
+          (mset! r12 16 rdx)
+          (set! rax (mref r12 16))
+          (jump done)))))
   )

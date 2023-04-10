@@ -3,7 +3,7 @@
 (require
   cpsc411/compiler-lib
   cpsc411/graph-lib
-  cpsc411/langs/v7)
+  cpsc411/langs/v8)
 
 (provide assign-registers)
 
@@ -12,11 +12,12 @@
 ;; Milestone 5 Exercise 10
 ;; Milestone 6 Exercise 12
 ;; Milestone 7 Exercise 7
+;; Milestone 8 Exercise 11
 ;;
 ;; Assign register or frame location to each local variable
 ;; Assumes current-assignable-registers parameter to be set
 (define/contract (assign-registers p)
-  (-> asm-pred-lang-v7/framed? asm-pred-lang-v7/spilled?)
+  (-> asm-pred-lang-v8/framed? asm-pred-lang-v8/spilled?)
 
   ;; (list aloc ...) (list (aloc (loc ...))) -> (values aloc (list aloc ...) (list (aloc (aloc...))...))
   ;; removes low degree abstract location from aloc-list and return tuple of
@@ -42,7 +43,7 @@
           [(? register?) (append reg-list (list c))]
           [(? fvar?) reg-list]
           [(? aloc?)
-           (define prev 
+           (define prev
             (if (dict-has-key? prev-assignment c)
               (first (dict-ref prev-assignment c))
               (void)))
@@ -74,7 +75,7 @@
     (define fvar-assignment (info-ref info 'assignment))
     (define-values (register-assignment new-locals) (generate-assignment local-list conflicts))
     (define assignment (append fvar-assignment register-assignment))
-    (info-set 
+    (info-set
       (info-set info 'locals new-locals)
       'assignment
       assignment))
@@ -95,7 +96,7 @@
 (module+ test
   (require
     rackunit
-    cpsc411/langs/v7
+    cpsc411/langs/v8
     "../utils/gen-utils.rkt")
 
   (define t1
@@ -198,14 +199,14 @@
         (equal? (list->set (map first assignments)) (list->set (map first `((p.1 r10) (z.5 r9) (v.1 r10)))))
         (equal? (list->set locals) (list->set `(t.6 w.2 x.3 y.4)))))
 
-  (check-equal? (assign-registers '(module 
+  (check-equal? (assign-registers '(module
                                       ((locals (x.1))
                                        (conflicts ((x.1 ())))
                                        (assignment ()))
                                       (begin
                                         (set! x.1 42)
                                         (jump r15))))
-                '(module 
+                '(module
                   ((locals ())
                    (conflicts ((x.1 ())))
                    (assignment ((x.1 r15))))
@@ -213,7 +214,7 @@
                       (set! x.1 42)
                       (jump r15))))
   (check-equal? (parameterize ([current-assignable-registers '(r9)])
-                  (assign-registers '(module 
+                  (assign-registers '(module
                                       ((locals (x.1))
                                        (conflicts ((x.1 ())))
                                        (assignment ()))
@@ -258,23 +259,23 @@
             (begin
               (set! x.1 42)
               (jump r15)))
-    (and 
+    (and
       (dict-equal? assignment '((x.2 r13) (x.1 r14)))
       (equal? locals '())))
-  
+
 
   ;; check does not assign with conflicting register
   (check-equal? (parameterize
                   ([current-assignable-registers '(r9)])
-                  (assign-registers 
-                    '(module 
+                  (assign-registers
+                    '(module
                       ((locals (x.1))
                         (conflicts ((x.1 (r9)) (r9 (x.1))))
                         (assignment ()))
                       (begin
                         (set! x.1 42)
                         (jump r15)))))
-                '(module 
+                '(module
                   ((locals (x.1))
                    (conflicts ((x.1 (r9)) (r9 (x.1))))
                    (assignment ()))

@@ -2,28 +2,29 @@
 
 (require
   cpsc411/compiler-lib
-  cpsc411/langs/v7)
+  cpsc411/langs/v8)
 
 (provide allocate-frames)
 
 ;; Milestone 6 Exercise 11
 ;; Milestone 7 Exercise 7
+;; Milestone 8 Exercise 11
 ;;
-;; Compiles Asm-pred-lang-v7/pre-framed to Asm-pred-lang-v7/framed by
+;; Compiles Asm-pred-lang-v8/pre-framed to Asm-pred-lang-v8/framed by
 ;; allocating frames for each non-tail call, and assigning all new-frame
 ;; variables to frame variables in the new frame.
 (define/contract (allocate-frames p)
-  (-> asm-pred-lang-v7/pre-framed? asm-pred-lang-v7/framed?)
+  (-> asm-pred-lang-v8/pre-framed? asm-pred-lang-v8/framed?)
 
   (define fbp (current-frame-base-pointer-register))
   (define assignment/c (listof (list/c aloc? fvar?)))
   (define frame-words? exact-nonnegative-integer?)
 
   ;; Removes 'call-undead and 'new-frames, updates 'assignment with as
-  ;; and updates 'locals with 'ocals.
+  ;; and updates 'locals with locals in info
   ;;
-  ;; p: asm-pred-lang-v7/pre-framed-info
-  ;; -> asm-pred-lang-v7/framed-info
+  ;; p: asm-pred-lang-v8/pre-framed-info
+  ;; -> asm-pred-lang-v8/framed-info
   (define/contract (pre-framed->framed-info info as locals)
     (-> info? assignment/c (listof aloc?) info?)
     (info-set
@@ -61,7 +62,7 @@
   (define/contract (assign-nfvs fw info)
     (-> frame-words? info? (values assignment/c (listof aloc?)))
 
-    ;; Assign each new-frame variable in a set of new-frame variables 
+    ;; Assign each new-frame variable in a set of new-frame variables
     ;; to a fvar. Returns new assignments and new locals.
     (define/contract (assign-nfv-set nfv-set acc)
       (-> (listof aloc?) assignment/c assignment/c)
@@ -79,8 +80,8 @@
         (info-ref info 'locals)
         (apply append (info-ref info 'new-frames)))))
 
-  ;; p: asm-pred-lang-v7/pre-framed-proc
-  ;; -> asm-pred-lang-v7/framed-proc
+  ;; p: asm-pred-lang-v8/pre-framed-proc
+  ;; -> asm-pred-lang-v8/framed-proc
   (define/contract (allocate-frames-proc label info tail)
     (-> label? info? any/c any/c)
     (define fw (frame-size/words info))
@@ -90,8 +91,8 @@
        ,(pre-framed->framed-info info new-as new-locals)
        ,(allocate-frames-tail fw tail)))
 
-  ;; p: asm-pred-lang-v7/pre-framed-p
-  ;; -> asm-pred-lang-v7/framed-p
+  ;; p: asm-pred-lang-v8/pre-framed-p
+  ;; -> asm-pred-lang-v8/framed-p
   (define (allocate-frames-p p)
     (match p
       [`(module ,info (define ,labels ,infos ,tails) ... ,tail)
@@ -102,8 +103,8 @@
            ,@(map allocate-frames-proc labels infos tails)
            ,(allocate-frames-tail fw tail))]))
 
-  ;; p: asm-pred-lang-v7/pre-framed-pred
-  ;; -> asm-pred-lang-v7/framed-pred
+  ;; p: asm-pred-lang-v8/pre-framed-pred
+  ;; -> asm-pred-lang-v8/framed-pred
   (define (allocate-frames-pred fw p)
     (-> frame-words? any/c any/c)
     (match p
@@ -122,15 +123,15 @@
            ,(allocate-frames-pred fw p1)
            ,(allocate-frames-pred fw p2)
            ,(allocate-frames-pred fw p3))]
-      [`(,_ ,_ ,_)
+      [`(,_relop ,_loc ,_opand)
         p]))
 
-  ;; t: asm-pred-lang-v7/pre-framed-tail
-  ;; -> asm-pred-lang-v7/framed-tail
+  ;; t: asm-pred-lang-v8/pre-framed-tail
+  ;; -> asm-pred-lang-v8/framed-tail
   (define/contract (allocate-frames-tail fw t)
     (-> frame-words? any/c any/c)
     (match t
-      [`(jump ,_ ,_ ...)
+      [`(jump ,_trg ,_loc ...)
         t]
       [`(begin ,es ... ,t)
         `(begin
@@ -142,18 +143,23 @@
            ,(allocate-frames-tail fw t1)
            ,(allocate-frames-tail fw t2))]))
 
-  ;; e: asm-pred-lang-v7/pre-framed-effect
-  ;; -> asm-pred-lang-v7/framed-effect
+  ;; e: asm-pred-lang-v8/pre-framed-effect
+  ;; -> asm-pred-lang-v8/framed-effect
   (define (allocate-frames-effect fw e)
     (-> frame-words? any/c any/c)
     (match e
-      [`(set! ,_ (,_ ,_ ,_))
+      [`(set! ,_loc1 (mref ,_loc2 ,_index))
         e]
-      [`(set! ,_ ,_)
+      [`(set! ,_loc1 (,_binop ,_loc1 ,_opand))
         e]
-      ;; modified template - moved tail effect since we assume valid input.
-      [`(begin ,es ...)
-        `(begin ,@(map (lambda (e) (allocate-frames-effect fw e)) es))]
+      [`(set! ,_loc ,_triv)
+        e]
+      [`(mset! ,_loc ,_index ,_triv)
+        e]
+      [`(begin ,es ... ,et)
+        `(begin
+           ,@(map (lambda (e) (allocate-frames-effect fw e))
+               (append es (list et))))]
       [`(if ,p ,e1 ,e2)
         `(if
            ,(allocate-frames-pred fw p)
@@ -200,6 +206,14 @@
 
   ;; not used
   #;
+  (define (allocate-frames-index i)
+    (match i
+      [(? int64?)
+       (void)]
+      [loc (void)]))
+
+  ;; not used
+  #;
   (define (allocate-frames-binop b)
     (match b
       ['* (void)]
@@ -209,7 +223,7 @@
       ['bitwise-ior (void)]
       ['bitwise-xor (void)]
       ['arithmetic-shift-right (void)]))
-  
+
   ;; not used
   #;
   (define (allocate-frames-relop r)
@@ -586,4 +600,27 @@
           (set! x.1 (bitwise-and x.1 x.2))
           (set! x.1 (arithmetic-shift-right x.1 x.2))
           (jump r15))))
+
+  ;; mref, mset
+  (check-equal?
+    (allocate-frames
+      '(module
+        ((new-frames ())
+         (locals ())
+         (call-undead ())
+         (undead-out ())
+         (conflicts ())
+         (assignment ()))
+        (begin
+          (mset! r12 0 42)
+          (set! rax (mref r12 0))
+          (jump done))))
+    '(module
+      ((locals ())
+       (conflicts ())
+       (assignment ()))
+      (begin
+        (mset! r12 0 42)
+        (set! rax (mref r12 0))
+        (jump done))))
   )
