@@ -2,7 +2,7 @@
 
 (require
   cpsc411/compiler-lib
-  cpsc411/langs/v7)
+  cpsc411/langs/v8)
 
 (provide replace-locations)
 
@@ -11,14 +11,15 @@
 ;; Milestone 5 Exercise 11
 ;; Milestone 6 Exercise 14
 ;; Milestone 7 Exercise 7
+;; Milestone 8 Exercise 11
 ;;
-;; Compiles Asm-pred-lang v7/assignments to Nested-asm-lang-fvars v7 by
+;; Compiles Asm-pred-lang v8/assignments to Nested-asm-lang-fvars v8 by
 ;; replacing all abstract location with physical locations using the
 ;; assignment described in the assignment info field.
 (define/contract (replace-locations p)
-  (-> asm-pred-lang-v7/assignments? nested-asm-lang-fvars-v7?)
+  (-> asm-pred-lang-v8/assignments? nested-asm-lang-fvars-v8?)
 
-  ;; asm-pred-lang-v7/assignments-p -> nested-asm-lang-fvars-v7-p
+  ;; asm-pred-lang-v8/assignments-p -> nested-asm-lang-fvars-v8-p
   (define (replace-locations-p p)
     (match p
       [`(module ,info (define ,labels ,infos ,tails) ... ,tail)
@@ -26,15 +27,15 @@
            ,@(map replace-locations-proc labels infos tails)
            ,(replace-locations-tail (info-ref info 'assignment) tail))]))
 
-  ;; tail: asm-pred-lang-v7/assignments-tail
-  ;; -> nested-asm-lang-fvars-v7-proc
+  ;; tail: asm-pred-lang-v8/assignments-tail
+  ;; -> nested-asm-lang-fvars-v8-proc
   (define/contract (replace-locations-proc label info tail)
     (-> label? info? any/c any/c)
     `(define
        ,label
        ,(replace-locations-tail (info-ref info 'assignment) tail)))
 
-  ;; assignment asm-pred-lang-v7/assignments-pred -> nested-asm-lang-fvars-v7-pred
+  ;; assignment asm-pred-lang-v8/assignments-pred -> nested-asm-lang-fvars-v8-pred
   (define (replace-locations-pred as p)
     (match p
       [`(true)
@@ -57,7 +58,7 @@
           ,(replace-locations-loc as l)
           ,(replace-locations-opand as o))]))
 
-  ;; assignment asm-pred-lang-v7/assignments-tail -> nested-asm-lang-fvars-v7-tail
+  ;; assignment asm-pred-lang-v8/assignments-tail -> nested-asm-lang-fvars-v8-tail
   (define (replace-locations-tail as t)
     (match t
       [`(jump ,trg ,_ ...)
@@ -72,9 +73,13 @@
            ,(replace-locations-tail as t1)
            ,(replace-locations-tail as t2))]))
 
-  ;; assignment asm-pred-lang-v7/assignments-effect -> nested-asm-lang-fvars-v7-effect
+  ;; assignment asm-pred-lang-v8/assignments-effect -> nested-asm-lang-fvars-v8-effect
   (define (replace-locations-effect as e)
     (match e
+      [`(set! ,loc1 (mref ,loc2 ,idx))
+        `(set! ,(replace-locations-loc as loc1)
+           (mref ,(replace-locations-loc as loc2)
+                 ,(replace-locations-index as idx)))]
       [`(set! ,loc (,binop ,loc ,opand))
         `(set!
            ,(replace-locations-loc as loc)
@@ -92,28 +97,39 @@
            ,(replace-locations-effect as e1)
            ,(replace-locations-effect as e2))]
       [`(return-point ,label ,tail)
-        `(return-point ,label ,(replace-locations-tail as tail))]))
+        `(return-point ,label ,(replace-locations-tail as tail))]
+      [`(mset! ,loc ,index ,triv)
+        `(mset!
+           ,(replace-locations-loc as loc)
+           ,(replace-locations-index as index)
+           ,(replace-locations-triv as triv))]))
 
-  ;; assignment asm-pred-lang-v7/assignments-opand -> nested-asm-lang-fvars-v7-opand
+  ;; assignment asm-pred-lang-v8/assignments-index -> nested-asm-lang-fvars-v8-index
+  (define (replace-locations-index as o)
+    (match o
+      [(? int64?) o]
+      [_ (replace-locations-loc as o)]))
+
+  ;; assignment asm-pred-lang-v8/assignments-opand -> nested-asm-lang-fvars-v8-opand
   (define (replace-locations-opand as o)
     (match o
       [(? int64?) o]
       [_ (replace-locations-loc as o)]))
 
-  ;; assignment asm-pred-lang-v7/assignments-triv -> nested-asm-lang-fvars-v7-triv
+  ;; assignment asm-pred-lang-v8/assignments-triv -> nested-asm-lang-fvars-v8-triv
   (define (replace-locations-triv as t)
     (match t
       [(? label?) t]
       [_ (replace-locations-opand as t)]))
 
-  ;; assignment asm-pred-lang-v7/assignments-loc -> nested-asm-lang-fvars-v7-loc
+  ;; assignment asm-pred-lang-v8/assignments-loc -> nested-asm-lang-fvars-v8-loc
   (define (replace-locations-loc as l)
     (-> info? any/c (or/c register? fvar?))
     (match l
       [(? aloc?) (info-ref as l)]
       [_ l]))
 
-  ;; assignment asm-pred-lang-v7/assignments-trg -> nested-asm-lang-fvars-v7-trg
+  ;; assignment asm-pred-lang-v8/assignments-trg -> nested-asm-lang-fvars-v8-trg
   (define (replace-locations-trg as t)
     (match t
       [(? label?) t]
@@ -163,7 +179,7 @@
   ;; es: (listof effect)
   (define-check (check-42p p)
     (check-equal?
-      (interp-nested-asm-lang-fvars-v7 (replace-locations p))
+      (interp-nested-asm-lang-fvars-v8 (replace-locations p))
       42))
 
   (define rax (current-return-value-register))
@@ -262,4 +278,17 @@
          (if (begin (set! tmp.4 1) (= tmp.4 2))
            (begin (set! rax 0) (jump tmp-ra.3 rbp rax))
            (begin (set! rax x.1) (set! rax (- rax 8)) (jump tmp-ra.3 rbp rax))))))
+
+  ;; M8 test
+  (check-42p
+    `(module
+       ((assignment ((x.1 rsi) (y.1 rax) (idx.1 rcx) (val.1 r13))))
+       (begin
+         (set! val.1 42)
+         (set! idx.1 0)
+         (set! x.1 ,(current-heap-base-pointer-register))
+         (mset! x.1 0 0)
+         (mset! x.1 idx.1 val.1)
+         (set! y.1 (mref x.1 idx.1))
+         (jump ,(current-return-address-register) ,(current-frame-base-pointer-register) ,(current-return-value-register)))))
   )
