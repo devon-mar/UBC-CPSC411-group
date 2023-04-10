@@ -237,24 +237,4 @@
               (set! rax (- rax 8))
               (jump r15)))))
     )
-
-    (expose-allocation-pointer
-      `(module
-        ((new-frames ()))
-        (begin
-          (set! tmp-ra.489 r15)
-          (begin
-            (set! x.6 16)
-            (set! x.5 8)
-            (begin 
-              (set! x.4 x.5)
-              (begin
-                (set! x.4 16)
-                (set! x.6 x.4))
-                (begin
-                  (begin
-                    (set! tmp-v.630 16)
-                    (set! tmp-v.630 (+ tmp-v.630 24))
-                    (set! rax tmp-v.630))
-                    (jump tmp-ra.489 rbp rax)))))))
 )
