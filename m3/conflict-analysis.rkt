@@ -52,6 +52,13 @@
   ;; effect undead-set-tree/rloc -> void
   (define (conflict-effect effect ust)
     (match (cons effect ust)
+      [(cons `(set! ,loc1 (mref ,loc2 ,idx)) undead-out)
+        (for ([u undead-out])
+         (unless (equal? loc1 u)
+           (set! conflict-graph (add-edge conflict-graph loc1 u))))]
+      [(cons `(mset! ,loc ,idx ,triv) undead-out)
+        ;; mset does not assign registers, frame variables, or alocs
+        (void)]
       [(cons `(set! ,loc (,_ ,loc ,_)) undead-out)
        (for ([u undead-out])
          (unless
@@ -70,13 +77,7 @@
        (conflict-effect effect1 ust1)
        (conflict-effect effect2 ust2)]
       [(cons `(return-point ,_ ,tail) `((,_ ...) ,ust))
-       (conflict-tail tail ust)]
-      [(cons `(set! ,loc1 (mref ,loc2 ,idx)) undead-out)
-        ;; mops do not assign registers or frame variables 
-        (void)]
-      [(cons `(mset! ,loc ,idx ,triv) undead-out)
-        ;; mops do not assign registers or frame variables 
-        (void)]))
+       (conflict-tail tail ust)]))
 
   ;; Updates conflict graph for the locs in the pred
   ;; pred undead-set-tree/rloc -> void
@@ -690,4 +691,19 @@
         (jump r15)))
     `((x.1 r15) ((x.2 x.1 r15) (r15)) ())
     `((x.3 ()) (x.2 (r15 x.1)) (x.1 (r15 x.2)) (r15 (x.1 x.2))))
+
+  ;; x.3 in conflict with x.1 and x.2
+  (check-conflict
+    `(module
+      ((new-frames ())
+       (locals (x.1 x.2 x.3))
+       (call-undead ()))
+      (begin 
+        (set! x.3 (mref x.2 0))
+        (begin
+          (set! x.2 10)
+          (set! x.1 (+ x.1 x.2)))
+        (jump r15)))
+    `((x.1 r15) ((x.2 x.1 r15) (r15)) ())
+    `((x.3 (r15 x.1)) (x.2 (r15 x.1)) (x.1 (x.2 r15 x.3)) (r15 (x.2 x.1 x.3))))
   )

@@ -187,9 +187,8 @@
       [(? int64?) uo]
       [loc (set-add uo loc)]))
 
-
   ;; Returns uo with i if i is a loc,
-  ;; otherwise returns i.
+  ;; otherwise returns uo.
   ;;
   ;; i: index
   ;; uo: undead-set/rloc?
@@ -855,7 +854,6 @@
       (rax)
       ()
       ()))
-
 
     ;; Check mset loc and index and triv
     (check-ust

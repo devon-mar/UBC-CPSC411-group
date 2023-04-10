@@ -428,7 +428,6 @@
     (equal? (list->set (info-ref bar-info 'locals)) m5-locals-2)
     (equal? (list->set (info-ref info 'locals)) m5-locals-1)))
     
-    
   ;; Check mops are handled correctly
   (check-match
   (uncover-locals
