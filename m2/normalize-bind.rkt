@@ -2,7 +2,7 @@
 
 (require
   cpsc411/compiler-lib
-  cpsc411/langs/v7)
+  cpsc411/langs/v8)
 
 (provide normalize-bind)
 
@@ -11,18 +11,23 @@
 ;; Milestone 5 Exercise 4
 ;; Milestone 6 Exercise 4
 ;; Milestone 7 Exercise 7
+;; Milestone 8 Exercise 7
 ;;
-;; Compiles Imp-mf-lang v7 to Imp-cmf-lang v7, pushing set! under begin so that
+;; Compiles Imp-mf-lang v8 to Imp-cmf-lang v8, pushing set! under begin so that
 ;; the right-hand-side of each set! is simple value-producing operation.
 (define/contract (normalize-bind p)
-  (-> imp-mf-lang-v7? proc-imp-cmf-lang-v7?)
+  (-> imp-mf-lang-v8? proc-imp-cmf-lang-v8?)
+
+  (define/contract (opand? o)
+    (-> any/c boolean?)
+    (or (int64? o) (aloc? o)))
 
   ;; Pushes a (set! ,aloc ,value) under a begin so that
   ;; the right-hand-size of each set! is a simple value producing operation.
   ;;
-  ;; aloc: imp-mf-lang-v7-aloc?
-  ;; value: imp-mf-lang-v7-value
-  ;; -> proc-imp-cmf-lang-v7-effect
+  ;; aloc: imp-mf-lang-v8-aloc?
+  ;; value: imp-mf-lang-v8-value
+  ;; -> proc-imp-cmf-lang-v8-effect
   (define/contract (normalize-bind-set aloc value)
     (-> aloc? any/c any/c)
     (match value
@@ -36,15 +41,36 @@
           ,(normalize-bind-set aloc vf))]
       [_ `(set! ,aloc ,value)]))
 
-  ;; tail: imp-mf-lang-v7-tail?
-  ;; -> proc-imp-cmf-lang-v7-proc
+  ;; Pushes a (mset! ,aloc ,opand ,value) under a begin so that
+  ;; the right-hand-size of each set! is a simple value producing operation.
+  ;;
+  ;; aloc: imp-mf-lang-v8-aloc
+  ;; opand: imp-mf-lang-v8-opand
+  ;; value: imp-mf-lang-v8-value
+  ;; -> proc-imp-cmf-lang-v8-effect
+  (define/contract (normalize-bind-mset aloc opand value)
+    (-> aloc? any/c any/c any/c)
+    (match value
+      [`(begin ,es ... ,value)
+        `(begin
+           ,@(map normalize-bind-effect es)
+           ,(normalize-bind-mset aloc opand value))]
+      [`(if ,pred ,vt ,vf)
+       `(if ,(normalize-bind-pred pred)
+          ,(normalize-bind-mset aloc opand vt)
+          ,(normalize-bind-mset aloc opand vf))]
+      [_
+        (value->triv value (lambda (t) `(mset! ,aloc ,opand ,t)))]))
+
+  ;; tail: imp-mf-lang-v8-tail?
+  ;; -> proc-imp-cmf-lang-v8-proc
   (define/contract (normalize-bind-proc label params tail)
     (-> label? (listof aloc?) any/c any/c)
     `(define
        ,label
        (lambda ,params ,(normalize-bind-tail tail))))
 
-  ;; imp-mf-lang-v7-p -> proc-imp-cmf-lang-v7-p
+  ;; imp-mf-lang-v8-p -> proc-imp-cmf-lang-v8-p
   (define (normalize-bind-p p)
     (match p
       [`(module (define ,labels (lambda (,alocs ...) ,tails)) ... ,tail)
@@ -52,7 +78,7 @@
            ,@(map normalize-bind-proc labels alocs tails)
            ,(normalize-bind-tail tail))]))
 
-  ;; imp-mf-lang-v7-pred -> proc-imp-cmf-lang-v7-pred
+  ;; imp-mf-lang-v8-pred -> proc-imp-cmf-lang-v8-pred
   (define (normalize-bind-pred p)
     (match p
       [`(true)
@@ -72,7 +98,7 @@
            ,(normalize-bind-pred p3))]
       [`(,_ ,_ ,_) p]))
 
-  ;; imp-mf-lang-v7-tail -> proc-imp-cmf-lang-v7-tail
+  ;; imp-mf-lang-v8-tail -> proc-imp-cmf-lang-v8-tail
   (define (normalize-bind-tail t)
     (match t
       [`(begin ,es ... ,tail)
@@ -88,9 +114,15 @@
       ;; value
       [_ (normalize-bind-value t)]))
 
-  ;; imp-mf-lang-v7-value -> proc-imp-cmf-lang-v7-value
+  ;; imp-mf-lang-v8-value -> proc-imp-cmf-lang-v8-value
   (define (normalize-bind-value v)
     (match v
+      ;; (mref aloc opand)
+      [`(mref ,_ ,_)
+        v]
+      ;; (aloc opand)
+      [`(alloc ,_)
+        v]
       [`(begin ,es ... ,v)
         `(begin
            ,@(map normalize-bind-effect es)
@@ -101,15 +133,18 @@
            ,(normalize-bind-value v1)
            ,(normalize-bind-value v2))]
       [`(call ,_ ,_ ...) v]
+      ;; (binop ,opand ,opand)
       [`(,_ ,_ ,_) v]
       ;; triv
       [_ v]))
 
-  ;; imp-mf-lang-v7-effect -> proc-imp-cmf-lang-v7-effect
+  ;; imp-mf-lang-v8-effect -> proc-imp-cmf-lang-v8-effect
   (define (normalize-bind-effect e)
     (match e
       [`(set! ,a ,v)
         (normalize-bind-set a v)]
+      [`(mset! ,a ,o ,v)
+        (normalize-bind-mset a o v)]
 			;; modified template - removed tail effect.
       [`(begin ,es ...)
         `(begin
@@ -119,6 +154,20 @@
            ,(normalize-bind-pred p)
            ,(normalize-bind-effect e1)
            ,(normalize-bind-effect e2))]))
+
+  ;; If v is not already a triv, turn it into one
+  ;; by introducing a begin.
+  ;;
+  ;; imp-mf-lang-v8-value (-> triv? any/c) -> proc-imp-cmf-lang-v8-tail
+  (define/contract (value->triv v f)
+    (-> any/c (-> (or/c opand? label?) any/c) any/c)
+    (match v
+      [(or (? opand?) (? label?)) (f v)]
+      [_
+        (define tmp (fresh 'tmp))
+        `(begin
+           ,(normalize-bind-set tmp v)
+           ,(f tmp))]))
 
   ;; not used
   #;
@@ -250,7 +299,7 @@
   ;; M3 tests
 	(define-check (check-42 p)
 		(check-equal?
-			(interp-imp-cmf-lang-v7 (normalize-bind p))
+			(interp-imp-cmf-lang-v8 (normalize-bind p))
 			42))
 
   (check-42
@@ -379,4 +428,30 @@
                                      (call L.fact.1 acc.2 n.2))))
                 r.1)))))
       (begin (set! x.1 (call L.fact.1 4 1)) (+ x.1 18))))
+
+
+  ;; M8 tests
+
+  ;; if in mset!
+  (check-42
+    `(module
+       (begin
+         (set! x.1 (alloc ,(current-word-size-bytes)))
+         (mset! x.1 0 (if (= 0 0) 42 0))
+         (mref x.1 0))))
+
+  ;; begin in mset!
+  ;; non-triv in mset!
+  (check-42
+    `(module
+       (begin
+         (set! x.1 (alloc ,(current-word-size-bytes)))
+         (mset!
+           x.1
+           0
+           (begin
+             (set! y.1 32)
+             (set! z.1 10)
+             (+ z.1 y.1)))
+         (mref x.1 0))))
   )
