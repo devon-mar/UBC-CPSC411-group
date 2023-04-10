@@ -184,7 +184,7 @@
 
   ;; "only imperative primops (only unsafe-vector-set! so far) can be directly called in effect context"
   ;;
-  ;; exprs-unsafe-data-lang-v8-primop (listof exprs-unsafe-data-lang-v8-value) -> exprs-bits-lang-v8-value
+  ;; exprs-unsafe-data-lang-v8-primop (listof exprs-unsafe-data-lang-v8-value) -> exprs-bits-lang-v8-effect
   (define (specify-representation-primop/effect p vs)
     (match (cons p vs)
       [`(unsafe-vector-set! ,vec ,idx ,val)
@@ -270,6 +270,14 @@
        `(mref ,(specify-representation-value/value v) ,vec-len-offset)]
       [`(unsafe-vector-ref ,vec ,idx)
        `(mref ,(specify-representation-value/value vec) ,(idx->vec-offset idx))]
+      ;; reference compiler doesn't like this!!
+      ;; let's just pass this through for now
+      ;; TODO fix this!
+      ;; (unsafe-vector-set! vector idx value)
+      [`(unsafe-vector-set! ,_ ,_ ,_)
+        `(begin
+           ,(specify-representation-primop/effect p vs)
+           ,(current-void-ptr))]
       ;; modfied template - squashed cases - the rest all need to be converted
       ;; to something of the form (if (!= (relop ,@vs) #f) #t #f)
       ;;
@@ -327,8 +335,11 @@
       ['not
        `(not ,(specify-representation-value/pred v))]
       ;; modified template - squashed some cases that all do the same thing
+      ;;
+      ;; must be careful to make sure that specify-representation-primop/value
+      ;; has an explicit match for the below symbols
       [(or 'cons 'unsafe-car 'unsafe-cdr 'unsafe-make-vector 'unsafe-vector-length 
-           'unsafe-vector-set! 'unsafe-vector-ref 'unsafe-fx* 'unsafe-fx+ 'unsafe-fx-)
+           'unsafe-vector-ref 'unsafe-fx* 'unsafe-fx+ 'unsafe-fx-)
        (value->pred (specify-representation-primop/value p vs))]
       ;; modified template - added nested match since the rest need
       ;; (specify-representation-value/value v)

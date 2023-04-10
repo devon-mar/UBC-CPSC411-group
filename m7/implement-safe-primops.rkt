@@ -13,8 +13,23 @@
 ;; each primitive operation which perform dynamic tag checking, to ensure type safety.
 ;;
 ;; Any type errors will return (error 2).
+;; Any other argument errors will return (error 3).
+;; All vectors will be initialised to 0.
 (define/contract (implement-safe-primops p)
   (-> exprs-unique-lang-v8? exprs-unsafe-data-lang-v8?)
+
+  (define vector-init-label (fresh-label 'vector-init))
+  (define vector-init-proc
+    (let ([vec (fresh 'vec)]
+          [len (fresh 'len)]
+          [i (fresh 'i)])
+      `(define ,vector-init-label
+         (lambda (,vec ,len ,i)
+           (if (eq? ,len ,i)
+             ,vec
+             (begin
+               (unsafe-vector-set! ,vec ,i 0)
+               (call ,vector-init-label ,vec ,len (unsafe-fx+ ,i 1))))))))
 
   ;; keep track of the primops that are actually called in p
   (define used-prim-fs (mutable-set))
@@ -31,7 +46,6 @@
   (define (make-safe-primop label f checks)
     (define-values (types preds)
       (splitf-at checks symbol?))
-
 
     (define vs (map (lambda (_) (fresh 'tmp)) types))
 
@@ -57,7 +71,7 @@
            lst))
 
     (define pred-checks
-      (for/fold ([body (cons f vs)])
+      (for/fold ([body (if (procedure? f) (apply f vs) (cons f vs))])
                 ([p preds])
         `(if
            ,(replace-placeholders p)
@@ -74,6 +88,8 @@
                  ,body
                  (error 2)))))))
 
+  ;; unsafes: must be a quoted symbol or procedure
+  ;;
   ;; Checks must start with a list of symbol? corresponding to primops
   ;; that check argument types. After all argument types have been defined,
   ;; arbitrary preds can be given to specify any requirements. In these preds,
@@ -81,7 +97,7 @@
   (define-syntax-rule (make-safe-primop-procs [safes unsafes checks ...] ...)
     (for/fold ([acc '()])
               ([s (list 'safes ...)]
-               [u (list 'unsafes ...)]
+               [u (list unsafes ...)]
                [types (list (list 'checks ...) ...)])
       (define l (fresh-label s))
       (dict-set acc s (cons l (make-safe-primop l u types)))))
@@ -89,35 +105,40 @@
   ;; Dictionary of primop-f to (cons proc-label proc-define)
   (define safe-procs
     (make-safe-primop-procs
-      [* unsafe-fx* fixnum? fixnum?]
-      [+ unsafe-fx+ fixnum? fixnum?]
-      [- unsafe-fx- fixnum? fixnum?]
-      [< unsafe-fx< fixnum? fixnum?]
-      [eq? eq? any/c any/c]
-      [<= unsafe-fx<= fixnum? fixnum?]
-      [> unsafe-fx> fixnum? fixnum?]
-      [>= unsafe-fx>= fixnum? fixnum?]
+      [* 'unsafe-fx* fixnum? fixnum?]
+      [+ 'unsafe-fx+ fixnum? fixnum?]
+      [- 'unsafe-fx- fixnum? fixnum?]
+      [< 'unsafe-fx< fixnum? fixnum?]
+      [eq? 'eq? any/c any/c]
+      [<= 'unsafe-fx<= fixnum? fixnum?]
+      [> 'unsafe-fx> fixnum? fixnum?]
+      [>= 'unsafe-fx>= fixnum? fixnum?]
       ;; unops
-      [fixnum? fixnum? any/c]
-      [boolean? boolean? any/c]
-      [empty? empty? any/c]
-      [void? void? any/c]
-      [ascii-char? ascii-char? any/c]
-      [error? error? any/c]
-      [not not any/c]
-      [pair? pair? any/c]
-      [vector? vector? any/c]
-      [cons cons any/c any/c]
-      [car unsafe-car pair?]
-      [cdr unsafe-cdr pair?]
-      [make-vector unsafe-make-vector fixnum? (unsafe-fx>= arg0 0)]
-      [vector-length unsafe-vector-length vector?]
+      [fixnum? 'fixnum? any/c]
+      [boolean? 'boolean? any/c]
+      [empty? 'empty? any/c]
+      [void? 'void? any/c]
+      [ascii-char? 'ascii-char? any/c]
+      [error? 'error? any/c]
+      [not 'not any/c]
+      [pair? 'pair? any/c]
+      [vector? 'vector? any/c]
+      [cons 'cons any/c any/c]
+      [car 'unsafe-car pair?]
+      [cdr 'unsafe-cdr pair?]
+      [make-vector
+        (lambda (size)
+          (define tmp (fresh 'tmp))
+          `(let ([,tmp (unsafe-make-vector ,size)])
+             (call ,vector-init-label ,tmp ,size 0)))
+        fixnum? (unsafe-fx>= arg0 0)]
+      [vector-length 'unsafe-vector-length vector?]
       [vector-set!
-        unsafe-vector-set!
+        'unsafe-vector-set!
         vector? fixnum? any/c
         (unsafe-fx< arg1 (unsafe-vector-length arg0)) (unsafe-fx>= arg1 0)]
       [vector-ref
-        unsafe-vector-ref
+        'unsafe-vector-ref
         vector? fixnum?
         (unsafe-fx< arg1 (unsafe-vector-length arg0)) (unsafe-fx>= arg1 0)]))
 
@@ -143,7 +164,8 @@
         (define v (implement-safe-primops-value value))
         (define procs (map implement-safe-primops-proc labels alocs values))
         (define safe-primops
-          (for/fold ([acc '()])
+          ;; need to add vector-init since make-vector calls it
+          (for/fold ([acc (if (set-member? used-prim-fs 'make-vector) `(,vector-init-proc) '())])
                     ([u used-prim-fs])
             (cons (cdr (dict-ref safe-procs u)) acc)))
 
@@ -352,4 +374,11 @@
 
   (check-eval-true '(module (call vector? (call make-vector 2))))
   (check-eval-false '(module (call vector? (void))))
+
+
+  ;; check vector init
+  (check-42
+    '(module
+       (let ([v.1 (call make-vector 8)])
+         (call + 42 (call vector-ref v.1 4)))))
   )
