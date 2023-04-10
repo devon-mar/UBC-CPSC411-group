@@ -2,7 +2,7 @@
 
 (require
   cpsc411/compiler-lib
-  cpsc411/langs/v7)
+  cpsc411/langs/v8)
 
 (provide optimize-predicates)
 
@@ -10,18 +10,24 @@
 ;; Milestone 5 Exercise 12
 ;; Milestone 6 Exercise 15
 ;; Milestone 7 Exercise 7
+;; Milestone 8 Exercise 11
 ;;
 ;; Optimize Nested-asm-lang-fvars programs by analyzing and simplifying predicates.
 (define/contract (optimize-predicates p)
-  (-> nested-asm-lang-fvars-v7? nested-asm-lang-fvars-v7?)
+  (-> nested-asm-lang-fvars-v8? nested-asm-lang-fvars-v8?)
 
   ;; env loc triv -> void
   ;; Update loc to triv in env if it is decided (integer),
   ;; otherwise remove key
-  (define (env-update env loc triv)
+  (define (env-update! env loc triv)
     (if (integer? triv)
         (set-box! env (dict-set (unbox env) loc triv))
         (set-box! env (dict-remove (unbox env) loc))))
+
+  ;; env loc -> void
+  ;; Remove loc in env
+  (define (env-remove! env loc)
+    (set-box! env (dict-remove (unbox env) loc)))
 
   ;; relop -> procedure
   (define (symbol->relop relop)
@@ -43,7 +49,8 @@
       [`bitwise-ior bitwise-ior]
       [`bitwise-xor bitwise-xor]
       ;; arithmetic-shift shifts right for negative integers, hence convert second arg to negative
-      [`arithmetic-shift-right (lambda (x y) (arithmetic-shift x (- 0 y)))]))
+      [`arithmetic-shift-right
+       (lambda (x y) (handle-overflow 64 (arithmetic-shift x (- y))))]))
 
   ;; opand env -> opand
   (define (convert-opand opand env)
@@ -61,7 +68,7 @@
   ;; tail env -> tail
   (define (convert-tail t env)
     (match t
-      [`(jump ,_) t]
+      [`(jump ,_trg) t]
       [`(begin ,effects ... ,tail)
        (define new-effects (convert-effect-list effects env))
        `(begin
@@ -126,12 +133,17 @@
   ;; effect env -> effect
   (define (convert-effect e env)
     (match e
+      [`(set! ,loc_1 (mref ,_loc2 ,_index))
+       (env-remove! env loc_1)
+       e]
       [`(set! ,loc_1 (,binop ,loc_1 ,opand))
-       (env-update env loc_1 (convert-binop binop loc_1 opand env))
-       `(set! ,loc_1 (,binop ,loc_1 ,opand))]
+       (env-update! env loc_1 (convert-binop binop loc_1 opand env))
+       e]
       [`(set! ,loc ,triv)
-       (env-update env loc (convert-triv triv env))
-       `(set! ,loc ,triv)]
+       (env-update! env loc (convert-triv triv env))
+       e]
+      [`(mset! ,_loc ,_index ,_triv)
+       e]
       [`(begin ,effects ...)
        `(begin ,@(convert-effect-list effects env))]
       [`(if ,pred ,effect1 ,effect2)
@@ -185,8 +197,8 @@
   (define-check (check-equal-interp? orig expected)
     (check-equal? (optimize-predicates orig) expected)
     (check-equal?
-      (interp-nested-asm-lang-fvars-v7 (optimize-predicates orig))
-      (interp-nested-asm-lang-fvars-v7 orig)))
+      (interp-nested-asm-lang-fvars-v8 (optimize-predicates orig))
+      (interp-nested-asm-lang-fvars-v8 orig)))
 
   ;; check that optimization did not change the program
   ;; p -> void
@@ -852,4 +864,16 @@
         (set! fv1 15)
         (set! fv1 (bitwise-xor fv1 fv1))
         (begin (set! rax 1) (jump done)))))
+
+  ;; mset! mref
+  (check-no-change?
+    `(module
+      (begin
+        (set! rax 10)
+        (mset! r12 8 15)
+        (set! rax (mref r12 8))
+        (if (= rax 15)
+            (set! rax 1)
+            (set! rax 2))
+        (jump done))))
   )
