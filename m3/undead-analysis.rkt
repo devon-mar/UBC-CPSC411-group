@@ -2,7 +2,7 @@
 
 (require
   cpsc411/compiler-lib
-  cpsc411/langs/v7
+  cpsc411/langs/v8
   "../utils/compiler-utils.rkt")
 
 (provide undead-analysis)
@@ -12,11 +12,12 @@
 ;; Milestone 5 - Exercise 8
 ;; Milestone 6 - Exercise 8
 ;; Milestone 7 - Exercise 7
+;; Milestone 8 Exercise 11
 ;;
 ;; Performs undeadness analysis, decorating the program with undead-set tree.
 ;; Only the info field of the program is modified.
 (define/contract (undead-analysis p)
-  (-> asm-pred-lang-v7/locals? asm-pred-lang-v7/undead?)
+  (-> asm-pred-lang-v8/locals? asm-pred-lang-v8/undead?)
 
   ;; call-undead for the current examining block
   (define call-undead (void))
@@ -24,7 +25,7 @@
   ;; Performs undeadness analysis, decorating the program with undead-set tree.
   ;; Only the info field of the program is modified.
   (define/contract (undead-analysis-p p)
-    (-> asm-pred-lang-v7/locals? asm-pred-lang-v7/undead?)
+    (-> asm-pred-lang-v8/locals? asm-pred-lang-v8/undead?)
     (match p
       [`(module ,info (define ,labels ,infos ,tails) ... ,tail)
        (set! call-undead (list))
@@ -91,6 +92,23 @@
         (values undead-set-tree/rloc? undead-set/rloc?))
 
     (match e
+      [`(mset! ,loc ,index ,triv)
+        (values uo 
+          (undead-analysis-index
+            index
+            (undead-analysis-triv
+              triv
+              (set-add uo loc))))]
+      [`(set! ,loc1 (mref ,loc2 ,index))
+        ;; 1. define loc1 -> set-remove
+        ;; 2. reference loc2 -> set-add
+        ;; 3. reference index -> undead-analysis-index
+        (values uo 
+          (undead-analysis-index
+            index
+            (set-add
+              (set-remove uo loc1)
+              loc2)))]
       [`(set! ,loc (,_binop ,loc ,opand))
         ;; 1. define loc -> set-remove
         ;; 2. reference loc -> set-add
@@ -166,6 +184,17 @@
   (define/contract (undead-analysis-opand o uo)
     (-> any/c undead-set/rloc? undead-set/rloc?)
     (match o
+      [(? int64?) uo]
+      [loc (set-add uo loc)]))
+
+  ;; Returns uo with i if i is a loc,
+  ;; otherwise returns uo.
+  ;;
+  ;; i: index
+  ;; uo: undead-set/rloc?
+  (define/contract (undead-analysis-index i uo)
+    (-> any/c undead-set/rloc? undead-set/rloc?)
+    (match i
       [(? int64?) uo]
       [loc (set-add uo loc)]))
 
@@ -777,6 +806,90 @@
       (set! rax (arithmetic-shift-right rax 2))
       (jump done))
     '((rax)
+      (rax)
+      (rax)
+      (rax)
+      (rax)
+      ()
+      ()))
+
+  ;; Check mref loc
+  (check-ust
+    '()
+    '(begin
+      (set! rax 42)
+      (set! rax (- rax 2))
+      (set! r10 (mref r9 5))
+      (set! rax (bitwise-and rax 2))
+      (set! rax (bitwise-ior rax 31))
+      (set! rax (bitwise-xor rax 15))
+      (set! rax (arithmetic-shift-right rax 2))
+      (jump done))
+    '((rax r9)
+      (r9 rax)
+      (rax)
+      (rax)
+      (rax)
+      (rax)
+      ()
+      ()))
+
+    ;; Check mset loc
+    (check-ust
+    '()
+    '(begin
+      (set! rax 42)
+      (set! rax (- rax 2))
+      (mset! r10 0 1)
+      (set! rax (bitwise-and rax 2))
+      (set! rax (bitwise-ior rax 31))
+      (set! rax (bitwise-xor rax 15))
+      (set! rax (arithmetic-shift-right rax 2))
+      (jump done))
+    '((rax r10)
+      (rax r10)
+      (rax)
+      (rax)
+      (rax)
+      (rax)
+      ()
+      ()))
+
+    ;; Check mset loc and index and triv
+    (check-ust
+    '()
+    '(begin
+      (set! rax 42)
+      (set! rax (- rax 2))
+      (mset! r10 r9 r8)
+      (set! rax (bitwise-and rax 2))
+      (set! rax (bitwise-ior rax 31))
+      (set! rax (bitwise-xor rax 15))
+      (set! rax (arithmetic-shift-right rax 2))
+      (jump done))
+    '((rax r8 r9 r10)
+      (rax r8 r9 r10)
+      (rax)
+      (rax)
+      (rax)
+      (rax)
+      ()
+      ()))
+
+  ;; Check mref loc and idx
+  (check-ust
+    '()
+    '(begin
+      (set! rax 42)
+      (set! rax (- rax 2))
+      (set! r10 (mref r9 r8))
+      (set! rax (bitwise-and rax 2))
+      (set! rax (bitwise-ior rax 31))
+      (set! rax (bitwise-xor rax 15))
+      (set! rax (arithmetic-shift-right rax 2))
+      (jump done))
+    '((rax r8 r9)
+      (r8 r9 rax)
       (rax)
       (rax)
       (rax)
