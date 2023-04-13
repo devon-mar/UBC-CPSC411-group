@@ -2,34 +2,41 @@
 
 (require
   cpsc411/compiler-lib
-  cpsc411/langs/v8)
+  cpsc411/langs/v9)
 
 (provide implement-safe-primops)
 
 ;; Milestone 7 Exercise 4
 ;; Milestone 8 Exercise 3
+;; Milestone 9 Exercise 3
 ;;
 ;; Implement safe primitive operations by inserting procedure definitions for
 ;; each primitive operation which perform dynamic tag checking, to ensure type safety.
 ;;
-;; Any type errors will return (error 2).
-;; Any other argument errors will return (error 3).
+;; Argument type errors will return (error (modulo i+100 uint8-max)) where i is the
+;; argument index in left to right order. For example given the set of arguments '(x y),
+;; a type error on x will return 100 and a type error on y will return 101.
+;;
+;; Any other error on arguments besides type will return 99.
+;;
 ;; All vectors will be initialised to 0.
 (define/contract (implement-safe-primops p)
-  (-> exprs-unique-lang-v8? exprs-unsafe-data-lang-v8?)
+  (-> exprs-unique-lang-v9? exprs-unsafe-data-lang-v9?)
 
-  (define vector-init-label (fresh-label 'vector-init))
+  (define uint8-max 255)
+
+  (define vector-init-aloc (fresh 'safe-vector-init))
   (define vector-init-proc
     (let ([vec (fresh 'vec)]
           [len (fresh 'len)]
           [i (fresh 'i)])
-      `(define ,vector-init-label
+      `(define ,vector-init-aloc
          (lambda (,vec ,len ,i)
            (if (eq? ,len ,i)
              ,vec
              (begin
                (unsafe-vector-set! ,vec ,i 0)
-               (call ,vector-init-label ,vec ,len (unsafe-fx+ ,i 1))))))))
+               (call ,vector-init-aloc ,vec ,len (unsafe-fx+ ,i 1))))))))
 
   ;; keep track of the primops that are actually called in p
   (define used-prim-fs (mutable-set))
@@ -43,7 +50,8 @@
   ;; f if all arguments correspond to the types in types.
   ;; If the arguments are of the wrong type, (error 2) is returned.
   ;; If an argument is of the right type but fails some predicate check, (error 3) is returned.
-  (define (make-safe-primop label f checks)
+  (define/contract (make-safe-primop aloc f checks)
+    (-> aloc? (or/c symbol? procedure?) (listof (or/c symbol? list?)) any/c)
     (define-values (types preds)
       (splitf-at checks symbol?))
 
@@ -75,18 +83,19 @@
                 ([p preds])
         `(if
            ,(replace-placeholders p)
-           ,body (error 3))))
+           ,body (error 99))))
 
-    `(define ,label
+    `(define ,aloc
        (lambda ,vs
          ,(for/fold ([body pred-checks])
                     ([t types]
-                     [v vs])
+                     [v vs]
+                     [i (in-naturals 100)])
             (if (equal? 'any/c t)
               body
               `(if (,t ,v)
                  ,body
-                 (error 2)))))))
+                 (error ,(modulo i uint8-max))))))))
 
   ;; unsafes: must be a quoted symbol or procedure
   ;;
@@ -99,10 +108,10 @@
               ([s (list 'safes ...)]
                [u (list unsafes ...)]
                [types (list (list 'checks ...) ...)])
-      (define l (fresh-label s))
-      (dict-set acc s (cons l (make-safe-primop l u types)))))
+      (define aloc (fresh (string->symbol (format "safe-~a" 's))))
+      (dict-set acc s (cons aloc (make-safe-primop aloc u types)))))
 
-  ;; Dictionary of primop-f to (cons proc-label proc-define)
+  ;; Dictionary of primop-f to (cons proc-aloc proc-define)
   (define safe-procs
     (make-safe-primop-procs
       [* 'unsafe-fx* fixnum? fixnum?]
@@ -122,6 +131,7 @@
       [error? 'error? any/c]
       [not 'not any/c]
       [pair? 'pair? any/c]
+      [procedure? 'procedure? any/c]
       [vector? 'vector? any/c]
       [cons 'cons any/c any/c]
       [car 'unsafe-car pair?]
@@ -130,7 +140,7 @@
         (lambda (size)
           (define tmp (fresh 'tmp))
           `(let ([,tmp (unsafe-make-vector ,size)])
-             (call ,vector-init-label ,tmp ,size 0)))
+             (call ,vector-init-aloc ,tmp ,size 0)))
         fixnum? (unsafe-fx>= arg0 0)]
       [vector-length 'unsafe-vector-length vector?]
       [vector-set!
@@ -140,7 +150,8 @@
       [vector-ref
         'unsafe-vector-ref
         vector? fixnum?
-        (unsafe-fx< arg1 (unsafe-vector-length arg0)) (unsafe-fx>= arg1 0)]))
+        (unsafe-fx< arg1 (unsafe-vector-length arg0)) (unsafe-fx>= arg1 0)]
+      [procedure-arity 'unsafe-procedure-arity procedure?]))
 
   ;; not used
   #;
@@ -150,19 +161,19 @@
       (memq b '(* + - < eq? <= > >=))
       #t))
 
-  ;; value: exprs-unique-lang-v8-value
-  ;; -> exprs-unsafe-data-lang-v8-proc
-  (define/contract (implement-safe-primops-proc label params value)
-    (-> label? (listof aloc?) any/c any/c)
-    `(define ,label
+  ;; value: exprs-unique-lang-v9-value
+  ;; -> exprs-unsafe-data-lang-v9-proc
+  (define/contract (implement-safe-primops-proc aloc params value)
+    (-> aloc? (listof aloc?) any/c any/c)
+    `(define ,aloc
        (lambda ,params ,(implement-safe-primops-value value))))
 
-  ;; exprs-unique-lang-v8-p -> exprs-unsafe-data-lang-v8-p
+  ;; exprs-unique-lang-v9-p -> exprs-unsafe-data-lang-v9-p
   (define (implement-safe-primops-p p)
     (match p
-      [`(module (define ,labels (lambda (,alocs ...) ,values)) ... ,value)
+      [`(module (define ,alocs (lambda (,params ...) ,values)) ... ,value)
         (define v (implement-safe-primops-value value))
-        (define procs (map implement-safe-primops-proc labels alocs values))
+        (define procs (map implement-safe-primops-proc alocs params values))
         (define safe-primops
           ;; need to add vector-init since make-vector calls it
           (for/fold ([acc (if (set-member? used-prim-fs 'make-vector) `(,vector-init-proc) '())])
@@ -174,7 +185,7 @@
            ,@procs
            ,v)]))
 
-  ;; exprs-unique-lang-v8-value -> exprs-unsafe-data-lang-v8-value
+  ;; exprs-unique-lang-v9-value -> exprs-unsafe-data-lang-v9-value
   (define (implement-safe-primops-value v)
     (match v
       [`(call ,v ,vs ...)
@@ -192,10 +203,11 @@
           ,(implement-safe-primops-value v3))]
       [_ (implement-safe-primops-triv v)]))
 
-  ;; exprs-unique-lang-v8-triv -> exprs-unsafe-data-lang-v8-triv
+  ;; exprs-unique-lang-v9-triv -> exprs-unsafe-data-lang-v9-triv
   (define (implement-safe-primops-triv t)
     (match t
-      [(? label?) t]
+      [`(lambda (,alocs ...) ,value)
+        `(lambda ,alocs ,(implement-safe-primops-value value))]
       [(? aloc?) t]
       [(? int61?) t]
       [#t t]
@@ -206,10 +218,10 @@
       [(? ascii-char-literal?) t]
       [_ (implement-safe-primops-prim-f t)]))
 
-  ;; Returns the label of the safe primop corresponding to prim-f
+  ;; Returns the aloc of the safe primop corresponding to prim-f
   ;; and marks the prim-f p as used.
   ;;
-  ;; exprs-unique-lang-v8-prim-f -> exprs-unsafe-data-lang-v8-label
+  ;; exprs-unique-lang-v9-prim-f -> exprs-unsafe-data-lang-v9-aloc
   (define (implement-safe-primops-prim-f p)
     (mark-prim-f-used! p)
     (car (dict-ref safe-procs p)))
@@ -221,65 +233,68 @@
   
   (define-check (check-42 p)
     (check-equal?
-      (interp-exprs-unsafe-data-lang-v8 (implement-safe-primops p))
+      (interp-exprs-unsafe-data-lang-v9 (implement-safe-primops p))
       42))
 
   (define-check (check-eval-true p)
     (check-equal?
-      (interp-exprs-unsafe-data-lang-v8 (implement-safe-primops p))
+      (interp-exprs-unsafe-data-lang-v9 (implement-safe-primops p))
       #t))
   (define-check (check-eval-false p)
     (check-equal?
-      (interp-exprs-unsafe-data-lang-v8 (implement-safe-primops p))
+      (interp-exprs-unsafe-data-lang-v9 (implement-safe-primops p))
       #f))
 
   (check-42 '(module (call + 40 2)))
   (check-42 '(module (call * 21 2)))
   (check-42 '(module (call - 50 8)))
 
-  (define-check (check-error-2 p)
+  (define-check (check-error-num num p)
     (check-equal?
-      (interp-exprs-unsafe-data-lang-v8 (implement-safe-primops p))
-      '(error 2)))
-  (define-check (check-error-3 p)
+      (interp-exprs-unsafe-data-lang-v9 (implement-safe-primops p))
+      `(error ,num)))
+  (define-check (check-error-99 p)
     (check-equal?
-      (interp-exprs-unsafe-data-lang-v8 (implement-safe-primops p))
-      '(error 3)))
+      (interp-exprs-unsafe-data-lang-v9 (implement-safe-primops p))
+      '(error 99)))
 
   (define-syntax-rule (binop-invalid-arg-type-tests binops ...)
-    (test-case
-      (format "binop-invalid-arg-type ~a" 'binop)
-      (begin
-        (check-error-2 '(module (call binops #t 2)))
-        (check-error-2 '(module (call binops 2 #t)))
-        (check-error-2 '(module (call binops #t #t)))
+    (begin
+      (test-case
+        (format "binop-invalid-arg-type ~a" 'binops)
+        (check-error-num 100 '(module (call binops #t 2)))
+        (check-error-num 101 '(module (call binops 2 #t)))
+        (check-error-num 101 '(module (call binops #t #t)))
 
-        (check-error-2 '(module (call binops #f 2)))
-        (check-error-2 '(module (call binops 2 #f)))
-        (check-error-2 '(module (call binops #f #f)))
+        (check-error-num 100 '(module (call binops #f 2)))
+        (check-error-num 101 '(module (call binops 2 #f)))
+        (check-error-num 101 '(module (call binops #f #f)))
 
-        (check-error-2 '(module (call binops #\a 2)))
-        (check-error-2 '(module (call binops 2 #\a)))
-        (check-error-2 '(module (call binops #\a #\b)))
+        (check-error-num 100 '(module (call binops #\a 2)))
+        (check-error-num 101 '(module (call binops 2 #\a)))
+        (check-error-num 101 '(module (call binops #\a #\b)))
 
-        (check-error-2 '(module (call binops (void) 2)))
-        (check-error-2 '(module (call binops 2 (void))))
-        (check-error-2 '(module (call binops (void) (void))))
+        (check-error-num 100 '(module (call binops (void) 2)))
+        (check-error-num 101 '(module (call binops 2 (void))))
+        (check-error-num 101 '(module (call binops (void) (void))))
 
-        (check-error-2 '(module (call binops empty 2)))
-        (check-error-2 '(module (call binops 2 empty)))
-        (check-error-2 '(module (call binops empty empty)))
+        (check-error-num 100 '(module (call binops empty 2)))
+        (check-error-num 101 '(module (call binops 2 empty)))
+        (check-error-num 101 '(module (call binops empty empty)))
 
-        (check-error-2 '(module (call binops (call make-vector 2) 2)))
-        (check-error-2 '(module (call binops 2 (call make-vector 2))))
-        (check-error-2 '(module (call binops (call make-vector 2) (call make-vector 2))))
+        (check-error-num 100 '(module (call binops (call make-vector 2) 2)))
+        (check-error-num 101 '(module (call binops 2 (call make-vector 2))))
+        (check-error-num 101 '(module (call binops (call make-vector 2) (call make-vector 2))))
 
-        (check-error-2 '(module (call binops (call cons 1 2) 2)))
-        (check-error-2 '(module (call binops 2 (call cons 1 2))))
-        (check-error-2 '(module (call binops (call cons 1 2) (call cons 1 2))))) ...))
+        (check-error-num 100 '(module (call binops (call cons 1 2) 2)))
+        (check-error-num 101 '(module (call binops 2 (call cons 1 2))))
+        (check-error-num 101 '(module (call binops (call cons 1 2) (call cons 1 2))))
+
+        (check-error-num 100 '(module (call binops (lambda () 42) 2)))
+        (check-error-num 101 '(module (call binops 2 (lambda () 42))))
+        (check-error-num 101 '(module (call binops (lambda () 42) (lambda () 42))))) ...))
 
   (binop-invalid-arg-type-tests * + - < <= > >=)
-
 
   (check-eval-true '(module (call < 1 2)))
   (check-eval-false '(module (call < 3 2)))
@@ -324,13 +339,13 @@
   (check-42 '(module 42))
   (check-42
     '(module
-       (define L.ft.1 (lambda () 42))
-       (call L.ft.1)))
+       (define ft.1 (lambda () 42))
+       (call ft.1)))
 
   (check-42
     '(module
-       (define L.ft.1 (lambda (f.1) (call f.1 40 2)))
-       (call L.ft.1 +)))
+       (define ft.1 (lambda (f.1) (call f.1 40 2)))
+       (call ft.1 +)))
 
   (check-42
     '(module
@@ -347,24 +362,24 @@
          2)))
 
   ;; negative size
-  (check-error-3 '(module (call make-vector -1)))
+  (check-error-99 '(module (call make-vector -1)))
   ;; out of bounds read
-  (check-error-3 '(module (call vector-ref (call make-vector 1) 1)))
-  (check-error-3 '(module (call vector-ref (call make-vector 1) 2)))
+  (check-error-99 '(module (call vector-ref (call make-vector 1) 1)))
+  (check-error-99 '(module (call vector-ref (call make-vector 1) 2)))
   ;; negative read index
-  (check-error-3 '(module (call vector-ref (call make-vector 1) -1)))
+  (check-error-99 '(module (call vector-ref (call make-vector 1) -1)))
   ;; out of bounds write
-  (check-error-3 '(module (call vector-set! (call make-vector 1) 1 (void))))
-  (check-error-3 '(module (call vector-set! (call make-vector 1) 2 (void))))
+  (check-error-99 '(module (call vector-set! (call make-vector 1) 1 (void))))
+  (check-error-99 '(module (call vector-set! (call make-vector 1) 2 (void))))
   ;; negative write index
-  (check-error-3 '(module (call vector-set! (call make-vector 1) -1 (void))))
+  (check-error-99 '(module (call vector-set! (call make-vector 1) -1 (void))))
 
-  (check-error-2 '(module (call vector-length (void))))
-  (check-error-2 '(module (call vector-ref (void) 0)))
-  (check-error-2 '(module (call vector-set! (void) 0 0)))
+  (check-error-num 100 '(module (call vector-length (void))))
+  (check-error-num 100 '(module (call vector-ref (void) 0)))
+  (check-error-num 100 '(module (call vector-set! (void) 0 0)))
 
-  (check-error-2 '(module (call car (void))))
-  (check-error-2 '(module (call cdr (void))))
+  (check-error-num 100 '(module (call car (void))))
+  (check-error-num 100 '(module (call cdr (void))))
 
   (check-42 '(module (call car (call cons 42 #\a))))
   (check-42 '(module (call cdr (call cons (void) 42))))
@@ -375,6 +390,15 @@
   (check-eval-true '(module (call vector? (call make-vector 2))))
   (check-eval-false '(module (call vector? (void))))
 
+  (check-eval-true '(module (call procedure? (lambda () 42))))
+  (check-eval-false '(module (call procedure? (void))))
+
+  (check-42
+    `(module
+       (call procedure-arity
+             (lambda
+               ,(for/fold ([acc '()]) ([i 42]) (cons (fresh i) acc))
+               (void)))))
 
   ;; check vector init
   (check-42
