@@ -2,7 +2,49 @@
 
 (require
  cpsc411/compiler-lib
- cpsc411/ptr-run-time)
+ cpsc411/ptr-run-time
+
+ "m2/generate-x64.rkt"
+ "m2/implement-fvars.rkt"
+ "m2/normalize-bind.rkt"
+ "m2/patch-instructions.rkt"
+ "m2/replace-locations.rkt"
+ "m2/select-instructions.rkt"
+ "m2/sequentialize-let.rkt"
+ "m2/uncover-locals.rkt"
+ "m2/uniquify.rkt"
+
+ "m3/assign-registers.rkt"
+ "m3/conflict-analysis.rkt"
+ "m3/undead-analysis.rkt"
+
+ "m4/expose-basic-blocks.rkt"
+ "m4/flatten-program.rkt"
+ "m4/optimize-predicates.rkt"
+ "m4/resolve-predicates.rkt"
+
+ "m5/impose-calling-conventions.rkt"
+
+ "m6/allocate-frames.rkt"
+ "m6/assign-call-undead-variables.rkt"
+ "m6/assign-frame-variables.rkt"
+
+ "m7/implement-safe-primops.rkt"
+ "m7/specify-representation.rkt"
+ "m7/remove-complex-opera.rkt"
+
+ "m8/expose-allocation-pointer.rkt"
+ "m8/implement-mops.rkt"
+
+ "m9/implement-safe-call.rkt"
+ "m9/define->letrec.rkt"
+ "m9/optimize-direct-calls.rkt"
+ "m9/dox-lambdas.rkt"
+ "m9/uncover-free.rkt"
+ "m9/convert-closures.rkt"
+ "m9/optimize-unknown-calls.rkt"
+ "m9/hoist-lambdas.rkt"
+ "m9/implement-closures.rkt")
 
 (provide
  uniquify
@@ -42,77 +84,6 @@
 
 ;; TODO: Fill in.
 ;; You'll want to merge milestone-8 code in
-
-;; Stubs; remove or replace with your definitions.
-(define-values (uniquify
-                implement-safe-primops
-                implement-safe-call
-                define->letrec
-                optimize-direct-calls
-                dox-lambdas
-                uncover-free
-                convert-closures
-                optimize-known-calls
-                hoist-lambdas
-                implement-closures
-                specify-representation
-                remove-complex-opera*
-                sequentialize-let
-                normalize-bind
-                impose-calling-conventions
-                select-instructions
-                expose-allocation-pointer
-                uncover-locals
-                undead-analysis
-                conflict-analysis
-                assign-call-undead-variables
-                allocate-frames
-                assign-registers
-                assign-frame-variables
-                replace-locations
-                implement-fvars
-                optimize-predicates
-                expose-basic-blocks
-                resolve-predicates
-                flatten-program
-                patch-instructions
-                implement-mops
-                generate-x64)
-  (values
-   values
-   values
-   values
-   values
-   values
-   values
-   values
-   values
-   values
-   values
-   values
-   values
-   values
-   values
-   values
-   values
-   values
-   values
-   values
-   values
-   values
-   values
-   values
-   values
-   values
-   values
-   values
-   values
-   values
-   values
-   values
-   values
-   values
-   values))
 
 (module+ test
   (require
