@@ -144,7 +144,10 @@
         fixnum? (unsafe-fx>= arg0 0)]
       [vector-length 'unsafe-vector-length vector?]
       [vector-set!
-        'unsafe-vector-set!
+        (lambda (vec idx val)
+          `(begin
+             (unsafe-vector-set! ,vec ,idx ,val)
+             (void)))
         vector? fixnum? any/c
         (unsafe-fx< arg1 (unsafe-vector-length arg0)) (unsafe-fx>= arg1 0)]
       [vector-ref
