@@ -30,17 +30,17 @@
        `(set! ,reg1 ,(reg-index->addr reg2 index))]
       ;; For:
       ;; (set! reg_1 (binop reg_1 int32))
- 	 	  ;; (set! reg_1 (binop reg_1 loc))
+      ;; (set! reg_1 (binop reg_1 loc))
       [`(set! ,_reg1 (,_binop ,_reg1 ,_)) s]
       ;; For:
       ;; (set! addr int32)
- 	 		;; (set! addr trg)
- 	 	  ;; (set! reg loc)
- 	 	  ;; (set! reg triv)
+      ;; (set! addr trg)
+      ;; (set! reg loc)
+      ;; (set! reg triv)
       [`(set! ,_ ,_) s]
       ;; For:
       ;; (mset! reg_1 index int32)
- 	 	  ;; (mset! reg_1 index trg)
+      ;; (mset! reg_1 index trg)
       [`(mset! ,reg ,index ,int32-or-trg)
        `(set! ,(reg-index->addr reg index) ,int32-or-trg)]
       [`(with-label ,label ,st)
