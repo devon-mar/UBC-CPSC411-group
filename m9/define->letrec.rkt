@@ -4,6 +4,8 @@
   cpsc411/compiler-lib
   cpsc411/langs/v9)
 
+(provide define->letrec)
+
 ;; Milestone 9 Exercise 5
 ;;
 ;; Transform all top-level bindings into local bindings.
