@@ -4,6 +4,8 @@
   cpsc411/compiler-lib
   cpsc411/langs/v9)
 
+(provide dox-lambdas)
+
 ;; Milestone 9 Exercise 7
 ;;
 ;; Explicitly binds all procedures to abstract locations.
