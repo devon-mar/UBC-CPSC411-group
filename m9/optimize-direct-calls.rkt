@@ -2,6 +2,8 @@
 
 (require cpsc411/langs/v9)
 
+(provide optimize-direct-calls)
+
 ;; Inline all direct calls to first-class procedures.
 (define/contract (optimize-direct-calls p)
   (-> just-exprs-lang-v9? just-exprs-lang-v9?)
