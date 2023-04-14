@@ -145,7 +145,7 @@
         (normalize-bind-set a v)]
       [`(mset! ,a ,o ,v)
         (normalize-bind-mset a o v)]
-			;; modified template - removed tail effect.
+      ;; modified template - removed tail effect.
       [`(begin ,es ...)
         `(begin
            ,@(map normalize-bind-effect es))]
@@ -297,29 +297,29 @@
         x.3)))
 
   ;; M3 tests
-	(define-check (check-42 p)
-		(check-equal?
-			(interp-imp-cmf-lang-v8 (normalize-bind p))
-			42))
+  (define-check (check-42 p)
+    (check-equal?
+      (interp-imp-cmf-lang-v8 (normalize-bind p))
+      42))
 
   (check-42
-	  ;; tail/value
-	  ;; value/triv
+    ;; tail/value
+    ;; value/triv
     '(module 42))
 
-	(check-42
-		'(module
-	     ;; pred/(relop triv triv)
-	     ;; pred/(true)
+  (check-42
+    '(module
+       ;; pred/(relop triv triv)
+       ;; pred/(true)
        (if (true)
-	       ;; pred/(not pred)
+         ;; pred/(not pred)
          (if (not (true)) 0 42)
          ;; pred/(false)
          (if (false) 1 0))))
 
   (check-42
     '(module
-	     ;; value/(if pred value value)
+       ;; value/(if pred value value)
        (if (begin (set! x.1 (if (true) 20 0)) (= x.1 20))
          42
          0)))
@@ -333,12 +333,12 @@
 
   (check-42
     '(module
-	     ;; tail/(begin effect ... tail)
+       ;; tail/(begin effect ... tail)
        (begin
          (set! x.1 1)
          (set! x.2 41)
-	       ;; tail/(if pred tail tail)
-	       ;; value/(binop triv triv)
+         ;; tail/(if pred tail tail)
+         ;; value/(binop triv triv)
          (if (false) 40 (+ x.2 x.1)))))
 
   (check-42
@@ -355,7 +355,7 @@
   (check-42
     '(module
        (begin
-	       ;; effect/(begin effect ... effect)
+         ;; effect/(begin effect ... effect)
          (begin
            (set!
              x.1
@@ -364,7 +364,7 @@
                (set! x.2 10)
                (set! x.3 20)
                (+ x.2 x.3)))
-	         ;; effect/(if pred effect effect)
+           ;; effect/(if pred effect effect)
            (if (true) (set! x.4 12) (set! x.4 40)))
          (+ x.1 x.4))))
 
