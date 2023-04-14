@@ -167,7 +167,7 @@
 (module+ test
   (require rackunit)
 
-  (define (check-42 p)
+  (define-check (check-42 p)
     (check-equal?
       (interp-lam-opticon-lang-v9 (dox-lambdas p))
       42))
