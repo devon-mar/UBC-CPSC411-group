@@ -4,8 +4,7 @@
   append-e
   list-equiv?
   dict-equal?
-  or-checks
-  and-checks)
+  or-checks)
 
 ;; General util functions
 
