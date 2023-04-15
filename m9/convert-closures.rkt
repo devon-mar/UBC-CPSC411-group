@@ -32,7 +32,7 @@
              `(let ([,tmp ,nvc])
                 (closure-call ,tmp ,tmp ,@new-vs))))]
       [`(letrec ([,alocs (lambda ,infos (,params ...) ,vs)] ...) ,vt)
-       (define labels (for/list ([a alocs]) (fresh-label 'fn)))
+       (define labels (for/list ([a alocs]) (fresh-label a)))
        (define frees (for/list ([info infos]) (info-ref info 'free)))
        (define lambdas
          (for/list ([ps params] [v vs] [free frees])
