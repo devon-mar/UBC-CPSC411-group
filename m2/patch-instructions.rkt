@@ -2,7 +2,8 @@
 
 (require
   cpsc411/compiler-lib
-  cpsc411/langs/v8)
+  cpsc411/langs/v8
+  "../utils/gen-utils.rkt")
 
 (provide patch-instructions)
 
@@ -39,72 +40,65 @@
         `(begin
            ,@(append-map patch-instructions-s s))]))
 
-  ;; Syntax:
-  ;; (use-tmp
-  ;;   ([value (or/c boolean? (-> any/c boolean?)) ...])
-  ;;   (-> value/register? paren-x64-mops-v8-s)
-  ;;   resolver-function)
+  ;; Exception struct for when there are no more patch registers
+  ;; Constructor: string continuation-mark-set -> exn:no-more-patch-regs
+  (struct exn:no-more-patch-regs exn:fail ())
+
+  ;; -> Exception
+  ;; Raise the error for when there are no more patch registers
+  (define (raise-no-more-patch-regs)
+    (raise
+      (exn:no-more-patch-regs
+        "No more patch registers"
+        (current-continuation-marks))))
+
+  ;; ([triv (triv -> boolean)])
+  ;; (triv -> paren-x64-mops-v8-s))
+  ;; -> (List-of paren-x64-mops-v8-s) or exn:no-more-patch-regs
   ;;
-  ;; value must be able to go in the RHS of a set!
-  ;; f will be called with N args where N is the number of values given to use-tmp.
-  ;; each arg will either be the given value or a temporary register.
-  ;; Takes optional resolve-function for when there are no more patch registers
-  (define-syntax use-tmp
-    (syntax-rules ()
-      [(use-tmp ([vs bs ...] ...) f)
-       (use-tmp ([vs bs ...] ...) f (lambda _ (error "no more patch registers")))]
-      [(use-tmp ([vs bs ...] ...) f r)
-       (use-tmp-impl (list vs ...) (list (list bs ...) ...) f r)]))
-  ;; (List-of triv)
-  ;; (List-of boolean|(any -> boolean))
-  ;; (triv -> boolean)
-  ;; ((List-of triv) (List-of paren-x64-mops-v8-s)
-  ;;  -> (List-of triv) (List-of paren-x64-mops-v8-s) (List-of reg))
-  ;; -> (List-of paren-x64-mops-v8-s)
-  ;; Use tmp registers for unsupported 's'. See above; do not call directly!
-  (define (use-tmp-impl vs bs f resolve)
-    ;; Return a concrete boolean value from bs and v.
-    (define/contract (eval-bs bs v)
-      (-> (listof (or/c boolean? (-> any/c boolean?))) any/c boolean?)
-      (let f ([bs bs])
-        (cond
-          [(empty? bs) #f]
-          [(or (and (boolean? (car bs)) (car bs))
-               (and (procedure? (car bs)) ((car bs) v)))
-           #t]
-          [else (f (cdr bs))])))
-
-    (for/fold ([new-vs '()]
-               [s '()]
+  ;; triv ::= label|int64|reg|addr
+  ;;
+  ;; Use patch registers for unsupported 's'.
+  ;; 'create-s' will be called where each arg will either be the value in 'vals' or
+  ;; a patch register if the check? in checks returns true (i.e. it is unsupported).
+  ;; Returns the list with 'set!' for setting the unsupported 'vals' to patch registers
+  ;; and the 'set!' created by 'create-s'.
+  ;; Raises exn:no-more-patch-regs if we run out of patch registers.
+  (define-syntax-rule (use-tmp ([vals checks] ...) create-s)
+    (for/fold ([new-vals '()]
+               [set-list '()]
                [regs (current-patch-instructions-registers)]
-               #:result `(,@s ,@(apply f new-vs)))
-              ([v vs]
-               [b bs])
+               #:result `(,@set-list ,@(apply create-s new-vals)))
+              ([val (list vals ...)]
+               [check? (list checks ...)])
       (cond
-        [(eval-bs b v)
-         (when (empty? regs)
-           (set!-values (new-vs s regs) (resolve new-vs s)))
+        [(check? val)
+         (when (empty? regs) (raise-no-more-patch-regs))
          (values
-           (append new-vs (list (car regs)))
-           (append s `((set! ,(car regs) ,v)))
+           (append new-vals (list (car regs)))
+           (append set-list `((set! ,(car regs) ,val)))
            (cdr regs))]
-        [else (values (append new-vs (list v)) s regs)])))
+        [else
+         (values
+           (append new-vals (list val))
+           set-list
+           regs)])))
 
-  ;; (List-of triv) (List-of paren-x64-mops-v8-s)
-  ;; -> (List-of triv) (List-of paren-x64-mops-v8-s) (List-of reg)
+  ;; addr addr|int64 addr|int64
+  ;; -> (List-of paren-x64-mops-v8-s) or exn:no-more-patch-regs
   ;; Resolve running out of patch-instructions-registers in patching memset!
-  ;; by adding the reg and the index together and freeing a patch register
-  (define (resolve-memset-patch new-vs s)
-    (unless (>= (length new-vs) 2)
-      (error "no more patch registers"))
-    (define reg (first new-vs))
-    (define index (second new-vs))
-    (unless (set-member? (current-patch-instructions-registers) index)
-      (error "no more patch registers"))
-    (values
-      (cons reg (cons 0 (rest (rest new-vs))))
-      (append s `((set! ,reg (+ ,reg ,index))))
-      (list index)))
+  ;; by adding the reg and the index together and freeing a patch register.
+  ;; Raises exn:no-more-patch-regs if we run out of patch registers.
+  (define (resolve-memset-patch loc index triv)
+    (unless (>= (length (current-patch-instructions-registers)) 2)
+      (raise-no-more-patch-regs))
+    (define tmp0 (first (current-patch-instructions-registers)))
+    (define tmp1 (second (current-patch-instructions-registers)))
+    `((set! ,tmp0 ,loc)
+      (set! ,tmp1 ,index)
+      (set! ,tmp0 (+ ,tmp0 ,tmp1))
+      (set! ,tmp1 ,triv)
+      (mset! ,tmp0 0 ,tmp1)))
 
   ;; Use tmp for the location receiving the value
   ;; loc (loc -> boolean?) (loc -> (List-of paren-x64-mops-v8-s))
@@ -128,14 +122,13 @@
         ;; _     _     addr|int64  | Y
         (use-tmp
           ([loc2 addr?]
-           [index addr? big-int?])
+           [index (or-checks addr? big-int?)])
           (lambda (r2 i)
             (use-tmp-rec
               loc1
               addr?
               (lambda (r1)
-                `((set! ,r1 (mref ,r2 ,i)))))))
-      ]
+                `((set! ,r1 (mref ,r2 ,i)))))))]
       [`(set! ,loc (,b ,loc ,o))
         ;; para-asm-lang-v8        | Need tmp for o?
         ;; ------------------------|----------
@@ -168,8 +161,9 @@
         ;; loc/addr triv/label          | N
         (use-tmp
           ([triv
-             (and (addr? loc)
-                  (or (big-int? triv) (addr? triv)))])
+            (lambda (t)
+              (and (addr? loc)
+                   (or (big-int? t) (addr? t))))])
           (lambda (v) `((set! ,loc ,v))))]
       [`(mset! ,loc ,index ,triv)
         ;; para-asm-lang-v8                 | Need tmp?
@@ -180,13 +174,14 @@
         ;; _     int64     _                | Y
         ;; _     _         addr             | Y
         ;; _     _         int64            | Y
-        (use-tmp
-          ([loc addr?]
-           [index big-int? addr?]
-           [triv big-int? addr?])
-          (lambda (reg index iort)
-            `((mset! ,reg ,index ,iort)))
-          resolve-memset-patch)]
+        (with-handlers ([exn:no-more-patch-regs?
+                         (lambda (e) (resolve-memset-patch loc index triv))])
+          (use-tmp
+            ([loc addr?]
+             [index (or-checks big-int? addr?)]
+             [triv (or-checks big-int? addr?)])
+            (lambda (reg index iort)
+              `((mset! ,reg ,index ,iort)))))]
       [`(jump ,trg)
         ;; label, reg, or addr -> reg or label
         (use-tmp
@@ -201,7 +196,7 @@
           ;; l must be a reg
           ([l addr?]
            ;; @278
-           [o addr? big-int?])
+           [o (or-checks addr? big-int?)])
           (lambda (r o) `((compare ,r ,o))))]
       [`(jump-if ,r ,t)
         (if (label? t)
@@ -266,9 +261,9 @@
       ['+ (void)]
       ['- (void)]
       ['bitwise-and (void)]
- 	 		['bitwise-ior (void)]
- 	 	  ['bitwise-xor (void)]
- 	 	  ['arithmetic-shift-right (void)]))
+      ['bitwise-ior (void)]
+      ['bitwise-xor (void)]
+      ['arithmetic-shift-right (void)]))
 
   ;; relop -> relop
   (define (invert-relop r)
