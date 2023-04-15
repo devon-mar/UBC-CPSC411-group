@@ -160,8 +160,7 @@
 (module+ test
   (require
     rackunit
-    "../utils/gen-utils.rkt"
-    "../utils/test-utils.rkt")
+    "../utils/gen-utils.rkt")
 
   ;; base cases
   (check-equal?
