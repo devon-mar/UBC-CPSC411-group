@@ -48,7 +48,8 @@
        (define new-bound (set-union bound alocs))
        (define-values (new-vt vt-fa)
          (uncover-free-value vt new-bound))
-       (define new-fa (apply set-union (set-subtract vt-fa alocs) vs-fas))
+       ;; for letrecs, alocs in RHS vs can be bound by the LHS aloc
+       (define new-fa (set-subtract (apply set-union vt-fa vs-fas) alocs))
        (values
          `(letrec ,aloc-lambda-pairs ,new-vt)
          new-fa)]
@@ -58,6 +59,7 @@
        (define new-bound (set-union bound alocs))
        (define-values (new-vt vt-fa)
          (uncover-free-value vt new-bound))
+       ;; for lets, alocs in RHS are not bound by the LHS aloc
        (define new-fa (apply set-union (set-subtract vt-fa alocs) vs-fas))
        (values
          `(let ,(map list alocs new-vs) ,new-vt)
@@ -306,6 +308,22 @@
                              (unsafe-vector-length v.3))))])
           (unsafe-procedure-call fn.1 5 v.4))))
     (check-free? info1 '(a.1 b.1 c.1 v.1 v.2 v.3)))
+
+  ;; self-ref free aloc in letrec
+  (check-equal?
+    (uncover-free
+      `(module
+        (letrec ([f.1 (lambda ()
+                        (letrec ([x.1 (lambda ()
+                                        (unsafe-procedure-call x.1))])
+                          x.1))])
+          f.1)))
+    `(module
+      (letrec ([f.1 (lambda ((free ())) ()
+                      (letrec ([x.1 (lambda ((free (x.1))) ()
+                                      (unsafe-procedure-call x.1))])
+                        x.1))])
+        f.1)))
 
   ;; free aloc in let/letrec
   (check-match
