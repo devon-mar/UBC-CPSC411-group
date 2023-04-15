@@ -55,12 +55,38 @@
   (define (implement-closures-value v)
     (match 
       [`(closure-ref ,v1 ,v2)
-        (void)]
-      [`(closure-call ,v vs ...)
-        (void)]
+        `(unsafe-procedure-ref ,v1 ,v2)]
+      [`(closure-call ,v ,vs ...)
+        `(call (unsafe-procedur-label ,v) ,@vs)]
+      [`(cletrec ([,alocs (make-closure ,labels ,arity ,vs)] ...) ,value)
+        (define generate-let
+          (lambda (value)
+            (lambda (body)
+              (lambda (assignments)
+                `(let ,assignments (begin ,@body ,value))))))
+        ;; ([,aloc (make-procedure ,label ,arity ,n)] ...)
+        (define let-assignments 
+          (for/fold
+            ([acc '()])
+            ([a alocs]
+            [ar arity]
+            [v-list vs])
+            (cons `[,a (make-procedure ,label ,ar ,(length v-list))] acc)))
+        (define let-body 
+          (for/fold
+            ([outer-acc '()])
+            ([a alocs]
+             [ar arity]
+             [v-list vs])
+              (append 
+                (for/fold
+                  ([inner-acc '()])
+                  ([v v-list]
+                  [idx (range (length v-list))])
+                  (cons `(unsafe-procedure-set! ,a ,idx ,v) inner-acc))
+                outer-acc)))
+        (((generate-let let-assignments) let-body) value)]
       [`(call ,v ,vs ...)
-        (void)]
-      [`(cletrec ([,alocs (lambda (,params ...) ,vs)] ...) ,v)
         (void)]
       [`(let ([,as ,vs] ...) ,v)
         (void)]
