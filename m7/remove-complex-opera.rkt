@@ -53,7 +53,7 @@
       [`(,relop ,v1 ,v2)
        ;; needs (relop opand opand)
        (use-let-values
-         (list opand?)
+         (list opand? opand?)
          (map remove-complex-opera-value (list v1 v2))
          (lambda (opand1 opand2)
            `(,relop ,opand1 ,opand2)))]))
@@ -78,8 +78,8 @@
  	 	  [`(call ,vc ,vs ...)
        ;; needs (call triv opand ...)
        (use-let-values
-         (list triv? opand?)
-         (map remove-complex-opera-value (cons vc vs))
+         (list* triv? (make-list (length vs) opand?))
+         (map remove-complex-opera-value (list* vc vs))
          (lambda vals
            (define triv (first vals))
            (define opands (rest vals))
@@ -101,7 +101,7 @@
       [`(,binop ,v1 ,v2)
        ;; needs (binop opand opand)
        (use-let-values
-         (list opand?)
+         (list opand? opand?)
          (map remove-complex-opera-value (list v1 v2))
          (lambda (opand1 opand2)
            `(,binop ,opand1 ,opand2)))]
@@ -112,44 +112,38 @@
     (match e
       [`(mset! ,v1 ,v2 ,v3)
        ;; needs (mset! aloc opand value)
+       (define new-vs (map remove-complex-opera-value (list v1 v2 v3)))
        (use-let-values
-         (list aloc? opand?)
-         (map remove-complex-opera-value (list v1 v2))
-         (lambda (aloc opand)
-           `(mset!
-             ,aloc
-             ,opand
-             ,(remove-complex-opera-value v3))))]
-      [`(begin ,effects ...) ;; modified template - removed tail effect
-       `(begin ,@(map remove-complex-opera-effect effects))]))
+         (list aloc? opand? (lambda (_) #t))
+         new-vs
+         (lambda (aloc opand value)
+           `(mset! ,aloc ,opand ,value)))]
+      [`(begin ,effects ... ,effect-t)
+       `(begin
+          ,@(map remove-complex-opera-effect effects)
+          ,(remove-complex-opera-effect effect-t))]))
 
   ;; (List-of (exprs-bits-lang-v8-value -> boolean))
   ;; (List-of exprs-bits-lang-v8-value)
-  ;; ((List-of exprs-bits-lang-v8-value) -> values-bits-lang-v8-value|effect)
+  ;; (exprs-bits-lang-v8-value ... -> values-bits-lang-v8-value|effect)
   ;; -> values-bits-lang-v8-value|effect
   ;; Use lets to bind unsupported values to alocs
   ;; by taking in a list of checks that checks whether a value is supported in Values Bits Lang,
   ;; a list of supported/unsupported values that are inside of the outer structure
-  ;; and a function that will create the outer structure from a list of supported values.
+  ;; and a function that will create the outer structure from supported values.
   ;; (If the 'check-list' is shorter than 'vs', it'll use the final check for the rest.)
   (define (use-let-values check-list vs fn)
-    (define-values (args aloc-vs _)
+    (define-values (args aloc-vs)
       (for/fold ([args '()]
-                 [aloc-vs '()]
-                 [check-list check-list])
-                ([v vs])
-        (if ((first check-list) v)
+                 [aloc-vs '()])
+                ([v vs]
+                 [check? check-list])
+        (if (check? v)
             (values (append-e args v)
-                    aloc-vs
-                    (if (empty? (rest check-list))
-                        check-list
-                        (rest check-list)))
+                    aloc-vs)
             (let ([new-aloc (fresh)])
               (values (append-e args new-aloc)
-                      (append-e aloc-vs (list new-aloc v))
-                      (if (empty? (rest check-list))
-                          check-list
-                          (rest check-list)))))))
+                      (append-e aloc-vs (list new-aloc v)))))))
     (if (empty? aloc-vs)
         (apply fn args)
         `(let ,aloc-vs ,(apply fn args))))
