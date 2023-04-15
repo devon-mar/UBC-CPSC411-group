@@ -35,12 +35,6 @@
 (define (or-checks . check-list)
   (lambda (value) (ormap (lambda (check) (check value)) check-list)))
 
-;; (any -> boolean) ... -> (any -> boolean)
-;; Combine the checks to create one check such that it returns true
-;; iff all of the checks in check-list passes with value
-(define (and-checks . check-list)
-  (lambda (value) (andmap (lambda (check) (check value)) check-list)))
-
 (module+ test
   (require rackunit)
   ;; append-e tests
@@ -92,17 +86,4 @@
   (check-true ((or-checks string? string? string? string? string? integer?) "world"))
   ;; all falses
   (check-false ((or-checks falsefn string? falsefn list?) 5))
-
-  ;; and-checks tests
-  (check-true ((and-checks) 5))
-  (check-true ((and-checks integer?) 5))
-  (check-false ((and-checks string?) 10))
-  ;; all trues
-  (check-true ((and-checks truefn integer? truefn) 1))
-  ;; one true, many false
-  (check-false ((and-checks falsefn falsefn falsefn truefn falsefn falsefn) "hi"))
-  ;; many true, one false
-  (check-false ((and-checks string? string? string? string? string? integer?) "world"))
-  ;; all falses
-  (check-false ((and-checks falsefn string? falsefn list?) 5))
   )
