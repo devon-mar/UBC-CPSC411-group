@@ -8,7 +8,7 @@
 
 ;; Milestone 9 Exercise 12
 (define/contract (implement-closures p)
-  (-> hoisted-lang-v9 proc-exposed-lang-v9)
+  (-> hoisted-lang-v9? proc-exposed-lang-v9?)
 
   (define/contract (primop? p)
     (-> any/c boolean?)
@@ -43,35 +43,30 @@
 
   (define (implement-closures-p p)
     (match p
-      [`(module (define ,labels (lambda (,alocs) ,lambda-values)) ... ,value)
-        `(module ,@(map implement-closures-proc labels alocs lambda-values))]))
+      [`(module (define ,labels (lambda ,alocs ,lambda-values)) ... ,value)
+        `(module ,@(map implement-closures-proc labels alocs lambda-values) ,(implement-closures-value value))]))
 
   ;; label aloc value -> proc
   ;; proc ::= (define label (lambda (aloc ...) value))
   (define (implement-closures-proc label aloc value)
-    `(define ,label (lambda ,aloc ,value)))
+    `(define ,label (lambda ,aloc ,(implement-closures-value value))))
 
   ;; hoisted-lang-v9-value -> proc-exposed-lang-v9-value
   (define (implement-closures-value v)
-    (match 
+    (match v
       [`(closure-ref ,v1 ,v2)
         `(unsafe-procedure-ref ,v1 ,v2)]
       [`(closure-call ,v ,vs ...)
-        `(call (unsafe-procedur-label ,v) ,@vs)]
-      [`(cletrec ([,alocs (make-closure ,labels ,arity ,vs)] ...) ,value)
-        (define generate-let
-          (lambda (value)
-            (lambda (body)
-              (lambda (assignments)
-                `(let ,assignments (begin ,@body ,value))))))
-        ;; ([,aloc (make-procedure ,label ,arity ,n)] ...)
+        `(call (unsafe-procedure-label ,v) ,@vs)]
+      [`(cletrec ([,alocs (make-closure ,labels ,arity ,vs ...)] ...) ,value)
         (define let-assignments 
           (for/fold
             ([acc '()])
             ([a alocs]
             [ar arity]
-            [v-list vs])
-            (cons `[,a (make-procedure ,label ,ar ,(length v-list))] acc)))
+            [v-list vs]
+            [l labels])
+            (cons `[,a (make-procedure ,l ,ar ,(length v-list))] acc)))
         (define let-body 
           (for/fold
             ([outer-acc '()])
@@ -85,30 +80,38 @@
                   [idx (range (length v-list))])
                   (cons `(unsafe-procedure-set! ,a ,idx ,v) inner-acc))
                 outer-acc)))
-        (((generate-let let-assignments) let-body) value)]
+        (define let-value (implement-closures-value value))
+        (if
+          (< 0 (length let-body))
+          `(let ,let-assignments (begin ,@let-body ,let-value))
+          `(let ,let-assignments ,let-value))]
       [`(call ,v ,vs ...)
-        (void)]
+        `(call ,(implement-closures-value v) ,@(map implement-closures-value vs))]
       [`(let ([,as ,vs] ...) ,v)
-        (void)]
+      `(let ,(map (lambda (a v) `[,a ,(implement-closures-value v)]) as vs) ,(implement-closures-value v))]
       [`(if ,v1 ,v2 ,v3)
-        (void)]
+        `(if 
+          ,(implement-closures-value v1)
+          ,(implement-closures-value v2)
+          ,(implement-closures-value v3))]
       [`(begin ,es ... ,v)
-        (void)]
+        `(begin ,@(map implement-closures-effect es) ,(implement-closures-value v))]
       [`(,primop ,vs ...)
         #:when (primop? primop)
-        (void)]
+        `(,primop ,@(map implement-closures-value vs))]
       [triv
-        (void)]))
+        triv]))
 
   ;; hoisted-lang-v9-effect -> proc-exposed-lang-v9-effect
   (define (implement-closures-effect e)
     (match e
       [`(begin ,es ... ,e)
-        (void)]
+        `(begin ,@(map implement-closures-effect es) ,(implement-closures-effect e))]
       [`(,primop ,vs ...)
-        (void)]))
+        `(,primop ,@(map implement-closures-value vs))]))
 
-  ;; hoisted-lang-v9-triv -> proc-exposed-lang-v9-triv
+  ;; Unused
+  #;
   (define (implement-closures-triv t)
     (match t
       [#t
@@ -130,7 +133,8 @@
       ['(void)
         (void)]))
 
-  ;; hoisted-lang-v9-primop -> proc-exposed-lang-v9-primop
+  ;; Unused
+  #;
   (define (implement-closures-primop p)
     (match p
       ['unsafe-fx*
@@ -186,5 +190,95 @@
       ['unsafe-procedure-arity
        (void)]))
 
-  (void))
+  (implement-closures-p p))
 
+(module+ test
+  (require rackunit)
+
+  (check-equal?
+    (implement-closures
+      `(module (closure-ref a.1 b.2)))
+    `(module (unsafe-procedure-ref a.1 b.2)))
+
+  ;; Check single make-procedure in cletrec
+  (check-match
+    (implement-closures
+    `(module 
+      (cletrec 
+        ([x.1 (make-closure L.func.1 1 1 2 3 4)])
+        5)))
+    `(module
+      (let ((x.1 (make-procedure L.func.1 1 4)))
+        (begin
+          ,set-statements ...
+          5)))
+    (equal?
+      (list->set set-statements)
+      (list->set
+        `((unsafe-procedure-set! x.1 0 1)
+          (unsafe-procedure-set! x.1 1 2)
+          (unsafe-procedure-set! x.1 2 3)
+          (unsafe-procedure-set! x.1 3 4)))))
+
+  ;; Check multiple make-procedure in cletrec
+  (check-match
+    (implement-closures
+      `(module 
+        (cletrec 
+            ([x.1 (make-closure L.foo.1 1 1 2 3 4)]
+            [x.2 (make-closure L.bar.1 2 8 9 10)])
+            5)))
+   `(module
+      (let ,assignments
+        (begin
+          ,set-statements ...
+          5)))
+    (and (equal?
+          (list->set set-statements)
+          (list->set
+            `((unsafe-procedure-set! x.1 0 1)
+              (unsafe-procedure-set! x.1 1 2)
+              (unsafe-procedure-set! x.1 2 3)
+              (unsafe-procedure-set! x.1 3 4)
+              (unsafe-procedure-set! x.2 0 8)
+              (unsafe-procedure-set! x.2 1 9)
+              (unsafe-procedure-set! x.2 2 10))))
+          (equal? 
+            (list->set assignments)
+            (list->set `((x.1 (make-procedure L.foo.1 1 4)) (x.2 (make-procedure L.bar.1 2 3)))))))
+
+  ;; Check cletrec with no values and no arity
+  ;; There mustn't be a beign scope
+  (check-equal?
+    (implement-closures
+      `(module 
+        (cletrec 
+          ([x.1 (make-closure L.func.1 0)])
+          5)))
+    `(module 
+      (let 
+        ((x.1 (make-procedure L.func.1 0 0)))
+        5)))
+
+  ;; closure-call
+  (check-equal?
+    (implement-closures
+      `(module 
+        (cletrec 
+          ([x.1 (make-closure L.func.1 1)])
+          (closure-call L.func.1 5))))
+    `(module
+      (let ((x.1 (make-procedure L.func.1 1 0)))
+      (call (unsafe-procedure-label L.func.1) 5))))
+
+  ;; closure-call with no args
+  (check-equal?
+    (implement-closures
+      `(module 
+        (cletrec 
+          ([x.1 (make-closure L.func.1 0)])
+          (closure-call L.func.1))))
+    `(module
+      (let ((x.1 (make-procedure L.func.1 0 0)))
+        (call (unsafe-procedure-label L.func.1)))))
+)
