@@ -75,7 +75,7 @@
          (list (remove-complex-opera-value value))
          (lambda (opand)
            `(alloc ,opand)))]
- 	 	  [`(call ,vc ,vs ...)
+      [`(call ,vc ,vs ...)
        ;; needs (call triv opand ...)
        (use-let-values
          (list* triv? (make-list (length vs) opand?))
@@ -84,12 +84,12 @@
            (define triv (first vals))
            (define opands (rest vals))
            `(call ,triv ,@opands)))]
- 	 	  [`(let ([,as ,vs] ...) ,vt)
+      [`(let ([,as ,vs] ...) ,vt)
        (define new-vs (map remove-complex-opera-value vs))
        `(let
          ,(map list as new-vs)
          ,(remove-complex-opera-value vt))]
- 	 	  [`(if ,pred ,v1 ,v2)
+      [`(if ,pred ,v1 ,v2)
        `(if
          ,(remove-complex-opera-pred pred)
          ,(remove-complex-opera-value v1)
