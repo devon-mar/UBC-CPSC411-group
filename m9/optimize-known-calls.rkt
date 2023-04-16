@@ -199,7 +199,18 @@
   (check-no-change `(module 20))
   (check-no-change `(module (let ([x.1 2]) (unsafe-fx+ x.1 x.1))))
 
-  ;; basic recursive
+  ;; basic - 1 param
+  (check-interp-expected
+    `(module
+       (letrec ([L.fn.1 (lambda (c.1 a.1) (unsafe-fx+ a.1 a.1))])
+         (cletrec ([x.1 (make-closure L.fn.1 1)])
+           (closure-call x.1 x.1 6))))
+    `(module
+       (letrec ([L.fn.1 (lambda (c.1 a.1) (unsafe-fx+ a.1 a.1))])
+         (cletrec ([x.1 (make-closure L.fn.1 1)])
+           (call L.fn.1 x.1 6)))))
+
+  ;; basic recursive - 1 param & 1 free
   (check-interp-expected
     `(module
       (let ([b.1 1])
@@ -326,10 +337,10 @@
                                     1
                                     (unsafe-fx* 2 (unsafe-vector-ref v.1 1)))
                                   (unsafe-fx- a.1 b.1)))))))])
-          (cletrec ([x.1 (make-closure L.x.1.7 1 x.1 b.1)])
-            (begin
-              (unsafe-vector-set! v.1 0 (closure-call x.1 x.1 6))
-              (unsafe-fx+
-                (unsafe-vector-ref v.1 1)
-                (unsafe-vector-ref v.1 0)))))))))
+            (cletrec ([x.1 (make-closure L.x.1.7 1 x.1 b.1)])
+              (begin
+                (unsafe-vector-set! v.1 0 (closure-call x.1 x.1 6))
+                (unsafe-fx+
+                  (unsafe-vector-ref v.1 1)
+                  (unsafe-vector-ref v.1 0)))))))))
   )
