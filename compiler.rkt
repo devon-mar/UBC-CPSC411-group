@@ -29,6 +29,7 @@
  "m6/assign-call-undead-variables.rkt"
  "m6/assign-frame-variables.rkt"
 
+ "m7/check-exprs-lang.rkt"
  "m7/implement-safe-primops.rkt"
  "m7/specify-representation.rkt"
  "m7/remove-complex-opera.rkt"
@@ -37,7 +38,7 @@
  "m8/implement-mops.rkt"
 
  "m9/implement-safe-call.rkt"
- "m9/define->letrec.rkt"
+ "m9/define-letrec.rkt"
  "m9/optimize-direct-calls.rkt"
  "m9/dox-lambdas.rkt"
  "m9/uncover-free.rkt"
