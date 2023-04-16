@@ -80,6 +80,8 @@
         (void)]
       [(? ascii-char-literal?)
        (void)]
+      ['(void)
+       (void)]
       [`(lambda (,as ...) ,v)
         (void)]
       [(? fixnum?)
