@@ -37,7 +37,7 @@
       [`(call ,vc ,vs ...)
        `(call
           ,(optimize-known-calls-value vc known)
-          ,(for/list ([v vs]) (optimize-known-calls-value v known)))]
+          ,@(for/list ([v vs]) (optimize-known-calls-value v known)))]
       [`(letrec ([,labels (lambda (,params ...) ,vs)] ...) ,vt)
        (optimize-known-calls-letrec labels params vs vt known)]
       [`(cletrec ([,alocs (make-closure ,labels ,vss ...)] ...) ,vt)
@@ -198,6 +198,13 @@
   ;; base cases
   (check-no-change `(module 20))
   (check-no-change `(module (let ([x.1 2]) (unsafe-fx+ x.1 x.1))))
+
+  ;; existing call
+  (check-no-change
+    `(module
+       (letrec ([L.fn.1 (lambda (c.1 a.1) (unsafe-fx+ a.1 a.1))])
+         (cletrec ([x.1 (make-closure L.fn.1 1)])
+           (call L.fn.1 x.1 6)))))
 
   ;; basic - 1 param
   (check-interp-expected
