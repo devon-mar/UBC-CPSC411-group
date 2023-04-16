@@ -41,7 +41,7 @@
          #t))
 
   ;; Holds list of values. Each value
-  ;; (values label (aloc ...) value) ...
+  ;; ((values label (aloc ...) value) ...)
   (define lambdas-to-hoist '())
 
   ;; closure-lang-v9-p -> hoisted-lang-v9-p
@@ -56,8 +56,9 @@
   (define (hoist-lambdas-proc)
     (for/list
       ([lam lambdas-to-hoist])
-      (define-values (l a v) lam)
-      `(define ,l (lambda ,a ,v))))
+      (match lam
+        [`(,l ,a ,v)
+          `(define ,l (lambda ,a ,v))])))
 
   ;; closure-lang-v9-value -> hoisted-lang-v9-value
   (define (hoist-lambdas-value v)
@@ -68,7 +69,7 @@
             ([l labels]
              [a alocs]
              [v vs])
-             (set! lambdas-to-hoist (cons (values l a v) lambdas-to-hoist))))]
+             (set! lambdas-to-hoist (cons (list l a (hoist-lambdas-value v)) lambdas-to-hoist))))]
       [`(closure-ref ,v1 ,v2)
         `(closure-ref ,(hoist-lambdas-value v1) ,(hoist-lambdas-value v2))]
       [`(closure-call ,v1 ,vs ...)
@@ -196,4 +197,39 @@
 
 (module+ test
   (require rackunit)
+
+  ;; Single letrec
+  (check-equal?
+    (hoist-lambdas `(module
+      (letrec ([L.foo.1 (lambda (x.1 x.2) (unsafe-fx+ x.1 x.2))]) 5)))
+    `(module (define L.foo.1 (lambda (x.1 x.2) (unsafe-fx+ x.1 x.2))) 5))
+
+  ;; Multiple lambdas in single letrec
+  ;; Lambda with no arguments
+  (check-match
+    (hoist-lambdas `(module
+      (letrec ([L.foo.1 (lambda (x.1 x.2) (unsafe-fx+ x.1 x.2))] [L.bar.2 (lambda () 4)]) 5)))
+    `(module
+      ,procs ...
+      5)
+    (equal?
+      (list->set procs)
+      (list->set
+        `((define L.bar.2 (lambda () 4))
+          (define L.foo.1 (lambda (x.1 x.2) (unsafe-fx+ x.1 x.2)))))))
+
+  ;; Check nested letrec
+  (check-match
+    (hoist-lambdas `(module
+      (letrec ([L.foo.1 (lambda (x.1 x.2) (unsafe-fx+ x.1 x.2))])
+        (letrec ( [L.bar.2 (lambda () 4)])
+          5))))
+    `(module
+      ,procs ...
+      5)
+    (equal?
+      (list->set procs)
+      (list->set 
+      `((define L.bar.2 (lambda () 4))
+        (define L.foo.1 (lambda (x.1 x.2) (unsafe-fx+ x.1 x.2)))))))
 )
