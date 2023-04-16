@@ -37,9 +37,11 @@
       [`(not ,pi)
        `(not ,(remove-complex-opera-pred pi))]
       [`(let ([,as ,vs] ...) ,pt)
-       (define new-vs (map remove-complex-opera-value vs))
+       (define new-av-pairs
+         (for/list ([a as] [v vs])
+           `[,a ,(remove-complex-opera-value v)]))
        `(let
-         ,(map list as new-vs)
+         ,new-av-pairs
          ,(remove-complex-opera-pred pt))]
       [`(if ,pred ,p1 ,p2)
        `(if
@@ -85,9 +87,11 @@
            (define opands (rest vals))
            `(call ,triv ,@opands)))]
       [`(let ([,as ,vs] ...) ,vt)
-       (define new-vs (map remove-complex-opera-value vs))
+       (define new-av-pairs
+         (for/list ([a as] [v vs])
+           `[,a ,(remove-complex-opera-value v)]))
        `(let
-         ,(map list as new-vs)
+         ,new-av-pairs
          ,(remove-complex-opera-value vt))]
       [`(if ,pred ,v1 ,v2)
        `(if
