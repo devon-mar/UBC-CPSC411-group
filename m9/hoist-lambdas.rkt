@@ -7,6 +7,7 @@
 (provide hoist-lambdas)
 
 ;; Milestone 9 Exercise 11
+;; Hoists letrec values to the top-level definitions
 (define/contract (hoist-lambdas p)
   (-> closure-lang-v9? hoisted-lang-v9?)
   (define/contract (primop? p)
@@ -40,8 +41,8 @@
                  unsafe-procedure-arity))
          #t))
 
-  ;; Holds list of values. Each value
-  ;; ((values label (aloc ...) value) ...)
+  ;; Holds list of lambda definitions
+  ;; ((label (aloc ...) value) ...)
   (define lambdas-to-hoist '())
 
   ;; closure-lang-v9-p -> hoisted-lang-v9-p
@@ -232,4 +233,19 @@
       (list->set 
       `((define L.bar.2 (lambda () 4))
         (define L.foo.1 (lambda (x.1 x.2) (unsafe-fx+ x.1 x.2)))))))
+
+  ;; Letrec in lambda
+  (check-match
+    (hoist-lambdas 
+    `(module
+      (letrec ([L.foo.1 (lambda () (letrec ( [L.bar.2 (lambda () 4)])
+          5))])
+        5)))
+    `(module
+      ,procs ...
+      5)
+    (equal?
+      (list->set procs)
+      (list->set 
+      `((define L.foo.1 (lambda () 5)) (define L.bar.2 (lambda () 4))))))
 )
