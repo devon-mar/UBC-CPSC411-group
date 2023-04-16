@@ -4,6 +4,8 @@
 
 (provide optimize-direct-calls)
 
+;; Milestone 9 Exercise 6
+;;
 ;; Inline all direct calls to first-class procedures.
 (define/contract (optimize-direct-calls p)
   (-> just-exprs-lang-v9? just-exprs-lang-v9?)
@@ -100,6 +102,8 @@
       [`(error ,uint8)
         (void)]
       [(? ascii-char-literal?)
+       (void)]
+      ['(void)
        (void)]
       [`(lambda (,as ...) ,v)
         (void)]
