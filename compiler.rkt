@@ -42,7 +42,7 @@
  "m9/dox-lambdas.rkt"
  "m9/uncover-free.rkt"
  "m9/convert-closures.rkt"
- "m9/optimize-unknown-calls.rkt"
+ "m9/optimize-known-calls.rkt"
  "m9/hoist-lambdas.rkt"
  "m9/implement-closures.rkt")
 
