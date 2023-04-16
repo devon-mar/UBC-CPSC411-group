@@ -37,7 +37,7 @@
       [`(call ,vc ,vs ...)
        `(call
           ,(optimize-known-calls-value vc known)
-          ,(for/list ([v vs]) (optimize-known-calls-value v known)))]
+          ,@(for/list ([v vs]) (optimize-known-calls-value v known)))]
       [`(letrec ([,labels (lambda (,params ...) ,vs)] ...) ,vt)
        (optimize-known-calls-letrec labels params vs vt known)]
       [`(cletrec ([,alocs (make-closure ,labels ,vss ...)] ...) ,vt)
@@ -49,11 +49,11 @@
           ,aloc-closure-pairs
           ,(optimize-known-calls-value vt known))]
       [`(let ([,alocs ,vs] ...) ,vt)
-       (define new-vs
-         (for/list ([v vs])
-           (optimize-known-calls-value v known)))
+       (define new-aloc-vs
+         (for/list ([aloc alocs] [v vs])
+           `[,aloc ,(optimize-known-calls-value v known)]))
        `(let
-          ,(map list alocs new-vs)
+          ,new-aloc-vs
           ,(optimize-known-calls-value vt known))]
       [`(if ,vp ,vt ,vf)
        `(if
@@ -108,14 +108,14 @@
       ;; For templates:
       ;; triv
       ;; (primop value ...)
- 	 	  ;; (closure-ref value value)
- 	 	  ;; (closure-call value value ...)
- 	 	  ;; (call value value ...)
- 	 	  ;; (letrec ([label (lambda (aloc ...) value)] ...) value)
- 	 	  ;; (cletrec ([aloc (make-closure label value ...)] ...) value)
- 	 	  ;; (let ([aloc value] ...) value)
- 	 	  ;; (if value value value)
- 	 	  ;; (begin effect ... value)
+      ;; (closure-ref value value)
+      ;; (closure-call value value ...)
+      ;; (call value value ...)
+      ;; (letrec ([label (lambda (aloc ...) value)] ...) value)
+      ;; (cletrec ([aloc (make-closure label value ...)] ...) value)
+      ;; (let ([aloc value] ...) value)
+      ;; (if value value value)
+      ;; (begin effect ... value)
       [_ (create-letrec known)]))
 
   ;; closure-lang-v9-effect dict(aloc, label) -> closure-lang-v9-effect
@@ -198,6 +198,13 @@
   ;; base cases
   (check-no-change `(module 20))
   (check-no-change `(module (let ([x.1 2]) (unsafe-fx+ x.1 x.1))))
+
+  ;; existing call
+  (check-no-change
+    `(module
+       (letrec ([L.fn.1 (lambda (c.1 a.1) (unsafe-fx+ a.1 a.1))])
+         (cletrec ([x.1 (make-closure L.fn.1 1)])
+           (call L.fn.1 x.1 6)))))
 
   ;; basic - 1 param
   (check-interp-expected
