@@ -108,14 +108,14 @@
       ;; For templates:
       ;; triv
       ;; (primop value ...)
- 	 	  ;; (closure-ref value value)
- 	 	  ;; (closure-call value value ...)
- 	 	  ;; (call value value ...)
- 	 	  ;; (letrec ([label (lambda (aloc ...) value)] ...) value)
- 	 	  ;; (cletrec ([aloc (make-closure label value ...)] ...) value)
- 	 	  ;; (let ([aloc value] ...) value)
- 	 	  ;; (if value value value)
- 	 	  ;; (begin effect ... value)
+      ;; (closure-ref value value)
+      ;; (closure-call value value ...)
+      ;; (call value value ...)
+      ;; (letrec ([label (lambda (aloc ...) value)] ...) value)
+      ;; (cletrec ([aloc (make-closure label value ...)] ...) value)
+      ;; (let ([aloc value] ...) value)
+      ;; (if value value value)
+      ;; (begin effect ... value)
       [_ (create-letrec known)]))
 
   ;; closure-lang-v9-effect dict(aloc, label) -> closure-lang-v9-effect
