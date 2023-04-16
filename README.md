@@ -183,7 +183,7 @@ For versions of the skeletons from prior versions of the course, see the tags.
 | 2        | `uniquify`                     | `m2/uniquify.rkt`                     |
 | 3        | `implement-safe-primops`       | `m7/implement-safe-primops.rkt`       |
 | 4        | `implement-safe-call`          | `m9/implement-safe-call.rkt`          |
-| 5        | `define->letrec`               | `m9/define->letrec.rkt`               |
+| 5        | `define->letrec`               | `m9/define-letrec.rkt`                |
 | 6        | `optimize-direct-calls`        | `m9/optimize-direct-calls.rkt`        |
 | 7        | `dox-lambdas`                  | `m9/dox-lambdas.rkt`                  |
 | 8        | `uncover-free`                 | `m9/uncover-free.rkt`                 |
