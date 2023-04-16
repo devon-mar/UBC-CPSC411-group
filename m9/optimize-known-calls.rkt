@@ -82,7 +82,7 @@
   ;; `(letrec ([label_c (lambda (aloc ...) value_1)] ...)
   ;;    (cletrec ([aloc_c (make-closure label_c value_2 ...)] ...)
   ;;      value_3))
-  ;; Add a mapping from aloc_c to label_c, and any (closure-call aloc_c ...)
+  ;; Add mappings from any aloc_c to label_c, and any (closure-call aloc_c ...)
   ;; in value_1 and value_3 will be converted to (call label_c ...).
   ;; Return the converted letrec value.
   ;; Assume that aloc_c isn't overriden by lets in value_1 or value_3
@@ -105,7 +105,7 @@
                (dict-set k caloc clabel)
                k)))
        (create-letrec new-known)]
-      ;; For template:
+      ;; For templates:
       ;; triv
       ;; (primop value ...)
  	 	  ;; (closure-ref value value)
@@ -161,6 +161,8 @@
                  unsafe-vector-ref
                  unsafe-procedure-arity))
          #t))
+
+  ;; Removed template for triv
 
   (optimize-known-calls-p p))
 
@@ -276,4 +278,58 @@
               (unsafe-fx-
                 (call L.fn.1.2 fn.1 3 -4)
                 (call L.fn.2.3 fn.2 17 31 5))))))))
+
+  ;; letrec in letrec
+  (check-interp
+    `(module
+      (letrec ([L.fn.1.4
+                (lambda (c.4)
+                  (let ()
+                    (letrec ([L.x.1.5
+                              (lambda (c.5 a.1)
+                                (let ([x.1 (closure-ref c.5 0)])
+                                  (if (unsafe-fx<= a.1 0)
+                                    1
+                                    (unsafe-fx*
+                                    a.1
+                                    (closure-call
+                                      x.1
+                                      x.1
+                                      (unsafe-fx- a.1 1))))))])
+                      (cletrec ([x.1 (make-closure L.x.1.5 1 x.1)]) x.1))))])
+        (cletrec ([fn.1 (make-closure L.fn.1.4 0)])
+          (let ([tmp.6 (closure-call fn.1 fn.1)])
+            ;; tmp should not be optimized
+            (closure-call tmp.6 tmp.6 5))))))
+
+  ;; effects
+  (check-interp
+    `(module
+      (let ([b.1 1]
+            [v.1 (unsafe-make-vector 5)])
+        (begin
+          (unsafe-vector-set! v.1 1 1)
+          (letrec ([L.x.1.7
+                    (lambda (c.4 a.1)
+                      (let ([x.1 (closure-ref c.4 0)]
+                            [b.1 (closure-ref c.4 1)])
+                        (if (unsafe-fx<= a.1 0)
+                            1
+                            (unsafe-fx*
+                              a.1
+                              (closure-call
+                                x.1
+                                x.1
+                                (begin
+                                  (unsafe-vector-set!
+                                    v.1
+                                    1
+                                    (unsafe-fx* 2 (unsafe-vector-ref v.1 1)))
+                                  (unsafe-fx- a.1 b.1)))))))])
+          (cletrec ([x.1 (make-closure L.x.1.7 1 x.1 b.1)])
+            (begin
+              (unsafe-vector-set! v.1 0 (closure-call x.1 x.1 6))
+              (unsafe-fx+
+                (unsafe-vector-ref v.1 1)
+                (unsafe-vector-ref v.1 0)))))))))
   )
