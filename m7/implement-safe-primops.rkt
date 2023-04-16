@@ -104,7 +104,7 @@
               ([s (list 'safes ...)]
                [u (list unsafes ...)]
                [types (list (list checks ...) ...)])
-      (define aloc (fresh (string->symbol (format "safe-~a" 's))))
+      (define aloc (fresh (string->symbol (format "safe-~a" s))))
       (dict-set acc s (cons aloc (make-safe-primop aloc u types)))))
 
   ;; Contains the safe primop definitions. See above.
