@@ -15,6 +15,14 @@
 ;;
 ;; Compiles immediate data and primitive operations into their implementations
 ;; as ptrs and primitive bitwise operations on ptrs.
+;;
+;; Implementation details
+;; - For some proc-exposed-lang-v9 non-terminals we have multiple corresponding functions based on the
+;;   template depending on where the return value is to be used in the output exprs-bits-lang-v8.
+;;   Such functions will have a /(pred/value/effect) in their name. This allows us to implement certain
+;;   optimisations (such as on not) (as recommended in OH) since we know where our output is going to be used.
+;;
+;; - If any template modifications ever need to be undone, the original template can be found in "m9/templates.rkt"
 (define/contract (specify-representation p)
   (-> proc-exposed-lang-v9? exprs-bits-lang-v8?)
 
@@ -101,15 +109,26 @@
          ,(current-true-ptr)
          ,(current-false-ptr)))
 
-  ;; Generates (tag-type v) and (untag-type v) functions for the given type
+  ;; Usage:
+  ;; (make-tag-func type v/c)
+  ;; (make-tag-func type v/c to-int-proc from-int-proc)
   ;;
-  ;; type the name of the type used in the current-*(shift|tag) params.
-  ;; v/c: contract for input value
+  ;; type: (unquotted) name of the type. Must have a corresponding current-type-(shift|tag) param.
+  ;; v/c: A contract? for the input value to the static-tag function.
+  ;; to-int-proc: A procedure that takes a v/c and turns it into an int64? representation.
+  ;; from-int-proc: A procedure that takes an int64? and turns it into a v/c.
+  ;;
+  ;; Generates (static-tag-type v) and (untag-type v) functions for the given type.
+  ;; (static-tag-type v) will statically tag v.
+  ;; (untag-type exprs-bits-lang-v8-value) will return a exprs-bits-lang-v8-value that will tag v at run time.
+  ;;
+  ;; Examples:
+  ;; (make-tag-func fixnum int61?) -> (begin (define (static-tag-fixnum v) ...) (define (untag-fixnum v) ...)
   (define-syntax (make-tag-func stx)
     (syntax-case stx ()
       [(_ type v/c) #`(make-tag-func type v/c values values)]
       [(_ type v/c to-int from-int)
-       (with-syntax ([tag (format-id #'type "tag-~a" #'type)]
+       (with-syntax ([tag (format-id #'type "static-tag-~a" #'type)]
                      [untag (format-id #'type "untag-~a" #'type)]
                      [shiftp (format-id #'type "current-~a-shift" #'type)]
                      [tagp (format-id #'type "current-~a-tag" #'type)]
@@ -123,33 +142,28 @@
              ;; an int64 will be returned. Otherwise a value that does it
              ;; at runtime will be returned.
              (define (untag i)
-               (if (int64? i)
-                 (from-int (arithmetic-shift i (* -1 (shiftp))))
-                 `(arithmetic-shift-right ,i ,(shiftp))))))]))
+               `(arithmetic-shift-right ,i ,(shiftp)))))]))
 
   (make-tag-func fixnum int61?)
   (make-tag-func error uint8?)
   (make-tag-func ascii-char ascii-char-literal? char->integer integer->char)
 
-  ;; Generates a function of the form (type?->pred v)
-  ;; which returns a proc-exposed-lang-v9-pred that checks if v is of type type.
-  (define-syntax (make-primop->pred stx)
+  ;; Usage:
+  ;; (make-primop-pred type v)
+  ;; type: A PTR type (must have a current-type-(tag|mask) parameter)
+  ;; v: the value to check.
+  ;;
+  ;; Returns a exprs-bits-lang-v8-pred that checks if v is of type type.
+  ;;
+  ;; Examples:
+  ;; (make-primop-pred fixnum 123) -> `(= (bitwise-and ,123 7) 0)
+  ;; (make-primop-pred error x) -> `(= (bitwise-and ,x 255) 62)
+  (define-syntax (make-primop-pred stx)
     (syntax-case stx ()
-      [(_ type)
-       (with-syntax ([name (format-id #'type "~a?->pred" #'type)]
-                     [tagp (format-id #'type "current-~a-tag" #'type)]
+      [(_ type v)
+       (with-syntax ([tagp (format-id #'type "current-~a-tag" #'type)]
                      [maskp (format-id #'type "current-~a-mask" #'type)])
-         ;; generates a proc-exposed-lang-v9-pred to check if v is of type name
-         #'(define (name v) `(= (bitwise-and ,v ,(maskp)) ,(tagp))))]))
-  (make-primop->pred fixnum)
-  (make-primop->pred boolean)
-  (make-primop->pred empty)
-  (make-primop->pred void)
-  (make-primop->pred ascii-char)
-  (make-primop->pred error)
-  (make-primop->pred pair)
-  (make-primop->pred vector)
-  (make-primop->pred procedure)
+         #'`(= (bitwise-and ,v ,(maskp)) ,(tagp)))]))
 
   ;; v: proc-exposed-lang-v9-value
   ;; -> proc-exposed-lang-v9-proc
@@ -168,7 +182,7 @@
             ,@(map specify-representation-proc labels alocs values)
           ,(specify-representation-value/value value))]))
 
-  ;; proc-exposed-lang-v9-p exprs-bits-lang-v8-value
+  ;; proc-exposed-lang-v9-p -> exprs-bits-lang-v8-value
   (define (specify-representation-value/value v)
     (match v
       ;; modified template - removed tail v
@@ -225,7 +239,7 @@
       [(? aloc?)
        t]
       [(? int61?)
-       (tag-fixnum t)]
+       (static-tag-fixnum t)]
       [#t
        (current-true-ptr)]
       [#f
@@ -235,9 +249,9 @@
       ['(void)
        (current-void-ptr)]
       [`(error ,uint8)
-       (tag-error uint8)]
+       (static-tag-error uint8)]
       [(? ascii-char-literal?)
-       (tag-ascii-char t)]))
+       (static-tag-ascii-char t)]))
 
   ;; "Only primops that produce values can appear in value context"
   ;;
@@ -346,8 +360,6 @@
   (define (value->pred v)
     `(!= ,v ,(current-false-ptr)))
 
-  ;; The following functions' return value may only be used in pred position of
-  ;; the target language.
   ;; proc-exposed-lang-v9-p exprs-bits-lang-v8-pred
   (define (specify-representation-value/pred v)
     (match v
@@ -381,27 +393,27 @@
       ;;
       ;; must be careful to make sure that specify-representation-primop/value
       ;; has an explicit match for the below symbols
-      [(or 'cons 'unsafe-car 'unsafe-cdr 'unsafe-make-vector 'unsafe-vector-length 
+      [(or 'cons 'unsafe-car 'unsafe-cdr 'unsafe-make-vector 'unsafe-vector-length
            'unsafe-vector-ref 'unsafe-fx* 'unsafe-fx+ 'unsafe-fx- 'make-procedure
            'unsafe-procedure-arity 'unsafe-procedure-label 'unsafe-procedure-ref)
        (value->pred (specify-representation-primop/value p vs))]
       ;; note: we intentionally skip unsafe-procedure-set!
       ;; since it should never show up in pred position
       ;;
-      ;; modified template - added nested match since the rest need
-      ;; (specify-representation-value/value v)
+      ;; modified template - added nested match since the rest need to be of the form
+      ;; (pred (specify-representation-value/value v))
       [_
-        ((match p
-           ['fixnum? fixnum?->pred]
-           ['boolean? boolean?->pred]
-           ['empty? empty?->pred]
-           ['void? void?->pred]
-           ['ascii-char? ascii-char?->pred]
-           ['error? error?->pred]
-           ['pair? pair?->pred]
-           ['vector? vector?->pred]
-           ['procedure? procedure?->pred])
-         (specify-representation-value/value v))]))
+        (define v-new (specify-representation-value/value v))
+        (match p
+          ['fixnum? (make-primop-pred fixnum v-new)]
+          ['boolean? (make-primop-pred boolean v-new)]
+          ['empty? (make-primop-pred empty v-new)]
+          ['void? (make-primop-pred void v-new)]
+          ['ascii-char? (make-primop-pred ascii-char v-new)]
+          ['error? (make-primop-pred error v-new)]
+          ['pair? (make-primop-pred pair v-new)]
+          ['vector? (make-primop-pred vector v-new)]
+          ['procedure? (make-primop-pred procedure v-new)])]))
 
   ;; proc-exposed-lang-v9-triv exprs-bits-lang-v8-pred
   (define (specify-representation-triv/pred t)
@@ -410,7 +422,7 @@
       [#f `(false)]
       [(? aloc?) `(!= ,t ,(current-false-ptr))]
       ;; modfied template - removed the other literal cases
-      ;; because they're all != #f 
+      ;; because they're all != #f
       [_ `(true)]))
 
   (specify-representation-p p))
@@ -608,7 +620,7 @@
 
   ;; should work on the output of the reference implementation's
   ;; safe primops
-  
+
 
   (define safe-primops
     '([*
@@ -864,7 +876,7 @@
              (unsafe-fx+ (unsafe-vector-length v.1) a.1))))))
 
   ;; TODO
-  ;; is this even a valid program? 
+  ;; is this even a valid program?
   (check-42
     '(module
        (if (unsafe-fx+ 10 2)
