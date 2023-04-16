@@ -63,7 +63,7 @@
   ;; aloc info (listof aloc) value
   ;; -> [label (lambda (aloc ...) value)] [aloc (make-closure label value ...)]
   ;;
-  ;; Convert a letrec of aloc-lambdas into letrec of label-lamdas and cletrec aloc-closures
+  ;; Convert aloc-lambda pairs into label-lamda pairs and aloc-closure pairs
   ;;
   ;; [aloc_fn (lambda ((free (aloc_free ...))) (ps ...) v)]
   ;; ->
