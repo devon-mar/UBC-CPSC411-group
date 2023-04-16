@@ -19,7 +19,7 @@
 ;; Implementation details
 ;; - For some proc-exposed-lang-v9 non-terminals we have multiple corresponding functions based on the
 ;;   template depending on where the return value is to be used in the output exprs-bits-lang-v8.
-;;   Such functions will have a /(pred/value/effect) in their name. This allows us to implement certain
+;;   Such functions will have a /(pred|value|effect) in their name. This allows us to implement certain
 ;;   optimisations (such as on not) (as recommended in OH) since we know where our output is going to be used.
 ;;
 ;; - If any template modifications ever need to be undone, the original template can be found in "m9/templates.rkt"
@@ -231,7 +231,7 @@
            ,(proc-env-idx->offset idx)
            ,(specify-representation-value/value val))]))
 
-  ;; proc-exposed-lang-v9-triv exprs-bits-lang-v8-triv
+  ;; proc-exposed-lang-v9-triv -> exprs-bits-lang-v8-triv
   (define (specify-representation-triv/value t)
     (match t
       [(? label?)
