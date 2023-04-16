@@ -92,7 +92,7 @@
         `(closure-call ,(hoist-lambdas-value v) ,@(map hoist-lambdas-value vs))]
       [`(let ([,as ,vs] ...) ,v)
         `(let
-          ,(map (lambda (a v) `(a ,(hoist-lambdas-value v))) as vs) ,(hoist-lambdas-value v))]
+          ,(map (lambda (a v) `(,a ,(hoist-lambdas-value v))) as vs) ,(hoist-lambdas-value v))]
       [`(if ,v1 ,v2 ,v3)
         `(if 
           ,(hoist-lambdas-value v1)
