@@ -135,6 +135,7 @@
   ;; by taking in a list of checks that checks whether a value is supported in Values Bits Lang,
   ;; a list of supported/unsupported values that are inside of the outer structure
   ;; and a function that will create the outer structure from supported values.
+  ;; Each check in 'check-list' corresponds to a value in 'vs'
   (define (use-let-values check-list vs fn)
     (define-values (args aloc-vs)
       (for/fold ([args '()]
