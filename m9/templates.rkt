@@ -421,3 +421,135 @@
        (void)]))
 
   (void))
+
+(define/contract (exprs-lang-v9-template p)
+  (-> exprs-lang-v9? any/c)
+
+  (define/contract (prim-f? p)
+    (-> any/c boolean?)
+    (and (memq p '(*
+                   +
+                   -
+                   <
+                   <=
+                   >
+                   >=
+                   eq?
+                   fixnum?
+                   boolean?
+                   empty?
+                   void?
+                   ascii-char?
+                   error?
+                   not
+                   pair?
+                   procedure?
+                   vector?
+                   cons
+                   car
+                   cdr
+                   make-vector
+                   vector-length
+                   vector-set!
+                   vector-ref
+                   procedure-arity))
+         #t))
+
+  (define (exprs-lang-v9-template-p p)
+    (match p
+      [`(module (define ,xs (lambda (,params ...) ,vs)) ... ,v)
+        (void)]))
+
+  (define (exprs-lang-v9-template-value v)
+    (match v
+      [`(let ([,xs ,vs] ...) ,v)
+        (void)]
+      [`(if ,v1 ,v2 ,v3)
+        (void)]
+      [`(call ,v ,vs ...)
+        (void)]
+      [triv (void)]))
+
+  (define (exprs-lang-v9-template-triv t)
+    (match t
+      [(? fixnum?)
+       (void)]
+      [#t
+       (void)]
+      [#f
+       (void)]
+      ['empty
+       (void)]
+      ['(void)
+       (void)]
+      [`(error ,uint8)
+        (void)]
+      [(? ascii-char-literal?)
+       (void)]
+      [`(lambda (,xs ...) ,v)
+        (void)]
+      [x (void)]))
+
+  (define (exprs-lang-v9-template-x x)
+    (match x
+      [(? prim-f?)
+       (void)]
+      [(? name?)
+       (void)]))
+
+  (define (exprs-lang-v9-template-prim-f p)
+    (match p
+      ['*
+       (void)]
+      ['+
+       (void)]
+      ['-
+       (void)]
+      ['<
+       (void)]
+      ['<=
+       (void)]
+      ['>
+       (void)]
+      ['>=
+       (void)]
+      ['eq?
+       (void)]
+      ['fixnum?
+       (void)]
+      ['boolean?
+       (void)]
+      ['empty?
+       (void)]
+      ['void?
+       (void)]
+      ['ascii-char?
+       (void)]
+      ['error?
+       (void)]
+      ['not
+       (void)]
+      ['pair?
+       (void)]
+      ['procedure?
+       (void)]
+      ['vector?
+       (void)]
+      ['cons
+       (void)]
+      ['car
+       (void)]
+      ['cdr
+       (void)]
+      ['make-vector
+       (void)]
+      ['vector-length
+       (void)]
+      ['vector-set!
+       (void)]
+      ['vector-ref
+       (void)]
+      ['procedure-arity
+       (void)]))
+
+  (void))
