@@ -308,14 +308,8 @@
        `(mref ,(specify-representation-value/value v) ,vec-len-offset)]
       [`(unsafe-vector-ref ,vec ,idx)
        `(mref ,(specify-representation-value/value vec) ,(vec-idx->offset idx))]
-      ;; reference compiler doesn't like this!!
-      ;; let's just pass this through for now
-      ;; TODO fix this!
-      ;; (unsafe-vector-set! vector idx value)
-      [`(unsafe-vector-set! ,_ ,_ ,_)
-        `(begin
-           ,(specify-representation-primop/effect p vs)
-           ,(current-void-ptr))]
+      ;; modified template - removed unsafe-vector-set! since it should never
+      ;; appear in value context
       [`(unsafe-procedure-label ,proc)
        `(mref ,(specify-representation-value/value proc) ,procedure-label-offset)]
       [`(unsafe-procedure-arity ,proc)
