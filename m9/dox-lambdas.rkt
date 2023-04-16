@@ -97,6 +97,7 @@
       [#t t]
       [#f t]
       ['empty t]
+      [`(void) t]
       ;; (error uint8)
       [`(error ,_) t]
       [(? ascii-char-literal?) t]
