@@ -32,29 +32,18 @@
              `(let ([,tmp ,nvc])
                 (closure-call ,tmp ,tmp ,@new-vs))))]
       [`(letrec ([,alocs (lambda ,infos (,params ...) ,vs)] ...) ,vt)
-       (define labels (for/list ([a alocs]) (fresh-label a)))
-       (define frees (for/list ([info infos]) (info-ref info 'free)))
-       (define lambdas
-         (for/list ([ps params] [v vs] [free frees])
-           (define closure-aloc (fresh 'c))
-           (define closure-refs
-             (for/list ([i (range (length free))])
-               `(closure-ref ,closure-aloc ,i)))
-           `(lambda (,closure-aloc ,@ps)
-              (let ,(map list free closure-refs)
-                ,(convert-closures-value v)))))
-       (define label-lambda-pairs (map list labels lambdas))
-       (define closures
-         (for/list ([ps params] [label labels] [free frees])
-           `(make-closure ,label ,(length ps) ,@free)))
+       (define-values (label-lambda-pairs aloc-closure-pairs)
+         (map2 convert-closure-letrec-case alocs infos params vs))
        `(letrec
-          ,(map list labels lambdas)
-          (cletrec ,(map list alocs closures)
+          ,label-lambda-pairs
+          (cletrec ,aloc-closure-pairs
             ,(convert-closures-value vt)))]
       [`(let ([,alocs ,vs] ...) ,vt)
-       (define new-vs (map convert-closures-value vs))
+       (define new-av-pairs
+         (for/list ([aloc alocs] [v vs])
+           `[,aloc ,(convert-closures-value v)]))
        `(let
-          ,(map list alocs new-vs)
+          ,new-av-pairs
           ,(convert-closures-value vt))]
       [`(if ,vp ,vt ,vf)
        `(if
@@ -70,6 +59,35 @@
        (define new-vs (map convert-closures-value vs))
        `(,primop ,@new-vs)]
       [triv triv]))
+
+  ;; aloc info (listof aloc) value
+  ;; -> [label (lambda (aloc ...) value)] [aloc (make-closure label value ...)]
+  ;;
+  ;; Convert aloc-lambda pairs into label-lamda pairs and aloc-closure pairs
+  ;;
+  ;; [aloc_fn (lambda ((free (aloc_free ...))) (ps ...) v)]
+  ;; ->
+  ;; [label_fn (lambda (aloc_c ps ...)
+  ;;             (let ([aloc_free (closure-ref aloc_c i)] ...) v))]
+  ;; [aloc_fn (make-closure label_fn n_ps aloc_free ...)]
+  ;;
+  ;; Where each aloc_free is assigned from closure-ref aloc_c (with i = 0,1,2...)
+  ;; and aloc_fn is assigned to a closure (with n_ps being length of ps)
+  (define (convert-closure-letrec-case aloc info ps v)
+    (define label (fresh-label aloc))
+    (define free (info-ref info 'free))
+    (define closure-aloc (fresh 'c))
+    ;; Assign each free alocs from closure-ref
+    (define faloc-closure-ref-pairs
+      (for/list ([faloc free] [i (range (length free))])
+        `[,faloc (closure-ref ,closure-aloc ,i)]))
+    (define lambda-fn
+      `(lambda (,closure-aloc ,@ps)
+        (let ,faloc-closure-ref-pairs
+          ,(convert-closures-value v))))
+    (values
+      `[,label ,lambda-fn]
+      `[,aloc (make-closure ,label ,(length ps) ,@free)]))
 
   ;; lam-free-lang-v9-effect -> closure-lang-v9-effect
   (define (convert-closures-effect e)
