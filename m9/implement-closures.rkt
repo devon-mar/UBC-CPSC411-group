@@ -313,6 +313,7 @@
         (let ((x.1 (make-procedure L.func.1 1 0))) 5))))
 
 
+  ;; Check for all value and effect positions
   (check-equal?
     (implement-closures `(module
       (closure-ref
@@ -354,7 +355,6 @@
                                 ([x.1 (make-closure L.func.11 1)])
                                 5))])
                             5)))))))))))))
-
   `(module
     (unsafe-procedure-ref
     (let ((x.1 (make-procedure L.func.1 1 0))) 5)
