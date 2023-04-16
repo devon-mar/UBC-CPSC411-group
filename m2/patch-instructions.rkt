@@ -53,10 +53,12 @@
         (current-continuation-marks))))
 
   ;; Syntax:
-  ;; (use-tmp
-  ;;   ([triv (-> triv boolean)] ...)
-  ;;   (-> triv paren-x64-mops-v8-s))
+  ;; (use-tmp ([vals checks] ...) create-s)
   ;; -> (List-of paren-x64-mops-v8-s) or exn:no-more-patch-regs
+  ;;
+  ;; vals : triv
+  ;; checks : (triv -> boolean)
+  ;; create-s : (triv -> paren-x64-mops-v8-s)
   ;;
   ;; triv ::= label|int64|reg|addr
   ;;
