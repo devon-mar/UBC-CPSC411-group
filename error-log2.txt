@@ -1,0 +1,1416 @@
+raco test: (submod "compiler.rkt" test)
+--------------------
+ > compiler testomatic test suite > v9 public test suite > implement-safe-call suite
+FAILURE
+test-program:
+  (module (define safe-s.1382 (lambda (tmp.1383 tmp.1384) (cons tmp.1383 tmp.1384))) (define safe-s.1387 (lambda (tmp.1388) (if (pair? tmp.1388) (unsafe-cdr tmp.1388) (error 100)))) (define safe-s.1350 (lambda (tmp.1351 tmp.1352) (eq? tmp.1351 tmp.1352))) (define safe-s.1341 (lambda (tmp.1342 tmp.1343) (if (fixnum? tmp.1343) (if (fixnum? tmp.1342) (unsafe-fx+ tmp.1342 tmp.1343) (error 100)) (error 101)))) (define safe-s.1385 (lambda (tmp.1386) (if (pair? tmp.1386) (unsafe-car tmp.1386) (error 100)))) (define map.68 (lambda (f.69 ls.70) (if (call safe-s.1350 empty ls.70) empty (call safe-s.1382 (call f.69 (call safe-s.1385 ls.70)) (call map.68 f.69 (call safe-s.1387 ls.70)))))) (call map.68 (lambda (x.71) (call safe-s.1341 1 x.71)) (call safe-s.1382 1 empty)))
+expected:           (2)
+src-interp:         interp-exprs-unsafe-data-lang-v9
+trg-interp:         interp-exprs-unsafe-lang-v9
+test-type:          "Checking test-program compiles without error"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:400:10
+params:             '(#<procedure:...est-suite/utils.rkt:401:11>)
+message:            "Exception raised"
+exception-message:
+  "implement-safe-call: broke its own contract\n  promised: exprs-unsafe-lang-v9?\n  produced: '(module (define safe-s.1382 (lambda (tmp.1383 tmp.1384) (cons tmp.1383 tmp.1384))) (define safe-s.1387 (lambda (tmp.1388) (if (pair? tmp.1388) (unsafe-cdr tmp.1388) (error 100)))) (define safe-s.1350 (lambda (tmp.1351 tmp.1352) (eq? tmp.1351 tmp.1352))...\n  in: the range of\n      (->\n       exprs-unsafe-data-lang-v9?\n       exprs-unsafe-lang-v9?)\n  contract from: \n      (function implement-safe-call)\n  blaming: (function implement-safe-call)\n   (assuming the contract is correct)\n  at: /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/implement-safe-call.rkt:14:18"
+exception:
+  implement-safe-call: broke its own contract
+    promised: exprs-unsafe-lang-v9?
+    produced: '(module (define safe-s.1382 (lambda (tmp.1383 tmp.1384) (cons tmp.1383 tmp.1384))) (define safe-s.1387 (lambda (tmp.1388) (if (pair? tmp.1388) (unsafe-cdr tmp.1388) (error 100)))) (define safe-s.1350 (lambda (tmp.1351 tmp.1352) (eq? tmp.1351 tmp.1352))...
+    in: the range of
+        (->
+         exprs-unsafe-data-lang-v9?
+         exprs-unsafe-lang-v9?)
+    contract from: 
+        (function implement-safe-call)
+    blaming: (function implement-safe-call)
+     (assuming the contract is correct)
+    at: /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/implement-safe-call.rkt:14:18
+    context...:
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/contract/private/blame.rkt:346:0: raise-blame-error
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/contract/private/arrow-higher-order.rkt:375:33
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > implement-safe-call suite
+FAILURE
+test-program:
+  (module (define safe-s.1313 (lambda (tmp.1314 tmp.1315) (cons tmp.1314 tmp.1315))) (define safe-s.1318 (lambda (tmp.1319) (if (pair? tmp.1319) (unsafe-cdr tmp.1319) (error 100)))) (define safe-s.1281 (lambda (tmp.1282 tmp.1283) (eq? tmp.1282 tmp.1283))) (define safe-s.1272 (lambda (tmp.1273 tmp.1274) (if (fixnum? tmp.1274) (if (fixnum? tmp.1273) (unsafe-fx+ tmp.1273 tmp.1274) (error 100)) (error 101)))) (define safe-s.1316 (lambda (tmp.1317) (if (pair? tmp.1317) (unsafe-car tmp.1317) (error 100)))) (define map.1 (lambda (f.2 ls.3) (if (call safe-s.1281 empty ls.3) empty (call safe-s.1313 (call f.2 (call safe-s.1316 ls.3)) (call map.1 f.2 (call safe-s.1318 ls.3)))))) (call map.1 (lambda (x.4) (call safe-s.1272 1 x.4)) (call safe-s.1313 1 (call safe-s.1313 2 (call safe-s.1313 3 empty)))))
+expected:           (2 3 4)
+src-interp:         interp-exprs-unsafe-data-lang-v9
+trg-interp:         interp-exprs-unsafe-lang-v9
+test-type:          "Checking test-program compiles without error"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:400:10
+params:             '(#<procedure:...est-suite/utils.rkt:401:11>)
+message:            "Exception raised"
+exception-message:
+  "implement-safe-call: broke its own contract\n  promised: exprs-unsafe-lang-v9?\n  produced: '(module (define safe-s.1313 (lambda (tmp.1314 tmp.1315) (cons tmp.1314 tmp.1315))) (define safe-s.1318 (lambda (tmp.1319) (if (pair? tmp.1319) (unsafe-cdr tmp.1319) (error 100)))) (define safe-s.1281 (lambda (tmp.1282 tmp.1283) (eq? tmp.1282 tmp.1283))...\n  in: the range of\n      (->\n       exprs-unsafe-data-lang-v9?\n       exprs-unsafe-lang-v9?)\n  contract from: \n      (function implement-safe-call)\n  blaming: (function implement-safe-call)\n   (assuming the contract is correct)\n  at: /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/implement-safe-call.rkt:14:18"
+exception:
+  implement-safe-call: broke its own contract
+    promised: exprs-unsafe-lang-v9?
+    produced: '(module (define safe-s.1313 (lambda (tmp.1314 tmp.1315) (cons tmp.1314 tmp.1315))) (define safe-s.1318 (lambda (tmp.1319) (if (pair? tmp.1319) (unsafe-cdr tmp.1319) (error 100)))) (define safe-s.1281 (lambda (tmp.1282 tmp.1283) (eq? tmp.1282 tmp.1283))...
+    in: the range of
+        (->
+         exprs-unsafe-data-lang-v9?
+         exprs-unsafe-lang-v9?)
+    contract from: 
+        (function implement-safe-call)
+    blaming: (function implement-safe-call)
+     (assuming the contract is correct)
+    at: /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/implement-safe-call.rkt:14:18
+    context...:
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/contract/private/blame.rkt:346:0: raise-blame-error
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/contract/private/arrow-higher-order.rkt:375:33
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > optimize-known-calls suite
+FAILURE
+test-program:
+  (module (letrec ((L.safe-s.630.9 (lambda (c.1963 tmp.631) (let ((safe-vector-init.575 (closure-ref c.1963 0))) (if (fixnum? tmp.631) (if (unsafe-fx>= tmp.631 0) (let ((tmp.632 (unsafe-make-vector tmp.631))) (call L.safe-vector-init.575.11 safe-vector-init.575 tmp.632 tmp.631 0)) (error 99)) (error 100))))) (L.safe-s.635.10 (lambda (c.1964 tmp.636 tmp.637 tmp.638) (let () (if (fixnum? tmp.637) (if (vector? tmp.636) (if (unsafe-fx>= tmp.637 0) (if (unsafe-fx< tmp.637 (unsafe-vector-length tmp.636)) (begin (unsafe-vector-set! tmp.636 tmp.637 tmp.638) (void)) (error 99)) (error 99)) (error 100)) (error 101))))) (L.safe-vector-init.575.11 (lambda (c.1965 vec.576 len.577 i.578) (let ((safe-vector-init.575 (closure-ref c.1965 0))) (if (eq? len.577 i.578) vec.576 (begin (unsafe-vector-set! vec.576 i.578 0) (call L.safe-vector-init.575.11 safe-vector-init.575 vec.576 len.577 (unsafe-fx+ i.578 1)))))))) (cletrec ((safe-s.630 (make-closure L.safe-s.630.9 1 safe-vector-init.575)) (safe-s.635 (make-closure L.safe-s.635.10 3)) (safe-vector-init.575 (make-closure L.safe-vector-init.575.11 3 safe-vector-init.575))) (let ((x.1.61 (call L.safe-s.630.9 safe-s.630 3))) (let ((x.2.62 (call L.safe-s.635.10 safe-s.635 x.1.61 0 1))) (let ((x.3.63 (call L.safe-s.635.10 safe-s.635 x.1.61 1 2))) (let ((x.4.64 (call L.safe-s.635.10 safe-s.635 x.1.61 2 3))) x.1.61)))))))
+expected:           #(1 2 3)
+src-interp:         interp-closure-lang-v9
+trg-interp:         interp-closure-lang-v9
+test-type:          "Checking test-program compiles without error"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:400:10
+params:             '(#<procedure:...est-suite/utils.rkt:401:11>)
+message:            "Exception raised"
+exception-message:
+  "optimize-known-calls: broke its own contract\n  promised: closure-lang-v9?\n  produced: '(module (letrec ((L.safe-s.630.9 (lambda (c.1963 tmp.631) (let ((safe-vector-init.575 (closure-ref c.1963 0))) (if (fixnum? tmp.631) (if (unsafe-fx>= tmp.631 0) (let ((tmp.632 (unsafe-make-vector tmp.631))) (call L.safe-vector-init.575.11 (safe-vector-...\n  in: the range of\n      (-> closure-lang-v9? closure-lang-v9?)\n  contract from: \n      (function optimize-known-calls)\n  blaming: (function optimize-known-calls)\n   (assuming the contract is correct)\n  at: /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/optimize-known-calls.rkt:12:18"
+exception:
+  optimize-known-calls: broke its own contract
+    promised: closure-lang-v9?
+    produced: '(module (letrec ((L.safe-s.630.9 (lambda (c.1963 tmp.631) (let ((safe-vector-init.575 (closure-ref c.1963 0))) (if (fixnum? tmp.631) (if (unsafe-fx>= tmp.631 0) (let ((tmp.632 (unsafe-make-vector tmp.631))) (call L.safe-vector-init.575.11 (safe-vector-...
+    in: the range of
+        (-> closure-lang-v9? closure-lang-v9?)
+    contract from: 
+        (function optimize-known-calls)
+    blaming: (function optimize-known-calls)
+     (assuming the contract is correct)
+    at: /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/optimize-known-calls.rkt:12:18
+    context...:
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/contract/private/blame.rkt:346:0: raise-blame-error
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/contract/private/arrow-higher-order.rkt:375:33
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > optimize-known-calls suite
+FAILURE
+test-program:
+  (module (letrec ((L.safe-s.858.16 (lambda (c.1970 tmp.859 tmp.860) (let () (if (fixnum? tmp.860) (if (fixnum? tmp.859) (unsafe-fx+ tmp.859 tmp.860) (error 100)) (error 101))))) (L.F.27.17 (lambda (c.1971 a.30 b.31 c.32 d.33 e.34 f.35 g.36) (let ((safe-s.858 (closure-ref c.1971 0)) (G.28 (closure-ref c.1971 1))) (call L.safe-s.858.16 safe-s.858 10 (call L.G.28.18 G.28 a.30 b.31 c.32 d.33 e.34 f.35 g.36 8))))) (L.G.28.18 (lambda (c.1972 a.37 b.38 c.39 d.40 e.41 f.42 g.43 h.44) (let ((H.29 (closure-ref c.1972 0))) (call L.H.29.19 H.29 a.37 b.38 c.39 d.40 e.41 f.42 g.43 h.44 9)))) (L.H.29.19 (lambda (c.1973 a.45 b.46 c.47 d.48 e.49 f.50 g.51 h.52 j.53) (let ((safe-s.858 (closure-ref c.1973 0))) (let ((r1.54 (call L.safe-s.858.16 safe-s.858 a.45 b.46))) (let ((r2.55 (call L.safe-s.858.16 safe-s.858 r1.54 c.47))) (let ((r3.56 (call L.safe-s.858.16 safe-s.858 r2.55 d.48))) (let ((r4.57 (call L.safe-s.858.16 safe-s.858 r3.56 e.49))) (let ((r5.58 (call L.safe-s.858.16 safe-s.858 r4.57 f.50))) (let ((r6.59 (call L.safe-s.858.16 safe-s.858 r5.58 g.51))) (let ((r7.60 (call L.safe-s.858.16 safe-s.858 r6.59 h.52))) (call L.safe-s.858.16 safe-s.858 r7.60 j.53)))))))))))) (cletrec ((safe-s.858 (make-closure L.safe-s.858.16 2)) (F.27 (make-closure L.F.27.17 7 safe-s.858 G.28)) (G.28 (make-closure L.G.28.18 8 H.29)) (H.29 (make-closure L.H.29.19 9 safe-s.858))) (call L.F.27.17 F.27 1 2 3 4 5 6 7))))
+expected:           55
+src-interp:         interp-closure-lang-v9
+trg-interp:         interp-closure-lang-v9
+test-type:          "Checking test-program compiles without error"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:400:10
+params:             '(#<procedure:...est-suite/utils.rkt:401:11>)
+message:            "Exception raised"
+exception-message:
+  "optimize-known-calls: broke its own contract\n  promised: closure-lang-v9?\n  produced: '(module (letrec ((L.safe-s.858.16 (lambda (c.1970 tmp.859 tmp.860) (let () (if (fixnum? tmp.860) (if (fixnum? tmp.859) (unsafe-fx+ tmp.859 tmp.860) (error 100)) (error 101))))) (L.F.27.17 (lambda (c.1971 a.30 b.31 c.32 d.33 e.34 f.35 g.36) (let ((safe-...\n  in: the range of\n      (-> closure-lang-v9? closure-lang-v9?)\n  contract from: \n      (function optimize-known-calls)\n  blaming: (function optimize-known-calls)\n   (assuming the contract is correct)\n  at: /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/optimize-known-calls.rkt:12:18"
+exception:
+  optimize-known-calls: broke its own contract
+    promised: closure-lang-v9?
+    produced: '(module (letrec ((L.safe-s.858.16 (lambda (c.1970 tmp.859 tmp.860) (let () (if (fixnum? tmp.860) (if (fixnum? tmp.859) (unsafe-fx+ tmp.859 tmp.860) (error 100)) (error 101))))) (L.F.27.17 (lambda (c.1971 a.30 b.31 c.32 d.33 e.34 f.35 g.36) (let ((safe-...
+    in: the range of
+        (-> closure-lang-v9? closure-lang-v9?)
+    contract from: 
+        (function optimize-known-calls)
+    blaming: (function optimize-known-calls)
+     (assuming the contract is correct)
+    at: /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/optimize-known-calls.rkt:12:18
+    context...:
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/contract/private/blame.rkt:346:0: raise-blame-error
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/contract/private/arrow-higher-order.rkt:375:33
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > optimize-known-calls suite
+FAILURE
+test-program:
+  (module (letrec ((L.safe-s.177.52 (lambda (c.2006 tmp.178 tmp.179) (let () (eq? tmp.178 tmp.179)))) (L.safe-s.171.53 (lambda (c.2007 tmp.172 tmp.173) (let () (if (fixnum? tmp.173) (if (fixnum? tmp.172) (unsafe-fx- tmp.172 tmp.173) (error 100)) (error 101))))) (L.safe-s.168.54 (lambda (c.2008 tmp.169 tmp.170) (let () (if (fixnum? tmp.170) (if (fixnum? tmp.169) (unsafe-fx+ tmp.169 tmp.170) (error 100)) (error 101))))) (L.safe-s.165.55 (lambda (c.2009 tmp.166 tmp.167) (let () (if (fixnum? tmp.167) (if (fixnum? tmp.166) (unsafe-fx* tmp.166 tmp.167) (error 100)) (error 101))))) (L.identity.72.56 (lambda (c.2010 x.74) (let ((safe-s.177 (closure-ref c.2010 0)) (safe-s.171 (closure-ref c.2010 1)) (safe-s.168 (closure-ref c.2010 2)) (identity.72 (closure-ref c.2010 3))) (if (call L.safe-s.177.52 safe-s.177 x.74 0) 0 (let ((y.75 (call L.safe-s.171.53 safe-s.171 x.74 1))) (let ((x.76 (call L.identity.72.56 identity.72 y.75))) (call L.safe-s.168.54 safe-s.168 1 x.76))))))) (L.fact.73.57 (lambda (c.2011 x.77) (let ((safe-s.171 (closure-ref c.2011 0)) (safe-s.165 (closure-ref c.2011 1)) (fact.73 (closure-ref c.2011 2)) (identity.72 (closure-ref c.2011 3)) (safe-s.177 (closure-ref c.2011 4))) (let ((x.78 (call L.identity.72.56 identity.72 x.77)) (y.79 (call L.identity.72.56 identity.72 0))) (if (call L.safe-s.177.52 safe-s.177 x.78 y.79) (let ((z.80 (call L.identity.72.56 identity.72 1))) z.80) (let ((n.81 (call L.identity.72.56 identity.72 1))) (let ((z.82 (call L.safe-s.171.53 safe-s.171 x.78 n.81))) (let ((y.83 (call L.fact.73.57 fact.73 z.82))) (call L.safe-s.165.55 safe-s.165 x.78 y.83)))))))))) (cletrec ((safe-s.177 (make-closure L.safe-s.177.52 2)) (safe-s.171 (make-closure L.safe-s.171.53 2)) (safe-s.168 (make-closure L.safe-s.168.54 2)) (safe-s.165 (make-closure L.safe-s.165.55 2)) (identity.72 (make-closure L.identity.72.56 1 safe-s.177 safe-s.171 safe-s.168 identity.72)) (fact.73 (make-closure L.fact.73.57 1 safe-s.171 safe-s.165 fact.73 identity.72 safe-s.177))) (call L.fact.73.57 fact.73 5))))
+expected:           120
+src-interp:         interp-closure-lang-v9
+trg-interp:         interp-closure-lang-v9
+test-type:          "Checking test-program compiles without error"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:400:10
+params:             '(#<procedure:...est-suite/utils.rkt:401:11>)
+message:            "Exception raised"
+exception-message:
+  "optimize-known-calls: broke its own contract\n  promised: closure-lang-v9?\n  produced: '(module (letrec ((L.safe-s.177.52 (lambda (c.2006 tmp.178 tmp.179) (let () (eq? tmp.178 tmp.179)))) (L.safe-s.171.53 (lambda (c.2007 tmp.172 tmp.173) (let () (if (fixnum? tmp.173) (if (fixnum? tmp.172) (unsafe-fx- tmp.172 tmp.173) (error 100)) (error 1...\n  in: the range of\n      (-> closure-lang-v9? closure-lang-v9?)\n  contract from: \n      (function optimize-known-calls)\n  blaming: (function optimize-known-calls)\n   (assuming the contract is correct)\n  at: /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/optimize-known-calls.rkt:12:18"
+exception:
+  optimize-known-calls: broke its own contract
+    promised: closure-lang-v9?
+    produced: '(module (letrec ((L.safe-s.177.52 (lambda (c.2006 tmp.178 tmp.179) (let () (eq? tmp.178 tmp.179)))) (L.safe-s.171.53 (lambda (c.2007 tmp.172 tmp.173) (let () (if (fixnum? tmp.173) (if (fixnum? tmp.172) (unsafe-fx- tmp.172 tmp.173) (error 100)) (error 1...
+    in: the range of
+        (-> closure-lang-v9? closure-lang-v9?)
+    contract from: 
+        (function optimize-known-calls)
+    blaming: (function optimize-known-calls)
+     (assuming the contract is correct)
+    at: /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/optimize-known-calls.rkt:12:18
+    context...:
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/contract/private/blame.rkt:346:0: raise-blame-error
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/contract/private/arrow-higher-order.rkt:375:33
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > optimize-known-calls suite
+FAILURE
+test-program:
+  (module (letrec ((L.safe-s.347.20 (lambda (c.1974 tmp.348 tmp.349) (let () (cons tmp.348 tmp.349)))) (L.safe-s.352.21 (lambda (c.1975 tmp.353) (let () (if (pair? tmp.353) (unsafe-cdr tmp.353) (error 100)))))) (cletrec ((safe-s.347 (make-closure L.safe-s.347.20 2)) (safe-s.352 (make-closure L.safe-s.352.21 1))) (call L.safe-s.352.21 safe-s.352 (call L.safe-s.347.20 safe-s.347 7 empty)))))
+expected:           ()
+src-interp:         interp-closure-lang-v9
+trg-interp:         interp-closure-lang-v9
+test-type:          "Checking test-program compiles without error"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:400:10
+params:             '(#<procedure:...est-suite/utils.rkt:401:11>)
+message:            "Exception raised"
+exception-message:
+  "optimize-known-calls: broke its own contract\n  promised: closure-lang-v9?\n  produced: '(module (letrec ((L.safe-s.347.20 (lambda (c.1974 tmp.348 tmp.349) (let () (cons tmp.348 tmp.349)))) (L.safe-s.352.21 (lambda (c.1975 tmp.353) (let () (if (pair? tmp.353) (unsafe-cdr tmp.353) (error 100)))))) (cletrec ((safe-s.347 (make-closure L.safe-...\n  in: the range of\n      (-> closure-lang-v9? closure-lang-v9?)\n  contract from: \n      (function optimize-known-calls)\n  blaming: (function optimize-known-calls)\n   (assuming the contract is correct)\n  at: /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/optimize-known-calls.rkt:12:18"
+exception:
+  optimize-known-calls: broke its own contract
+    promised: closure-lang-v9?
+    produced: '(module (letrec ((L.safe-s.347.20 (lambda (c.1974 tmp.348 tmp.349) (let () (cons tmp.348 tmp.349)))) (L.safe-s.352.21 (lambda (c.1975 tmp.353) (let () (if (pair? tmp.353) (unsafe-cdr tmp.353) (error 100)))))) (cletrec ((safe-s.347 (make-closure L.safe-...
+    in: the range of
+        (-> closure-lang-v9? closure-lang-v9?)
+    contract from: 
+        (function optimize-known-calls)
+    blaming: (function optimize-known-calls)
+     (assuming the contract is correct)
+    at: /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/optimize-known-calls.rkt:12:18
+    context...:
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/contract/private/blame.rkt:346:0: raise-blame-error
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/contract/private/arrow-higher-order.rkt:375:33
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > optimize-known-calls suite
+FAILURE
+test-program:
+  (module (letrec ((L.safe-s.416.45 (lambda (c.1999 tmp.417 tmp.418) (let () (cons tmp.417 tmp.418)))) (L.safe-s.384.46 (lambda (c.2000 tmp.385 tmp.386) (let () (eq? tmp.385 tmp.386)))) (L.safe-s.372.47 (lambda (c.2001 tmp.373 tmp.374) (let () (if (fixnum? tmp.374) (if (fixnum? tmp.373) (unsafe-fx* tmp.373 tmp.374) (error 100)) (error 101)))))) (cletrec ((safe-s.416 (make-closure L.safe-s.416.45 2)) (safe-s.384 (make-closure L.safe-s.384.46 2)) (safe-s.372 (make-closure L.safe-s.372.47 2))) (call L.safe-s.416.45 safe-s.416 (if (call L.safe-s.384.46 safe-s.384 7 8) (call L.safe-s.372.47 safe-s.372 7 8) (call L.safe-s.372.47 safe-s.372 8 7)) empty))))
+expected:           (56)
+src-interp:         interp-closure-lang-v9
+trg-interp:         interp-closure-lang-v9
+test-type:          "Checking test-program compiles without error"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:400:10
+params:             '(#<procedure:...est-suite/utils.rkt:401:11>)
+message:            "Exception raised"
+exception-message:
+  "optimize-known-calls: broke its own contract\n  promised: closure-lang-v9?\n  produced: '(module (letrec ((L.safe-s.416.45 (lambda (c.1999 tmp.417 tmp.418) (let () (cons tmp.417 tmp.418)))) (L.safe-s.384.46 (lambda (c.2000 tmp.385 tmp.386) (let () (eq? tmp.385 tmp.386)))) (L.safe-s.372.47 (lambda (c.2001 tmp.373 tmp.374) (let () (if (fixnu...\n  in: the range of\n      (-> closure-lang-v9? closure-lang-v9?)\n  contract from: \n      (function optimize-known-calls)\n  blaming: (function optimize-known-calls)\n   (assuming the contract is correct)\n  at: /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/optimize-known-calls.rkt:12:18"
+exception:
+  optimize-known-calls: broke its own contract
+    promised: closure-lang-v9?
+    produced: '(module (letrec ((L.safe-s.416.45 (lambda (c.1999 tmp.417 tmp.418) (let () (cons tmp.417 tmp.418)))) (L.safe-s.384.46 (lambda (c.2000 tmp.385 tmp.386) (let () (eq? tmp.385 tmp.386)))) (L.safe-s.372.47 (lambda (c.2001 tmp.373 tmp.374) (let () (if (fixnu...
+    in: the range of
+        (-> closure-lang-v9? closure-lang-v9?)
+    contract from: 
+        (function optimize-known-calls)
+    blaming: (function optimize-known-calls)
+     (assuming the contract is correct)
+    at: /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/optimize-known-calls.rkt:12:18
+    context...:
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/contract/private/blame.rkt:346:0: raise-blame-error
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/contract/private/arrow-higher-order.rkt:375:33
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > optimize-known-calls suite
+FAILURE
+test-program:
+  (module (letrec ((L.safe-s.720.43 (lambda (c.1997 tmp.721 tmp.722) (let () (if (fixnum? tmp.722) (if (fixnum? tmp.721) (unsafe-fx+ tmp.721 tmp.722) (error 100)) (error 101))))) (L.safe-s.717.44 (lambda (c.1998 tmp.718 tmp.719) (let () (if (fixnum? tmp.719) (if (fixnum? tmp.718) (unsafe-fx* tmp.718 tmp.719) (error 100)) (error 101)))))) (cletrec ((safe-s.720 (make-closure L.safe-s.720.43 2)) (safe-s.717 (make-closure L.safe-s.717.44 2))) (call L.safe-s.720.43 safe-s.720 (call L.safe-s.720.43 safe-s.720 5 6) (call L.safe-s.717.44 safe-s.717 4 5)))))
+expected:           31
+src-interp:         interp-closure-lang-v9
+trg-interp:         interp-closure-lang-v9
+test-type:          "Checking test-program compiles without error"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:400:10
+params:             '(#<procedure:...est-suite/utils.rkt:401:11>)
+message:            "Exception raised"
+exception-message:
+  "optimize-known-calls: broke its own contract\n  promised: closure-lang-v9?\n  produced: '(module (letrec ((L.safe-s.720.43 (lambda (c.1997 tmp.721 tmp.722) (let () (if (fixnum? tmp.722) (if (fixnum? tmp.721) (unsafe-fx+ tmp.721 tmp.722) (error 100)) (error 101))))) (L.safe-s.717.44 (lambda (c.1998 tmp.718 tmp.719) (let () (if (fixnum? tmp....\n  in: the range of\n      (-> closure-lang-v9? closure-lang-v9?)\n  contract from: \n      (function optimize-known-calls)\n  blaming: (function optimize-known-calls)\n   (assuming the contract is correct)\n  at: /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/optimize-known-calls.rkt:12:18"
+exception:
+  optimize-known-calls: broke its own contract
+    promised: closure-lang-v9?
+    produced: '(module (letrec ((L.safe-s.720.43 (lambda (c.1997 tmp.721 tmp.722) (let () (if (fixnum? tmp.722) (if (fixnum? tmp.721) (unsafe-fx+ tmp.721 tmp.722) (error 100)) (error 101))))) (L.safe-s.717.44 (lambda (c.1998 tmp.718 tmp.719) (let () (if (fixnum? tmp....
+    in: the range of
+        (-> closure-lang-v9? closure-lang-v9?)
+    contract from: 
+        (function optimize-known-calls)
+    blaming: (function optimize-known-calls)
+     (assuming the contract is correct)
+    at: /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/optimize-known-calls.rkt:12:18
+    context...:
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/contract/private/blame.rkt:346:0: raise-blame-error
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/contract/private/arrow-higher-order.rkt:375:33
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > optimize-known-calls suite
+FAILURE
+test-program:
+  (module (letrec ((L.safe-s.1623.31 (lambda (c.1985 tmp.1624 tmp.1625) (let () (if (fixnum? tmp.1625) (if (fixnum? tmp.1624) (unsafe-fx< tmp.1624 tmp.1625) (error 100)) (error 101))))) (L.swap.8.32 (lambda (c.1986 x.9 y.10) (let ((safe-s.1623 (closure-ref c.1986 0)) (swap.8 (closure-ref c.1986 1))) (if (call L.safe-s.1623.31 safe-s.1623 y.10 x.9) x.9 (let ((z.11 (call L.swap.8.32 swap.8 y.10 x.9))) z.11)))))) (cletrec ((safe-s.1623 (make-closure L.safe-s.1623.31 2)) (swap.8 (make-closure L.swap.8.32 2 safe-s.1623 swap.8))) (call L.swap.8.32 swap.8 1 2))))
+expected:           2
+src-interp:         interp-closure-lang-v9
+trg-interp:         interp-closure-lang-v9
+test-type:          "Checking test-program compiles without error"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:400:10
+params:             '(#<procedure:...est-suite/utils.rkt:401:11>)
+message:            "Exception raised"
+exception-message:
+  "optimize-known-calls: broke its own contract\n  promised: closure-lang-v9?\n  produced: '(module (letrec ((L.safe-s.1623.31 (lambda (c.1985 tmp.1624 tmp.1625) (let () (if (fixnum? tmp.1625) (if (fixnum? tmp.1624) (unsafe-fx< tmp.1624 tmp.1625) (error 100)) (error 101))))) (L.swap.8.32 (lambda (c.1986 x.9 y.10) (let ((safe-s.1623 (closure-r...\n  in: the range of\n      (-> closure-lang-v9? closure-lang-v9?)\n  contract from: \n      (function optimize-known-calls)\n  blaming: (function optimize-known-calls)\n   (assuming the contract is correct)\n  at: /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/optimize-known-calls.rkt:12:18"
+exception:
+  optimize-known-calls: broke its own contract
+    promised: closure-lang-v9?
+    produced: '(module (letrec ((L.safe-s.1623.31 (lambda (c.1985 tmp.1624 tmp.1625) (let () (if (fixnum? tmp.1625) (if (fixnum? tmp.1624) (unsafe-fx< tmp.1624 tmp.1625) (error 100)) (error 101))))) (L.swap.8.32 (lambda (c.1986 x.9 y.10) (let ((safe-s.1623 (closure-r...
+    in: the range of
+        (-> closure-lang-v9? closure-lang-v9?)
+    contract from: 
+        (function optimize-known-calls)
+    blaming: (function optimize-known-calls)
+     (assuming the contract is correct)
+    at: /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/optimize-known-calls.rkt:12:18
+    context...:
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/contract/private/blame.rkt:346:0: raise-blame-error
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/contract/private/arrow-higher-order.rkt:375:33
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > optimize-known-calls suite
+FAILURE
+test-program:
+  (module (letrec ((L.safe-s.243.61 (lambda (c.2015 tmp.244 tmp.245) (let () (if (fixnum? tmp.245) (if (fixnum? tmp.244) (unsafe-fx< tmp.244 tmp.245) (error 100)) (error 101))))) (L.swap.65.62 (lambda (c.2016 x.66 y.67) (let ((safe-s.243 (closure-ref c.2016 0)) (swap.65 (closure-ref c.2016 1))) (if (call L.safe-s.243.61 safe-s.243 y.67 x.66) x.66 (call L.swap.65.62 swap.65 y.67 x.66)))))) (cletrec ((safe-s.243 (make-closure L.safe-s.243.61 2)) (swap.65 (make-closure L.swap.65.62 2 safe-s.243 swap.65))) (call L.swap.65.62 swap.65 1 2))))
+expected:           2
+src-interp:         interp-closure-lang-v9
+trg-interp:         interp-closure-lang-v9
+test-type:          "Checking test-program compiles without error"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:400:10
+params:             '(#<procedure:...est-suite/utils.rkt:401:11>)
+message:            "Exception raised"
+exception-message:
+  "optimize-known-calls: broke its own contract\n  promised: closure-lang-v9?\n  produced: '(module (letrec ((L.safe-s.243.61 (lambda (c.2015 tmp.244 tmp.245) (let () (if (fixnum? tmp.245) (if (fixnum? tmp.244) (unsafe-fx< tmp.244 tmp.245) (error 100)) (error 101))))) (L.swap.65.62 (lambda (c.2016 x.66 y.67) (let ((safe-s.243 (closure-ref c.2...\n  in: the range of\n      (-> closure-lang-v9? closure-lang-v9?)\n  contract from: \n      (function optimize-known-calls)\n  blaming: (function optimize-known-calls)\n   (assuming the contract is correct)\n  at: /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/optimize-known-calls.rkt:12:18"
+exception:
+  optimize-known-calls: broke its own contract
+    promised: closure-lang-v9?
+    produced: '(module (letrec ((L.safe-s.243.61 (lambda (c.2015 tmp.244 tmp.245) (let () (if (fixnum? tmp.245) (if (fixnum? tmp.244) (unsafe-fx< tmp.244 tmp.245) (error 100)) (error 101))))) (L.swap.65.62 (lambda (c.2016 x.66 y.67) (let ((safe-s.243 (closure-ref c.2...
+    in: the range of
+        (-> closure-lang-v9? closure-lang-v9?)
+    contract from: 
+        (function optimize-known-calls)
+    blaming: (function optimize-known-calls)
+     (assuming the contract is correct)
+    at: /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/optimize-known-calls.rkt:12:18
+    context...:
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/contract/private/blame.rkt:346:0: raise-blame-error
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/contract/private/arrow-higher-order.rkt:375:33
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > optimize-known-calls suite
+FAILURE
+test-program:
+  (module (letrec ((L.safe-s.1520.8 (lambda (c.1962 tmp.1521 tmp.1522) (let () (cons tmp.1521 tmp.1522))))) (cletrec ((safe-s.1520 (make-closure L.safe-s.1520.8 2))) (call L.safe-s.1520.8 safe-s.1520 7 empty))))
+expected:           (7)
+src-interp:         interp-closure-lang-v9
+trg-interp:         interp-closure-lang-v9
+test-type:          "Checking test-program compiles without error"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:400:10
+params:             '(#<procedure:...est-suite/utils.rkt:401:11>)
+message:            "Exception raised"
+exception-message:
+  "optimize-known-calls: broke its own contract\n  promised: closure-lang-v9?\n  produced: '(module (letrec ((L.safe-s.1520.8 (lambda (c.1962 tmp.1521 tmp.1522) (let () (cons tmp.1521 tmp.1522))))) (cletrec ((safe-s.1520 (make-closure L.safe-s.1520.8 2))) (call L.safe-s.1520.8 (safe-s.1520 7 empty)))))\n  in: the range of\n      (-> closure-lang-v9? closure-lang-v9?)\n  contract from: \n      (function optimize-known-calls)\n  blaming: (function optimize-known-calls)\n   (assuming the contract is correct)\n  at: /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/optimize-known-calls.rkt:12:18"
+exception:
+  optimize-known-calls: broke its own contract
+    promised: closure-lang-v9?
+    produced: '(module (letrec ((L.safe-s.1520.8 (lambda (c.1962 tmp.1521 tmp.1522) (let () (cons tmp.1521 tmp.1522))))) (cletrec ((safe-s.1520 (make-closure L.safe-s.1520.8 2))) (call L.safe-s.1520.8 (safe-s.1520 7 empty)))))
+    in: the range of
+        (-> closure-lang-v9? closure-lang-v9?)
+    contract from: 
+        (function optimize-known-calls)
+    blaming: (function optimize-known-calls)
+     (assuming the contract is correct)
+    at: /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/optimize-known-calls.rkt:12:18
+    context...:
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/contract/private/blame.rkt:346:0: raise-blame-error
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/contract/private/arrow-higher-order.rkt:375:33
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > optimize-known-calls suite
+FAILURE
+test-program:
+  (module (letrec ((L.safe-s.1902.12 (lambda (c.1966 tmp.1903 tmp.1904) (let () (eq? tmp.1903 tmp.1904)))) (L.safe-s.1896.13 (lambda (c.1967 tmp.1897 tmp.1898) (let () (if (fixnum? tmp.1898) (if (fixnum? tmp.1897) (unsafe-fx- tmp.1897 tmp.1898) (error 100)) (error 101))))) (L.safe-s.1890.14 (lambda (c.1968 tmp.1891 tmp.1892) (let () (if (fixnum? tmp.1892) (if (fixnum? tmp.1891) (unsafe-fx* tmp.1891 tmp.1892) (error 100)) (error 101))))) (L.fact.18.15 (lambda (c.1969 x.19) (let ((safe-s.1902 (closure-ref c.1969 0)) (fact.18 (closure-ref c.1969 1)) (safe-s.1896 (closure-ref c.1969 2)) (safe-s.1890 (closure-ref c.1969 3))) (if (call L.safe-s.1902.12 safe-s.1902 x.19 0) 1 (call L.safe-s.1890.14 safe-s.1890 x.19 (call L.fact.18.15 fact.18 (call L.safe-s.1896.13 safe-s.1896 x.19 1)))))))) (cletrec ((safe-s.1902 (make-closure L.safe-s.1902.12 2)) (safe-s.1896 (make-closure L.safe-s.1896.13 2)) (safe-s.1890 (make-closure L.safe-s.1890.14 2)) (fact.18 (make-closure L.fact.18.15 1 safe-s.1902 fact.18 safe-s.1896 safe-s.1890))) (call L.fact.18.15 fact.18 5))))
+expected:           120
+src-interp:         interp-closure-lang-v9
+trg-interp:         interp-closure-lang-v9
+test-type:          "Checking test-program compiles without error"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:400:10
+params:             '(#<procedure:...est-suite/utils.rkt:401:11>)
+message:            "Exception raised"
+exception-message:
+  "optimize-known-calls: broke its own contract\n  promised: closure-lang-v9?\n  produced: '(module (letrec ((L.safe-s.1902.12 (lambda (c.1966 tmp.1903 tmp.1904) (let () (eq? tmp.1903 tmp.1904)))) (L.safe-s.1896.13 (lambda (c.1967 tmp.1897 tmp.1898) (let () (if (fixnum? tmp.1898) (if (fixnum? tmp.1897) (unsafe-fx- tmp.1897 tmp.1898) (error 10...\n  in: the range of\n      (-> closure-lang-v9? closure-lang-v9?)\n  contract from: \n      (function optimize-known-calls)\n  blaming: (function optimize-known-calls)\n   (assuming the contract is correct)\n  at: /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/optimize-known-calls.rkt:12:18"
+exception:
+  optimize-known-calls: broke its own contract
+    promised: closure-lang-v9?
+    produced: '(module (letrec ((L.safe-s.1902.12 (lambda (c.1966 tmp.1903 tmp.1904) (let () (eq? tmp.1903 tmp.1904)))) (L.safe-s.1896.13 (lambda (c.1967 tmp.1897 tmp.1898) (let () (if (fixnum? tmp.1898) (if (fixnum? tmp.1897) (unsafe-fx- tmp.1897 tmp.1898) (error 10...
+    in: the range of
+        (-> closure-lang-v9? closure-lang-v9?)
+    contract from: 
+        (function optimize-known-calls)
+    blaming: (function optimize-known-calls)
+     (assuming the contract is correct)
+    at: /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/optimize-known-calls.rkt:12:18
+    context...:
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/contract/private/blame.rkt:346:0: raise-blame-error
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/contract/private/arrow-higher-order.rkt:375:33
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > optimize-known-calls suite
+FAILURE
+test-program:
+  (module (letrec ((L.safe-s.1596.24 (lambda (c.1978 tmp.1597) (let ((safe-vector-init.1541 (closure-ref c.1978 0))) (if (fixnum? tmp.1597) (if (unsafe-fx>= tmp.1597 0) (let ((tmp.1598 (unsafe-make-vector tmp.1597))) (call L.safe-vector-init.1541.26 safe-vector-init.1541 tmp.1598 tmp.1597 0)) (error 99)) (error 100))))) (L.safe-s.1605.25 (lambda (c.1979 tmp.1606 tmp.1607) (let () (if (fixnum? tmp.1607) (if (vector? tmp.1606) (if (unsafe-fx>= tmp.1607 0) (if (unsafe-fx< tmp.1607 (unsafe-vector-length tmp.1606)) (unsafe-vector-ref tmp.1606 tmp.1607) (error 99)) (error 99)) (error 100)) (error 101))))) (L.safe-vector-init.1541.26 (lambda (c.1980 vec.1542 len.1543 i.1544) (let ((safe-vector-init.1541 (closure-ref c.1980 0))) (if (eq? len.1543 i.1544) vec.1542 (begin (unsafe-vector-set! vec.1542 i.1544 0) (call L.safe-vector-init.1541.26 safe-vector-init.1541 vec.1542 len.1543 (unsafe-fx+ i.1544 1)))))))) (cletrec ((safe-s.1596 (make-closure L.safe-s.1596.24 1 safe-vector-init.1541)) (safe-s.1605 (make-closure L.safe-s.1605.25 2)) (safe-vector-init.1541 (make-closure L.safe-vector-init.1541.26 3 safe-vector-init.1541))) (call L.safe-s.1605.25 safe-s.1605 (call L.safe-s.1596.24 safe-s.1596 2) 0))))
+expected:           0
+src-interp:         interp-closure-lang-v9
+trg-interp:         interp-closure-lang-v9
+test-type:          "Checking test-program compiles without error"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:400:10
+params:             '(#<procedure:...est-suite/utils.rkt:401:11>)
+message:            "Exception raised"
+exception-message:
+  "optimize-known-calls: broke its own contract\n  promised: closure-lang-v9?\n  produced: '(module (letrec ((L.safe-s.1596.24 (lambda (c.1978 tmp.1597) (let ((safe-vector-init.1541 (closure-ref c.1978 0))) (if (fixnum? tmp.1597) (if (unsafe-fx>= tmp.1597 0) (let ((tmp.1598 (unsafe-make-vector tmp.1597))) (call L.safe-vector-init.1541.26 (saf...\n  in: the range of\n      (-> closure-lang-v9? closure-lang-v9?)\n  contract from: \n      (function optimize-known-calls)\n  blaming: (function optimize-known-calls)\n   (assuming the contract is correct)\n  at: /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/optimize-known-calls.rkt:12:18"
+exception:
+  optimize-known-calls: broke its own contract
+    promised: closure-lang-v9?
+    produced: '(module (letrec ((L.safe-s.1596.24 (lambda (c.1978 tmp.1597) (let ((safe-vector-init.1541 (closure-ref c.1978 0))) (if (fixnum? tmp.1597) (if (unsafe-fx>= tmp.1597 0) (let ((tmp.1598 (unsafe-make-vector tmp.1597))) (call L.safe-vector-init.1541.26 (saf...
+    in: the range of
+        (-> closure-lang-v9? closure-lang-v9?)
+    contract from: 
+        (function optimize-known-calls)
+    blaming: (function optimize-known-calls)
+     (assuming the contract is correct)
+    at: /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/optimize-known-calls.rkt:12:18
+    context...:
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/contract/private/blame.rkt:346:0: raise-blame-error
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/contract/private/arrow-higher-order.rkt:375:33
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > optimize-known-calls suite
+FAILURE
+test-program:
+  (module (letrec ((L.safe-s.936.4 (lambda (c.1958 tmp.937 tmp.938) (let () (eq? tmp.937 tmp.938)))) (L.safe-s.927.5 (lambda (c.1959 tmp.928 tmp.929) (let () (if (fixnum? tmp.929) (if (fixnum? tmp.928) (unsafe-fx+ tmp.928 tmp.929) (error 100)) (error 101))))) (L.safe-s.924.6 (lambda (c.1960 tmp.925 tmp.926) (let () (if (fixnum? tmp.926) (if (fixnum? tmp.925) (unsafe-fx* tmp.925 tmp.926) (error 100)) (error 101))))) (L.fact.20.7 (lambda (c.1961 x.21) (let ((safe-s.936 (closure-ref c.1961 0)) (safe-s.927 (closure-ref c.1961 1)) (safe-s.924 (closure-ref c.1961 2)) (fact.20 (closure-ref c.1961 3))) (if (call L.safe-s.936.4 safe-s.936 x.21 0) 1 (let ((z.22 (call L.safe-s.927.5 safe-s.927 x.21 -1))) (let ((y.23 (call L.fact.20.7 fact.20 z.22))) (call L.safe-s.924.6 safe-s.924 x.21 y.23)))))))) (cletrec ((safe-s.936 (make-closure L.safe-s.936.4 2)) (safe-s.927 (make-closure L.safe-s.927.5 2)) (safe-s.924 (make-closure L.safe-s.924.6 2)) (fact.20 (make-closure L.fact.20.7 1 safe-s.936 safe-s.927 safe-s.924 fact.20))) (call L.fact.20.7 fact.20 5))))
+expected:           120
+src-interp:         interp-closure-lang-v9
+trg-interp:         interp-closure-lang-v9
+test-type:          "Checking test-program compiles without error"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:400:10
+params:             '(#<procedure:...est-suite/utils.rkt:401:11>)
+message:            "Exception raised"
+exception-message:
+  "optimize-known-calls: broke its own contract\n  promised: closure-lang-v9?\n  produced: '(module (letrec ((L.safe-s.936.4 (lambda (c.1958 tmp.937 tmp.938) (let () (eq? tmp.937 tmp.938)))) (L.safe-s.927.5 (lambda (c.1959 tmp.928 tmp.929) (let () (if (fixnum? tmp.929) (if (fixnum? tmp.928) (unsafe-fx+ tmp.928 tmp.929) (error 100)) (error 101...\n  in: the range of\n      (-> closure-lang-v9? closure-lang-v9?)\n  contract from: \n      (function optimize-known-calls)\n  blaming: (function optimize-known-calls)\n   (assuming the contract is correct)\n  at: /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/optimize-known-calls.rkt:12:18"
+exception:
+  optimize-known-calls: broke its own contract
+    promised: closure-lang-v9?
+    produced: '(module (letrec ((L.safe-s.936.4 (lambda (c.1958 tmp.937 tmp.938) (let () (eq? tmp.937 tmp.938)))) (L.safe-s.927.5 (lambda (c.1959 tmp.928 tmp.929) (let () (if (fixnum? tmp.929) (if (fixnum? tmp.928) (unsafe-fx+ tmp.928 tmp.929) (error 100)) (error 101...
+    in: the range of
+        (-> closure-lang-v9? closure-lang-v9?)
+    contract from: 
+        (function optimize-known-calls)
+    blaming: (function optimize-known-calls)
+     (assuming the contract is correct)
+    at: /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/optimize-known-calls.rkt:12:18
+    context...:
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/contract/private/blame.rkt:346:0: raise-blame-error
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/contract/private/arrow-higher-order.rkt:375:33
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > optimize-known-calls suite
+FAILURE
+test-program:
+  (module (letrec ((L.safe-s.660.22 (lambda (c.1976 tmp.661 tmp.662) (let () (eq? tmp.661 tmp.662)))) (L.safe-s.651.23 (lambda (c.1977 tmp.652 tmp.653) (let () (if (fixnum? tmp.653) (if (fixnum? tmp.652) (unsafe-fx+ tmp.652 tmp.653) (error 100)) (error 101)))))) (cletrec ((safe-s.660 (make-closure L.safe-s.660.22 2)) (safe-s.651 (make-closure L.safe-s.651.23 2))) (if (call L.safe-s.660.22 safe-s.660 (call L.safe-s.651.23 safe-s.651 5 6) 11) 4 6))))
+expected:           4
+src-interp:         interp-closure-lang-v9
+trg-interp:         interp-closure-lang-v9
+test-type:          "Checking test-program compiles without error"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:400:10
+params:             '(#<procedure:...est-suite/utils.rkt:401:11>)
+message:            "Exception raised"
+exception-message:
+  "optimize-known-calls: broke its own contract\n  promised: closure-lang-v9?\n  produced: '(module (letrec ((L.safe-s.660.22 (lambda (c.1976 tmp.661 tmp.662) (let () (eq? tmp.661 tmp.662)))) (L.safe-s.651.23 (lambda (c.1977 tmp.652 tmp.653) (let () (if (fixnum? tmp.653) (if (fixnum? tmp.652) (unsafe-fx+ tmp.652 tmp.653) (error 100)) (error 1...\n  in: the range of\n      (-> closure-lang-v9? closure-lang-v9?)\n  contract from: \n      (function optimize-known-calls)\n  blaming: (function optimize-known-calls)\n   (assuming the contract is correct)\n  at: /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/optimize-known-calls.rkt:12:18"
+exception:
+  optimize-known-calls: broke its own contract
+    promised: closure-lang-v9?
+    produced: '(module (letrec ((L.safe-s.660.22 (lambda (c.1976 tmp.661 tmp.662) (let () (eq? tmp.661 tmp.662)))) (L.safe-s.651.23 (lambda (c.1977 tmp.652 tmp.653) (let () (if (fixnum? tmp.653) (if (fixnum? tmp.652) (unsafe-fx+ tmp.652 tmp.653) (error 100)) (error 1...
+    in: the range of
+        (-> closure-lang-v9? closure-lang-v9?)
+    contract from: 
+        (function optimize-known-calls)
+    blaming: (function optimize-known-calls)
+     (assuming the contract is correct)
+    at: /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/optimize-known-calls.rkt:12:18
+    context...:
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/contract/private/blame.rkt:346:0: raise-blame-error
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/contract/private/arrow-higher-order.rkt:375:33
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > optimize-known-calls suite
+FAILURE
+test-program:
+  (module (letrec ((L.safe-s.1451.27 (lambda (c.1981 tmp.1452 tmp.1453) (let () (cons tmp.1452 tmp.1453)))) (L.safe-s.1454.28 (lambda (c.1982 tmp.1455) (let () (if (pair? tmp.1455) (unsafe-car tmp.1455) (error 100)))))) (cletrec ((safe-s.1451 (make-closure L.safe-s.1451.27 2)) (safe-s.1454 (make-closure L.safe-s.1454.28 1))) (call L.safe-s.1454.28 safe-s.1454 (call L.safe-s.1451.27 safe-s.1451 7 empty)))))
+expected:           7
+src-interp:         interp-closure-lang-v9
+trg-interp:         interp-closure-lang-v9
+test-type:          "Checking test-program compiles without error"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:400:10
+params:             '(#<procedure:...est-suite/utils.rkt:401:11>)
+message:            "Exception raised"
+exception-message:
+  "optimize-known-calls: broke its own contract\n  promised: closure-lang-v9?\n  produced: '(module (letrec ((L.safe-s.1451.27 (lambda (c.1981 tmp.1452 tmp.1453) (let () (cons tmp.1452 tmp.1453)))) (L.safe-s.1454.28 (lambda (c.1982 tmp.1455) (let () (if (pair? tmp.1455) (unsafe-car tmp.1455) (error 100)))))) (cletrec ((safe-s.1451 (make-closu...\n  in: the range of\n      (-> closure-lang-v9? closure-lang-v9?)\n  contract from: \n      (function optimize-known-calls)\n  blaming: (function optimize-known-calls)\n   (assuming the contract is correct)\n  at: /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/optimize-known-calls.rkt:12:18"
+exception:
+  optimize-known-calls: broke its own contract
+    promised: closure-lang-v9?
+    produced: '(module (letrec ((L.safe-s.1451.27 (lambda (c.1981 tmp.1452 tmp.1453) (let () (cons tmp.1452 tmp.1453)))) (L.safe-s.1454.28 (lambda (c.1982 tmp.1455) (let () (if (pair? tmp.1455) (unsafe-car tmp.1455) (error 100)))))) (cletrec ((safe-s.1451 (make-closu...
+    in: the range of
+        (-> closure-lang-v9? closure-lang-v9?)
+    contract from: 
+        (function optimize-known-calls)
+    blaming: (function optimize-known-calls)
+     (assuming the contract is correct)
+    at: /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/optimize-known-calls.rkt:12:18
+    context...:
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/contract/private/blame.rkt:346:0: raise-blame-error
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/contract/private/arrow-higher-order.rkt:375:33
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > optimize-known-calls suite
+FAILURE
+test-program:
+  (module (letrec ((L.safe-s.1113.39 (lambda (c.1993 tmp.1114) (let ((safe-vector-init.1058 (closure-ref c.1993 0))) (if (fixnum? tmp.1114) (if (unsafe-fx>= tmp.1114 0) (let ((tmp.1115 (unsafe-make-vector tmp.1114))) (call L.safe-vector-init.1058.42 safe-vector-init.1058 tmp.1115 tmp.1114 0)) (error 99)) (error 100))))) (L.safe-s.1118.40 (lambda (c.1994 tmp.1119 tmp.1120 tmp.1121) (let () (if (fixnum? tmp.1120) (if (vector? tmp.1119) (if (unsafe-fx>= tmp.1120 0) (if (unsafe-fx< tmp.1120 (unsafe-vector-length tmp.1119)) (begin (unsafe-vector-set! tmp.1119 tmp.1120 tmp.1121) (void)) (error 99)) (error 99)) (error 100)) (error 101))))) (L.safe-s.1122.41 (lambda (c.1995 tmp.1123 tmp.1124) (let () (if (fixnum? tmp.1124) (if (vector? tmp.1123) (if (unsafe-fx>= tmp.1124 0) (if (unsafe-fx< tmp.1124 (unsafe-vector-length tmp.1123)) (unsafe-vector-ref tmp.1123 tmp.1124) (error 99)) (error 99)) (error 100)) (error 101))))) (L.safe-vector-init.1058.42 (lambda (c.1996 vec.1059 len.1060 i.1061) (let ((safe-vector-init.1058 (closure-ref c.1996 0))) (if (eq? len.1060 i.1061) vec.1059 (begin (unsafe-vector-set! vec.1059 i.1061 0) (call L.safe-vector-init.1058.42 safe-vector-init.1058 vec.1059 len.1060 (unsafe-fx+ i.1061 1)))))))) (cletrec ((safe-s.1113 (make-closure L.safe-s.1113.39 1 safe-vector-init.1058)) (safe-s.1118 (make-closure L.safe-s.1118.40 3)) (safe-s.1122 (make-closure L.safe-s.1122.41 2)) (safe-vector-init.1058 (make-closure L.safe-vector-init.1058.42 3 safe-vector-init.1058))) (let ((x.1.84 (call L.safe-s.1113.39 safe-s.1113 3))) (let ((x.2.85 (call L.safe-s.1118.40 safe-s.1118 x.1.84 0 1))) (let ((x.3.86 (call L.safe-s.1118.40 safe-s.1118 x.1.84 1 2))) (let ((x.4.87 (call L.safe-s.1118.40 safe-s.1118 x.1.84 2 3))) (call L.safe-s.1122.41 safe-s.1122 x.1.84 2))))))))
+expected:           3
+src-interp:         interp-closure-lang-v9
+trg-interp:         interp-closure-lang-v9
+test-type:          "Checking test-program compiles without error"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:400:10
+params:             '(#<procedure:...est-suite/utils.rkt:401:11>)
+message:            "Exception raised"
+exception-message:
+  "optimize-known-calls: broke its own contract\n  promised: closure-lang-v9?\n  produced: '(module (letrec ((L.safe-s.1113.39 (lambda (c.1993 tmp.1114) (let ((safe-vector-init.1058 (closure-ref c.1993 0))) (if (fixnum? tmp.1114) (if (unsafe-fx>= tmp.1114 0) (let ((tmp.1115 (unsafe-make-vector tmp.1114))) (call L.safe-vector-init.1058.42 (saf...\n  in: the range of\n      (-> closure-lang-v9? closure-lang-v9?)\n  contract from: \n      (function optimize-known-calls)\n  blaming: (function optimize-known-calls)\n   (assuming the contract is correct)\n  at: /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/optimize-known-calls.rkt:12:18"
+exception:
+  optimize-known-calls: broke its own contract
+    promised: closure-lang-v9?
+    produced: '(module (letrec ((L.safe-s.1113.39 (lambda (c.1993 tmp.1114) (let ((safe-vector-init.1058 (closure-ref c.1993 0))) (if (fixnum? tmp.1114) (if (unsafe-fx>= tmp.1114 0) (let ((tmp.1115 (unsafe-make-vector tmp.1114))) (call L.safe-vector-init.1058.42 (saf...
+    in: the range of
+        (-> closure-lang-v9? closure-lang-v9?)
+    contract from: 
+        (function optimize-known-calls)
+    blaming: (function optimize-known-calls)
+     (assuming the contract is correct)
+    at: /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/optimize-known-calls.rkt:12:18
+    context...:
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/contract/private/blame.rkt:346:0: raise-blame-error
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/contract/private/arrow-higher-order.rkt:375:33
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > optimize-known-calls suite
+FAILURE
+test-program:
+  (module (letrec ((L.safe-s.522.58 (lambda (c.2012 tmp.523 tmp.524) (let () (eq? tmp.523 tmp.524)))) (L.safe-s.513.59 (lambda (c.2013 tmp.514 tmp.515) (let () (if (fixnum? tmp.515) (if (fixnum? tmp.514) (unsafe-fx+ tmp.514 tmp.515) (error 100)) (error 101))))) (L.fib_loop.12.60 (lambda (c.2014 n.13 acc1.14 acc2.15) (let ((safe-s.522 (closure-ref c.2014 0)) (safe-s.513 (closure-ref c.2014 1)) (fib_loop.12 (closure-ref c.2014 2))) (if (call L.safe-s.522.58 safe-s.522 n.13 0) acc1.14 (if (call L.safe-s.522.58 safe-s.522 n.13 1) acc2.15 (let ((new-n.16 (call L.safe-s.513.59 safe-s.513 n.13 -1))) (let ((new-acc2.17 (call L.safe-s.513.59 safe-s.513 acc1.14 acc2.15))) (call L.fib_loop.12.60 fib_loop.12 new-n.16 acc2.15 new-acc2.17))))))))) (cletrec ((safe-s.522 (make-closure L.safe-s.522.58 2)) (safe-s.513 (make-closure L.safe-s.513.59 2)) (fib_loop.12 (make-closure L.fib_loop.12.60 3 safe-s.522 safe-s.513 fib_loop.12))) (call L.fib_loop.12.60 fib_loop.12 5 0 1))))
+expected:           5
+src-interp:         interp-closure-lang-v9
+trg-interp:         interp-closure-lang-v9
+test-type:          "Checking test-program compiles without error"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:400:10
+params:             '(#<procedure:...est-suite/utils.rkt:401:11>)
+message:            "Exception raised"
+exception-message:
+  "optimize-known-calls: broke its own contract\n  promised: closure-lang-v9?\n  produced: '(module (letrec ((L.safe-s.522.58 (lambda (c.2012 tmp.523 tmp.524) (let () (eq? tmp.523 tmp.524)))) (L.safe-s.513.59 (lambda (c.2013 tmp.514 tmp.515) (let () (if (fixnum? tmp.515) (if (fixnum? tmp.514) (unsafe-fx+ tmp.514 tmp.515) (error 100)) (error 1...\n  in: the range of\n      (-> closure-lang-v9? closure-lang-v9?)\n  contract from: \n      (function optimize-known-calls)\n  blaming: (function optimize-known-calls)\n   (assuming the contract is correct)\n  at: /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/optimize-known-calls.rkt:12:18"
+exception:
+  optimize-known-calls: broke its own contract
+    promised: closure-lang-v9?
+    produced: '(module (letrec ((L.safe-s.522.58 (lambda (c.2012 tmp.523 tmp.524) (let () (eq? tmp.523 tmp.524)))) (L.safe-s.513.59 (lambda (c.2013 tmp.514 tmp.515) (let () (if (fixnum? tmp.515) (if (fixnum? tmp.514) (unsafe-fx+ tmp.514 tmp.515) (error 100)) (error 1...
+    in: the range of
+        (-> closure-lang-v9? closure-lang-v9?)
+    contract from: 
+        (function optimize-known-calls)
+    blaming: (function optimize-known-calls)
+     (assuming the contract is correct)
+    at: /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/optimize-known-calls.rkt:12:18
+    context...:
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/contract/private/blame.rkt:346:0: raise-blame-error
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/contract/private/arrow-higher-order.rkt:375:33
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > optimize-known-calls suite
+FAILURE
+test-program:
+  (module (letrec ((L.safe-s.1044.1 (lambda (c.1955 tmp.1045) (let ((safe-vector-init.989 (closure-ref c.1955 0))) (if (fixnum? tmp.1045) (if (unsafe-fx>= tmp.1045 0) (let ((tmp.1046 (unsafe-make-vector tmp.1045))) (call L.safe-vector-init.989.2 safe-vector-init.989 tmp.1046 tmp.1045 0)) (error 99)) (error 100))))) (L.safe-vector-init.989.2 (lambda (c.1956 vec.990 len.991 i.992) (let ((safe-vector-init.989 (closure-ref c.1956 0))) (if (eq? len.991 i.992) vec.990 (begin (unsafe-vector-set! vec.990 i.992 0) (call L.safe-vector-init.989.2 safe-vector-init.989 vec.990 len.991 (unsafe-fx+ i.992 1)))))))) (cletrec ((safe-s.1044 (make-closure L.safe-s.1044.1 1 safe-vector-init.989)) (safe-vector-init.989 (make-closure L.safe-vector-init.989.2 3 safe-vector-init.989))) (call L.safe-s.1044.1 safe-s.1044 0))))
+expected:           #()
+src-interp:         interp-closure-lang-v9
+trg-interp:         interp-closure-lang-v9
+test-type:          "Checking test-program compiles without error"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:400:10
+params:             '(#<procedure:...est-suite/utils.rkt:401:11>)
+message:            "Exception raised"
+exception-message:
+  "optimize-known-calls: broke its own contract\n  promised: closure-lang-v9?\n  produced: '(module (letrec ((L.safe-s.1044.1 (lambda (c.1955 tmp.1045) (let ((safe-vector-init.989 (closure-ref c.1955 0))) (if (fixnum? tmp.1045) (if (unsafe-fx>= tmp.1045 0) (let ((tmp.1046 (unsafe-make-vector tmp.1045))) (call L.safe-vector-init.989.2 (safe-ve...\n  in: the range of\n      (-> closure-lang-v9? closure-lang-v9?)\n  contract from: \n      (function optimize-known-calls)\n  blaming: (function optimize-known-calls)\n   (assuming the contract is correct)\n  at: /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/optimize-known-calls.rkt:12:18"
+exception:
+  optimize-known-calls: broke its own contract
+    promised: closure-lang-v9?
+    produced: '(module (letrec ((L.safe-s.1044.1 (lambda (c.1955 tmp.1045) (let ((safe-vector-init.989 (closure-ref c.1955 0))) (if (fixnum? tmp.1045) (if (unsafe-fx>= tmp.1045 0) (let ((tmp.1046 (unsafe-make-vector tmp.1045))) (call L.safe-vector-init.989.2 (safe-ve...
+    in: the range of
+        (-> closure-lang-v9? closure-lang-v9?)
+    contract from: 
+        (function optimize-known-calls)
+    blaming: (function optimize-known-calls)
+     (assuming the contract is correct)
+    at: /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/optimize-known-calls.rkt:12:18
+    context...:
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/contract/private/blame.rkt:346:0: raise-blame-error
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/contract/private/arrow-higher-order.rkt:375:33
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > optimize-known-calls suite
+FAILURE
+test-program:
+  (module (letrec ((L.safe-s.1803.33 (lambda (c.1987 tmp.1804) (let ((safe-vector-init.1748 (closure-ref c.1987 0))) (if (fixnum? tmp.1804) (if (unsafe-fx>= tmp.1804 0) (let ((tmp.1805 (unsafe-make-vector tmp.1804))) (call L.safe-vector-init.1748.34 safe-vector-init.1748 tmp.1805 tmp.1804 0)) (error 99)) (error 100))))) (L.safe-vector-init.1748.34 (lambda (c.1988 vec.1749 len.1750 i.1751) (let ((safe-vector-init.1748 (closure-ref c.1988 0))) (if (eq? len.1750 i.1751) vec.1749 (begin (unsafe-vector-set! vec.1749 i.1751 0) (call L.safe-vector-init.1748.34 safe-vector-init.1748 vec.1749 len.1750 (unsafe-fx+ i.1751 1)))))))) (cletrec ((safe-s.1803 (make-closure L.safe-s.1803.33 1 safe-vector-init.1748)) (safe-vector-init.1748 (make-closure L.safe-vector-init.1748.34 3 safe-vector-init.1748))) (call L.safe-s.1803.33 safe-s.1803 2))))
+expected:           #(0 0)
+src-interp:         interp-closure-lang-v9
+trg-interp:         interp-closure-lang-v9
+test-type:          "Checking test-program compiles without error"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:400:10
+params:             '(#<procedure:...est-suite/utils.rkt:401:11>)
+message:            "Exception raised"
+exception-message:
+  "optimize-known-calls: broke its own contract\n  promised: closure-lang-v9?\n  produced: '(module (letrec ((L.safe-s.1803.33 (lambda (c.1987 tmp.1804) (let ((safe-vector-init.1748 (closure-ref c.1987 0))) (if (fixnum? tmp.1804) (if (unsafe-fx>= tmp.1804 0) (let ((tmp.1805 (unsafe-make-vector tmp.1804))) (call L.safe-vector-init.1748.34 (saf...\n  in: the range of\n      (-> closure-lang-v9? closure-lang-v9?)\n  contract from: \n      (function optimize-known-calls)\n  blaming: (function optimize-known-calls)\n   (assuming the contract is correct)\n  at: /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/optimize-known-calls.rkt:12:18"
+exception:
+  optimize-known-calls: broke its own contract
+    promised: closure-lang-v9?
+    produced: '(module (letrec ((L.safe-s.1803.33 (lambda (c.1987 tmp.1804) (let ((safe-vector-init.1748 (closure-ref c.1987 0))) (if (fixnum? tmp.1804) (if (unsafe-fx>= tmp.1804 0) (let ((tmp.1805 (unsafe-make-vector tmp.1804))) (call L.safe-vector-init.1748.34 (saf...
+    in: the range of
+        (-> closure-lang-v9? closure-lang-v9?)
+    contract from: 
+        (function optimize-known-calls)
+    blaming: (function optimize-known-calls)
+     (assuming the contract is correct)
+    at: /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/optimize-known-calls.rkt:12:18
+    context...:
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/contract/private/blame.rkt:346:0: raise-blame-error
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/contract/private/arrow-higher-order.rkt:375:33
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > optimize-known-calls suite
+FAILURE
+test-program:
+  (module (letrec ((L.safe-s.1727.29 (lambda (c.1983 tmp.1728 tmp.1729) (let () (cons tmp.1728 tmp.1729)))) (L.safe-s.1683.30 (lambda (c.1984 tmp.1684 tmp.1685) (let () (if (fixnum? tmp.1685) (if (fixnum? tmp.1684) (unsafe-fx* tmp.1684 tmp.1685) (error 100)) (error 101)))))) (cletrec ((safe-s.1727 (make-closure L.safe-s.1727.29 2)) (safe-s.1683 (make-closure L.safe-s.1683.30 2))) (call L.safe-s.1727.29 safe-s.1727 (call L.safe-s.1683.30 safe-s.1683 7 8) empty))))
+expected:           (56)
+src-interp:         interp-closure-lang-v9
+trg-interp:         interp-closure-lang-v9
+test-type:          "Checking test-program compiles without error"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:400:10
+params:             '(#<procedure:...est-suite/utils.rkt:401:11>)
+message:            "Exception raised"
+exception-message:
+  "optimize-known-calls: broke its own contract\n  promised: closure-lang-v9?\n  produced: '(module (letrec ((L.safe-s.1727.29 (lambda (c.1983 tmp.1728 tmp.1729) (let () (cons tmp.1728 tmp.1729)))) (L.safe-s.1683.30 (lambda (c.1984 tmp.1684 tmp.1685) (let () (if (fixnum? tmp.1685) (if (fixnum? tmp.1684) (unsafe-fx* tmp.1684 tmp.1685) (error 1...\n  in: the range of\n      (-> closure-lang-v9? closure-lang-v9?)\n  contract from: \n      (function optimize-known-calls)\n  blaming: (function optimize-known-calls)\n   (assuming the contract is correct)\n  at: /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/optimize-known-calls.rkt:12:18"
+exception:
+  optimize-known-calls: broke its own contract
+    promised: closure-lang-v9?
+    produced: '(module (letrec ((L.safe-s.1727.29 (lambda (c.1983 tmp.1728 tmp.1729) (let () (cons tmp.1728 tmp.1729)))) (L.safe-s.1683.30 (lambda (c.1984 tmp.1684 tmp.1685) (let () (if (fixnum? tmp.1685) (if (fixnum? tmp.1684) (unsafe-fx* tmp.1684 tmp.1685) (error 1...
+    in: the range of
+        (-> closure-lang-v9? closure-lang-v9?)
+    contract from: 
+        (function optimize-known-calls)
+    blaming: (function optimize-known-calls)
+     (assuming the contract is correct)
+    at: /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/optimize-known-calls.rkt:12:18
+    context...:
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/contract/private/blame.rkt:346:0: raise-blame-error
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/contract/private/arrow-higher-order.rkt:375:33
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > optimize-known-calls suite
+FAILURE
+test-program:
+  (module (letrec ((L.id.24.3 (lambda (c.1957 x.25) (let () x.25)))) (cletrec ((id.24 (make-closure L.id.24.3 1))) (let ((x.26 (call L.id.24.3 id.24 5))) (call L.id.24.3 id.24 x.26)))))
+expected:           5
+src-interp:         interp-closure-lang-v9
+trg-interp:         interp-closure-lang-v9
+test-type:          "Checking test-program compiles without error"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:400:10
+params:             '(#<procedure:...est-suite/utils.rkt:401:11>)
+message:            "Exception raised"
+exception-message:
+  "optimize-known-calls: broke its own contract\n  promised: closure-lang-v9?\n  produced: '(module (letrec ((L.id.24.3 (lambda (c.1957 x.25) (let () x.25)))) (cletrec ((id.24 (make-closure L.id.24.3 1))) (let ((x.26 (call L.id.24.3 (id.24 5)))) (call L.id.24.3 (id.24 x.26))))))\n  in: the range of\n      (-> closure-lang-v9? closure-lang-v9?)\n  contract from: \n      (function optimize-known-calls)\n  blaming: (function optimize-known-calls)\n   (assuming the contract is correct)\n  at: /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/optimize-known-calls.rkt:12:18"
+exception:
+  optimize-known-calls: broke its own contract
+    promised: closure-lang-v9?
+    produced: '(module (letrec ((L.id.24.3 (lambda (c.1957 x.25) (let () x.25)))) (cletrec ((id.24 (make-closure L.id.24.3 1))) (let ((x.26 (call L.id.24.3 (id.24 5)))) (call L.id.24.3 (id.24 x.26))))))
+    in: the range of
+        (-> closure-lang-v9? closure-lang-v9?)
+    contract from: 
+        (function optimize-known-calls)
+    blaming: (function optimize-known-calls)
+     (assuming the contract is correct)
+    at: /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/optimize-known-calls.rkt:12:18
+    context...:
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/contract/private/blame.rkt:346:0: raise-blame-error
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/contract/private/arrow-higher-order.rkt:375:33
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > optimize-known-calls suite
+FAILURE
+test-program:
+  (module (letrec ((L.safe-s.798.35 (lambda (c.1989 tmp.799 tmp.800) (let () (eq? tmp.799 tmp.800)))) (L.safe-s.792.36 (lambda (c.1990 tmp.793 tmp.794) (let () (if (fixnum? tmp.794) (if (fixnum? tmp.793) (unsafe-fx- tmp.793 tmp.794) (error 100)) (error 101))))) (L.safe-s.786.37 (lambda (c.1991 tmp.787 tmp.788) (let () (if (fixnum? tmp.788) (if (fixnum? tmp.787) (unsafe-fx* tmp.787 tmp.788) (error 100)) (error 101))))) (L.fact_loop.5.38 (lambda (c.1992 n.6 acc.7) (let ((safe-s.798 (closure-ref c.1992 0)) (safe-s.786 (closure-ref c.1992 1)) (safe-s.792 (closure-ref c.1992 2)) (fact_loop.5 (closure-ref c.1992 3))) (if (call L.safe-s.798.35 safe-s.798 n.6 0) acc.7 (call L.fact_loop.5.38 fact_loop.5 (call L.safe-s.792.36 safe-s.792 n.6 1) (call L.safe-s.786.37 safe-s.786 acc.7 n.6))))))) (cletrec ((safe-s.798 (make-closure L.safe-s.798.35 2)) (safe-s.792 (make-closure L.safe-s.792.36 2)) (safe-s.786 (make-closure L.safe-s.786.37 2)) (fact_loop.5 (make-closure L.fact_loop.5.38 2 safe-s.798 safe-s.786 safe-s.792 fact_loop.5))) (call L.fact_loop.5.38 fact_loop.5 5 1))))
+expected:           120
+src-interp:         interp-closure-lang-v9
+trg-interp:         interp-closure-lang-v9
+test-type:          "Checking test-program compiles without error"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:400:10
+params:             '(#<procedure:...est-suite/utils.rkt:401:11>)
+message:            "Exception raised"
+exception-message:
+  "optimize-known-calls: broke its own contract\n  promised: closure-lang-v9?\n  produced: '(module (letrec ((L.safe-s.798.35 (lambda (c.1989 tmp.799 tmp.800) (let () (eq? tmp.799 tmp.800)))) (L.safe-s.792.36 (lambda (c.1990 tmp.793 tmp.794) (let () (if (fixnum? tmp.794) (if (fixnum? tmp.793) (unsafe-fx- tmp.793 tmp.794) (error 100)) (error 1...\n  in: the range of\n      (-> closure-lang-v9? closure-lang-v9?)\n  contract from: \n      (function optimize-known-calls)\n  blaming: (function optimize-known-calls)\n   (assuming the contract is correct)\n  at: /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/optimize-known-calls.rkt:12:18"
+exception:
+  optimize-known-calls: broke its own contract
+    promised: closure-lang-v9?
+    produced: '(module (letrec ((L.safe-s.798.35 (lambda (c.1989 tmp.799 tmp.800) (let () (eq? tmp.799 tmp.800)))) (L.safe-s.792.36 (lambda (c.1990 tmp.793 tmp.794) (let () (if (fixnum? tmp.794) (if (fixnum? tmp.793) (unsafe-fx- tmp.793 tmp.794) (error 100)) (error 1...
+    in: the range of
+        (-> closure-lang-v9? closure-lang-v9?)
+    contract from: 
+        (function optimize-known-calls)
+    blaming: (function optimize-known-calls)
+     (assuming the contract is correct)
+    at: /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/optimize-known-calls.rkt:12:18
+    context...:
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/contract/private/blame.rkt:346:0: raise-blame-error
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/contract/private/arrow-higher-order.rkt:375:33
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > optimize-known-calls suite
+FAILURE
+test-program:
+  (module (letrec ((L.safe-s.1212.48 (lambda (c.2002 tmp.1213 tmp.1214) (let () (eq? tmp.1213 tmp.1214)))) (L.safe-s.1203.49 (lambda (c.2003 tmp.1204 tmp.1205) (let () (if (fixnum? tmp.1205) (if (fixnum? tmp.1204) (unsafe-fx+ tmp.1204 tmp.1205) (error 100)) (error 101))))) (L.safe-s.1200.50 (lambda (c.2004 tmp.1201 tmp.1202) (let () (if (fixnum? tmp.1202) (if (fixnum? tmp.1201) (unsafe-fx* tmp.1201 tmp.1202) (error 100)) (error 101))))) (L.fact.88.51 (lambda (c.2005 x.89) (let ((safe-s.1212 (closure-ref c.2005 0)) (safe-s.1203 (closure-ref c.2005 1)) (safe-s.1200 (closure-ref c.2005 2)) (fact.88 (closure-ref c.2005 3))) (if (call L.safe-s.1212.48 safe-s.1212 x.89 0) 1 (let ((z.90 (call L.safe-s.1203.49 safe-s.1203 x.89 -1))) (let ((y.91 (call L.fact.88.51 fact.88 z.90))) (call L.safe-s.1200.50 safe-s.1200 x.89 y.91)))))))) (cletrec ((safe-s.1212 (make-closure L.safe-s.1212.48 2)) (safe-s.1203 (make-closure L.safe-s.1203.49 2)) (safe-s.1200 (make-closure L.safe-s.1200.50 2)) (fact.88 (make-closure L.fact.88.51 1 safe-s.1212 safe-s.1203 safe-s.1200 fact.88))) (call L.fact.88.51 fact.88 10))))
+expected:           3628800
+src-interp:         interp-closure-lang-v9
+trg-interp:         interp-closure-lang-v9
+test-type:          "Checking test-program compiles without error"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:400:10
+params:             '(#<procedure:...est-suite/utils.rkt:401:11>)
+message:            "Exception raised"
+exception-message:
+  "optimize-known-calls: broke its own contract\n  promised: closure-lang-v9?\n  produced: '(module (letrec ((L.safe-s.1212.48 (lambda (c.2002 tmp.1213 tmp.1214) (let () (eq? tmp.1213 tmp.1214)))) (L.safe-s.1203.49 (lambda (c.2003 tmp.1204 tmp.1205) (let () (if (fixnum? tmp.1205) (if (fixnum? tmp.1204) (unsafe-fx+ tmp.1204 tmp.1205) (error 10...\n  in: the range of\n      (-> closure-lang-v9? closure-lang-v9?)\n  contract from: \n      (function optimize-known-calls)\n  blaming: (function optimize-known-calls)\n   (assuming the contract is correct)\n  at: /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/optimize-known-calls.rkt:12:18"
+exception:
+  optimize-known-calls: broke its own contract
+    promised: closure-lang-v9?
+    produced: '(module (letrec ((L.safe-s.1212.48 (lambda (c.2002 tmp.1213 tmp.1214) (let () (eq? tmp.1213 tmp.1214)))) (L.safe-s.1203.49 (lambda (c.2003 tmp.1204 tmp.1205) (let () (if (fixnum? tmp.1205) (if (fixnum? tmp.1204) (unsafe-fx+ tmp.1204 tmp.1205) (error 10...
+    in: the range of
+        (-> closure-lang-v9? closure-lang-v9?)
+    contract from: 
+        (function optimize-known-calls)
+    blaming: (function optimize-known-calls)
+     (assuming the contract is correct)
+    at: /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/optimize-known-calls.rkt:12:18
+    context...:
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/contract/private/blame.rkt:346:0: raise-blame-error
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/contract/private/arrow-higher-order.rkt:375:33
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > specify-representation suite
+FAILURE
+test-program:
+  (module (define L.safe-s.1683.30 (lambda (c.1984 tmp.1684 tmp.1685) (let () (if (fixnum? tmp.1685) (if (fixnum? tmp.1684) (unsafe-fx* tmp.1684 tmp.1685) (error 100)) (error 101))))) (define L.safe-s.1727.29 (lambda (c.1983 tmp.1728 tmp.1729) (let () (cons tmp.1728 tmp.1729)))) (let ((safe-s.1727 (make-procedure L.safe-s.1727.29 2 0)) (safe-s.1683 (make-procedure L.safe-s.1683.30 2 0))) (call (unsafe-procedure-label L.safe-s.1727.29) safe-s.1727 (call (unsafe-procedure-label L.safe-s.1683.30) safe-s.1683 7 8) empty)))
+expected:           (56)
+src-interp:         interp-proc-exposed-lang-v9
+trg-interp:         interp-exprs-bits-lang-v8
+output-program:
+  (module (define L.safe-s.1683.30 (lambda (c.1984 tmp.1684 tmp.1685) (let () (if (= (bitwise-and tmp.1685 7) 0) (if (= (bitwise-and tmp.1684 7) 0) (* tmp.1684 (arithmetic-shift-right tmp.1685 3)) 25662) 25918)))) (define L.safe-s.1727.29 (lambda (c.1983 tmp.1728 tmp.1729) (let () (let ((tmp.2017 (+ (alloc 16) 1))) (begin (mset! tmp.2017 -1 tmp.1728) (mset! tmp.2017 7 tmp.1729) tmp.2017))))) (let ((safe-s.1727 (let ((tmp.2018 (+ (alloc 16) 2))) (begin (mset! tmp.2018 -2 L.safe-s.1727.29) (mset! tmp.2018 6 16) tmp.2018))) (safe-s.1683 (let ((tmp.2019 (+ (alloc 16) 2))) (begin (mset! tmp.2019 -2 L.safe-s.1683.30) (mset! tmp.2019 6 16) tmp.2019)))) (call (mref L.safe-s.1727.29 -2) safe-s.1727 (call (mref L.safe-s.1683.30 -2) safe-s.1683 56 64) 22)))
+test-type:          "Checking output is interpretable"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:411:12
+params:             '(#<procedure:...est-suite/utils.rkt:412:13>)
+message:            "Exception raised"
+exception-message:
+  "+: contract violation\n  expected: number?\n  given: #<procedure:...c411/langs/base.rkt:499:8>"
+exception:
+  +: contract violation
+    expected: number?
+    given: #<procedure:...c411/langs/base.rkt:499:8>
+    context...:
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:465:0: mref
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:250:7
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > specify-representation suite
+FAILURE
+test-program:
+  (module (define L.fact.73.57 (lambda (c.2011 x.77) (let ((safe-s.171 (unsafe-procedure-ref c.2011 0)) (safe-s.165 (unsafe-procedure-ref c.2011 1)) (fact.73 (unsafe-procedure-ref c.2011 2)) (identity.72 (unsafe-procedure-ref c.2011 3)) (safe-s.177 (unsafe-procedure-ref c.2011 4))) (let ((x.78 (call (unsafe-procedure-label L.identity.72.56) identity.72 x.77)) (y.79 (call (unsafe-procedure-label L.identity.72.56) identity.72 0))) (if (call (unsafe-procedure-label L.safe-s.177.52) safe-s.177 x.78 y.79) (let ((z.80 (call (unsafe-procedure-label L.identity.72.56) identity.72 1))) z.80) (let ((n.81 (call (unsafe-procedure-label L.identity.72.56) identity.72 1))) (let ((z.82 (call (unsafe-procedure-label L.safe-s.171.53) safe-s.171 x.78 n.81))) (let ((y.83 (call (unsafe-procedure-label L.fact.73.57) fact.73 z.82))) (call (unsafe-procedure-label L.safe-s.165.55) safe-s.165 x.78 y.83))))))))) (define L.identity.72.56 (lambda (c.2010 x.74) (let ((safe-s.177 (unsafe-procedure-ref c.2010 0)) (safe-s.171 (unsafe-procedure-ref c.2010 1)) (safe-s.168 (unsafe-procedure-ref c.2010 2)) (identity.72 (unsafe-procedure-ref c.2010 3))) (if (call (unsafe-procedure-label L.safe-s.177.52) safe-s.177 x.74 0) 0 (let ((y.75 (call (unsafe-procedure-label L.safe-s.171.53) safe-s.171 x.74 1))) (let ((x.76 (call (unsafe-procedure-label L.identity.72.56) identity.72 y.75))) (call (unsafe-procedure-label L.safe-s.168.54) safe-s.168 1 x.76))))))) (define L.safe-s.165.55 (lambda (c.2009 tmp.166 tmp.167) (let () (if (fixnum? tmp.167) (if (fixnum? tmp.166) (unsafe-fx* tmp.166 tmp.167) (error 100)) (error 101))))) (define L.safe-s.168.54 (lambda (c.2008 tmp.169 tmp.170) (let () (if (fixnum? tmp.170) (if (fixnum? tmp.169) (unsafe-fx+ tmp.169 tmp.170) (error 100)) (error 101))))) (define L.safe-s.171.53 (lambda (c.2007 tmp.172 tmp.173) (let () (if (fixnum? tmp.173) (if (fixnum? tmp.172) (unsafe-fx- tmp.172 tmp.173) (error 100)) (error 101))))) (define L.safe-s.177.52 (lambda (c.2006 tmp.178 tmp.179) (let () (eq? tmp.178 tmp.179)))) (let ((safe-s.177 (make-procedure L.safe-s.177.52 2 0)) (safe-s.171 (make-procedure L.safe-s.171.53 2 0)) (safe-s.168 (make-procedure L.safe-s.168.54 2 0)) (safe-s.165 (make-procedure L.safe-s.165.55 2 0)) (identity.72 (make-procedure L.identity.72.56 1 4)) (fact.73 (make-procedure L.fact.73.57 1 5))) (begin (unsafe-procedure-set! fact.73 0 safe-s.171) (unsafe-procedure-set! fact.73 1 safe-s.165) (unsafe-procedure-set! fact.73 2 fact.73) (unsafe-procedure-set! fact.73 3 identity.72) (unsafe-procedure-set! fact.73 4 safe-s.177) (unsafe-procedure-set! identity.72 0 safe-s.177) (unsafe-procedure-set! identity.72 1 safe-s.171) (unsafe-procedure-set! identity.72 2 safe-s.168) (unsafe-procedure-set! identity.72 3 identity.72) (call (unsafe-procedure-label L.fact.73.57) fact.73 5))))
+expected:           120
+src-interp:         interp-proc-exposed-lang-v9
+trg-interp:         interp-exprs-bits-lang-v8
+output-program:
+  (module (define L.fact.73.57 (lambda (c.2011 x.77) (let ((safe-s.171 (mref c.2011 14)) (safe-s.165 (mref c.2011 22)) (fact.73 (mref c.2011 30)) (identity.72 (mref c.2011 38)) (safe-s.177 (mref c.2011 46))) (let ((x.78 (call (mref L.identity.72.56 -2) identity.72 x.77)) (y.79 (call (mref L.identity.72.56 -2) identity.72 0))) (if (!= (call (mref L.safe-s.177.52 -2) safe-s.177 x.78 y.79) 6) (let ((z.80 (call (mref L.identity.72.56 -2) identity.72 8))) z.80) (let ((n.81 (call (mref L.identity.72.56 -2) identity.72 8))) (let ((z.82 (call (mref L.safe-s.171.53 -2) safe-s.171 x.78 n.81))) (let ((y.83 (call (mref L.fact.73.57 -2) fact.73 z.82))) (call (mref L.safe-s.165.55 -2) safe-s.165 x.78 y.83))))))))) (define L.identity.72.56 (lambda (c.2010 x.74) (let ((safe-s.177 (mref c.2010 14)) (safe-s.171 (mref c.2010 22)) (safe-s.168 (mref c.2010 30)) (identity.72 (mref c.2010 38))) (if (!= (call (mref L.safe-s.177.52 -2) safe-s.177 x.74 0) 6) 0 (let ((y.75 (call (mref L.safe-s.171.53 -2) safe-s.171 x.74 8))) (let ((x.76 (call (mref L.identity.72.56 -2) identity.72 y.75))) (call (mref L.safe-s.168.54 -2) safe-s.168 8 x.76))))))) (define L.safe-s.165.55 (lambda (c.2009 tmp.166 tmp.167) (let () (if (= (bitwise-and tmp.167 7) 0) (if (= (bitwise-and tmp.166 7) 0) (* tmp.166 (arithmetic-shift-right tmp.167 3)) 25662) 25918)))) (define L.safe-s.168.54 (lambda (c.2008 tmp.169 tmp.170) (let () (if (= (bitwise-and tmp.170 7) 0) (if (= (bitwise-and tmp.169 7) 0) (+ tmp.169 tmp.170) 25662) 25918)))) (define L.safe-s.171.53 (lambda (c.2007 tmp.172 tmp.173) (let () (if (= (bitwise-and tmp.173 7) 0) (if (= (bitwise-and tmp.172 7) 0) (- tmp.172 tmp.173) 25662) 25918)))) (define L.safe-s.177.52 (lambda (c.2006 tmp.178 tmp.179) (let () (if (= tmp.178 tmp.179) 14 6)))) (let ((safe-s.177 (let ((tmp.2026 (+ (alloc 16) 2))) (begin (mset! tmp.2026 -2 L.safe-s.177.52) (mset! tmp.2026 6 16) tmp.2026))) (safe-s.171 (let ((tmp.2027 (+ (alloc 16) 2))) (begin (mset! tmp.2027 -2 L.safe-s.171.53) (mset! tmp.2027 6 16) tmp.2027))) (safe-s.168 (let ((tmp.2028 (+ (alloc 16) 2))) (begin (mset! tmp.2028 -2 L.safe-s.168.54) (mset! tmp.2028 6 16) tmp.2028))) (safe-s.165 (let ((tmp.2029 (+ (alloc 16) 2))) (begin (mset! tmp.2029 -2 L.safe-s.165.55) (mset! tmp.2029 6 16) tmp.2029))) (identity.72 (let ((tmp.2030 (+ (alloc 48) 2))) (begin (mset! tmp.2030 -2 L.identity.72.56) (mset! tmp.2030 6 8) tmp.2030))) (fact.73 (let ((tmp.2031 (+ (alloc 56) 2))) (begin (mset! tmp.2031 -2 L.fact.73.57) (mset! tmp.2031 6 8) tmp.2031)))) (begin (mset! fact.73 14 safe-s.171) (mset! fact.73 22 safe-s.165) (mset! fact.73 30 fact.73) (mset! fact.73 38 identity.72) (mset! fact.73 46 safe-s.177) (mset! identity.72 14 safe-s.177) (mset! identity.72 22 safe-s.171) (mset! identity.72 30 safe-s.168) (mset! identity.72 38 identity.72) (call (mref L.fact.73.57 -2) fact.73 40))))
+test-type:          "Checking output is interpretable"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:411:12
+params:             '(#<procedure:...est-suite/utils.rkt:412:13>)
+message:            "Exception raised"
+exception-message:
+  "+: contract violation\n  expected: number?\n  given: #<procedure:...c411/langs/base.rkt:499:8>"
+exception:
+  +: contract violation
+    expected: number?
+    given: #<procedure:...c411/langs/base.rkt:499:8>
+    context...:
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:465:0: mref
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:250:7
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > specify-representation suite
+FAILURE
+test-program:
+  (module (define L.safe-s.717.44 (lambda (c.1998 tmp.718 tmp.719) (let () (if (fixnum? tmp.719) (if (fixnum? tmp.718) (unsafe-fx* tmp.718 tmp.719) (error 100)) (error 101))))) (define L.safe-s.720.43 (lambda (c.1997 tmp.721 tmp.722) (let () (if (fixnum? tmp.722) (if (fixnum? tmp.721) (unsafe-fx+ tmp.721 tmp.722) (error 100)) (error 101))))) (let ((safe-s.720 (make-procedure L.safe-s.720.43 2 0)) (safe-s.717 (make-procedure L.safe-s.717.44 2 0))) (call (unsafe-procedure-label L.safe-s.720.43) safe-s.720 (call (unsafe-procedure-label L.safe-s.720.43) safe-s.720 5 6) (call (unsafe-procedure-label L.safe-s.717.44) safe-s.717 4 5))))
+expected:           31
+src-interp:         interp-proc-exposed-lang-v9
+trg-interp:         interp-exprs-bits-lang-v8
+output-program:
+  (module (define L.safe-s.717.44 (lambda (c.1998 tmp.718 tmp.719) (let () (if (= (bitwise-and tmp.719 7) 0) (if (= (bitwise-and tmp.718 7) 0) (* tmp.718 (arithmetic-shift-right tmp.719 3)) 25662) 25918)))) (define L.safe-s.720.43 (lambda (c.1997 tmp.721 tmp.722) (let () (if (= (bitwise-and tmp.722 7) 0) (if (= (bitwise-and tmp.721 7) 0) (+ tmp.721 tmp.722) 25662) 25918)))) (let ((safe-s.720 (let ((tmp.2032 (+ (alloc 16) 2))) (begin (mset! tmp.2032 -2 L.safe-s.720.43) (mset! tmp.2032 6 16) tmp.2032))) (safe-s.717 (let ((tmp.2033 (+ (alloc 16) 2))) (begin (mset! tmp.2033 -2 L.safe-s.717.44) (mset! tmp.2033 6 16) tmp.2033)))) (call (mref L.safe-s.720.43 -2) safe-s.720 (call (mref L.safe-s.720.43 -2) safe-s.720 40 48) (call (mref L.safe-s.717.44 -2) safe-s.717 32 40))))
+test-type:          "Checking output is interpretable"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:411:12
+params:             '(#<procedure:...est-suite/utils.rkt:412:13>)
+message:            "Exception raised"
+exception-message:
+  "+: contract violation\n  expected: number?\n  given: #<procedure:...c411/langs/base.rkt:499:8>"
+exception:
+  +: contract violation
+    expected: number?
+    given: #<procedure:...c411/langs/base.rkt:499:8>
+    context...:
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:465:0: mref
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:250:7
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > specify-representation suite
+FAILURE
+test-program:
+  (module (define L.safe-vector-init.575.11 (lambda (c.1965 vec.576 len.577 i.578) (let ((safe-vector-init.575 (unsafe-procedure-ref c.1965 0))) (if (eq? len.577 i.578) vec.576 (begin (unsafe-vector-set! vec.576 i.578 0) (call (unsafe-procedure-label L.safe-vector-init.575.11) safe-vector-init.575 vec.576 len.577 (unsafe-fx+ i.578 1))))))) (define L.safe-s.635.10 (lambda (c.1964 tmp.636 tmp.637 tmp.638) (let () (if (fixnum? tmp.637) (if (vector? tmp.636) (if (unsafe-fx>= tmp.637 0) (if (unsafe-fx< tmp.637 (unsafe-vector-length tmp.636)) (begin (unsafe-vector-set! tmp.636 tmp.637 tmp.638) (void)) (error 99)) (error 99)) (error 100)) (error 101))))) (define L.safe-s.630.9 (lambda (c.1963 tmp.631) (let ((safe-vector-init.575 (unsafe-procedure-ref c.1963 0))) (if (fixnum? tmp.631) (if (unsafe-fx>= tmp.631 0) (let ((tmp.632 (unsafe-make-vector tmp.631))) (call (unsafe-procedure-label L.safe-vector-init.575.11) safe-vector-init.575 tmp.632 tmp.631 0)) (error 99)) (error 100))))) (let ((safe-s.630 (make-procedure L.safe-s.630.9 1 1)) (safe-s.635 (make-procedure L.safe-s.635.10 3 0)) (safe-vector-init.575 (make-procedure L.safe-vector-init.575.11 3 1))) (begin (unsafe-procedure-set! safe-vector-init.575 0 safe-vector-init.575) (unsafe-procedure-set! safe-s.630 0 safe-vector-init.575) (let ((x.1.61 (call (unsafe-procedure-label L.safe-s.630.9) safe-s.630 3))) (let ((x.2.62 (call (unsafe-procedure-label L.safe-s.635.10) safe-s.635 x.1.61 0 1))) (let ((x.3.63 (call (unsafe-procedure-label L.safe-s.635.10) safe-s.635 x.1.61 1 2))) (let ((x.4.64 (call (unsafe-procedure-label L.safe-s.635.10) safe-s.635 x.1.61 2 3))) x.1.61)))))))
+expected:           #(1 2 3)
+src-interp:         interp-proc-exposed-lang-v9
+trg-interp:         interp-exprs-bits-lang-v8
+output-program:
+  (module (define L.safe-vector-init.575.11 (lambda (c.1965 vec.576 len.577 i.578) (let ((safe-vector-init.575 (mref c.1965 14))) (if (= len.577 i.578) vec.576 (begin (mset! vec.576 (+ (* (arithmetic-shift-right i.578 3) 8) 5) 0) (call (mref L.safe-vector-init.575.11 -2) safe-vector-init.575 vec.576 len.577 (+ i.578 8))))))) (define L.safe-s.635.10 (lambda (c.1964 tmp.636 tmp.637 tmp.638) (let () (if (= (bitwise-and tmp.637 7) 0) (if (= (bitwise-and tmp.636 7) 3) (if (>= tmp.637 0) (if (< tmp.637 (mref tmp.636 -3)) (begin (mset! tmp.636 (+ (* (arithmetic-shift-right tmp.637 3) 8) 5) tmp.638) 30) 25406) 25406) 25662) 25918)))) (define L.safe-s.630.9 (lambda (c.1963 tmp.631) (let ((safe-vector-init.575 (mref c.1963 14))) (if (= (bitwise-and tmp.631 7) 0) (if (>= tmp.631 0) (let ((tmp.632 (let ((tmp.2034 (+ (alloc (* (+ 1 (arithmetic-shift-right tmp.631 3)) 8)) 3))) (begin (mset! tmp.2034 -3 tmp.631) tmp.2034)))) (call (mref L.safe-vector-init.575.11 -2) safe-vector-init.575 tmp.632 tmp.631 0)) 25406) 25662)))) (let ((safe-s.630 (let ((tmp.2035 (+ (alloc 24) 2))) (begin (mset! tmp.2035 -2 L.safe-s.630.9) (mset! tmp.2035 6 8) tmp.2035))) (safe-s.635 (let ((tmp.2036 (+ (alloc 16) 2))) (begin (mset! tmp.2036 -2 L.safe-s.635.10) (mset! tmp.2036 6 24) tmp.2036))) (safe-vector-init.575 (let ((tmp.2037 (+ (alloc 24) 2))) (begin (mset! tmp.2037 -2 L.safe-vector-init.575.11) (mset! tmp.2037 6 24) tmp.2037)))) (begin (mset! safe-vector-init.575 14 safe-vector-init.575) (mset! safe-s.630 14 safe-vector-init.575) (let ((x.1.61 (call (mref L.safe-s.630.9 -2) safe-s.630 24))) (let ((x.2.62 (call (mref L.safe-s.635.10 -2) safe-s.635 x.1.61 0 8))) (let ((x.3.63 (call (mref L.safe-s.635.10 -2) safe-s.635 x.1.61 8 16))) (let ((x.4.64 (call (mref L.safe-s.635.10 -2) safe-s.635 x.1.61 16 24))) x.1.61)))))))
+test-type:          "Checking output is interpretable"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:411:12
+params:             '(#<procedure:...est-suite/utils.rkt:412:13>)
+message:            "Exception raised"
+exception-message:
+  "+: contract violation\n  expected: number?\n  given: #<procedure:...c411/langs/base.rkt:499:8>"
+exception:
+  +: contract violation
+    expected: number?
+    given: #<procedure:...c411/langs/base.rkt:499:8>
+    context...:
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:465:0: mref
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:250:7
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > specify-representation suite
+FAILURE
+test-program:
+  (module (define L.safe-vector-init.1748.34 (lambda (c.1988 vec.1749 len.1750 i.1751) (let ((safe-vector-init.1748 (unsafe-procedure-ref c.1988 0))) (if (eq? len.1750 i.1751) vec.1749 (begin (unsafe-vector-set! vec.1749 i.1751 0) (call (unsafe-procedure-label L.safe-vector-init.1748.34) safe-vector-init.1748 vec.1749 len.1750 (unsafe-fx+ i.1751 1))))))) (define L.safe-s.1803.33 (lambda (c.1987 tmp.1804) (let ((safe-vector-init.1748 (unsafe-procedure-ref c.1987 0))) (if (fixnum? tmp.1804) (if (unsafe-fx>= tmp.1804 0) (let ((tmp.1805 (unsafe-make-vector tmp.1804))) (call (unsafe-procedure-label L.safe-vector-init.1748.34) safe-vector-init.1748 tmp.1805 tmp.1804 0)) (error 99)) (error 100))))) (let ((safe-s.1803 (make-procedure L.safe-s.1803.33 1 1)) (safe-vector-init.1748 (make-procedure L.safe-vector-init.1748.34 3 1))) (begin (unsafe-procedure-set! safe-vector-init.1748 0 safe-vector-init.1748) (unsafe-procedure-set! safe-s.1803 0 safe-vector-init.1748) (call (unsafe-procedure-label L.safe-s.1803.33) safe-s.1803 2))))
+expected:           #(0 0)
+src-interp:         interp-proc-exposed-lang-v9
+trg-interp:         interp-exprs-bits-lang-v8
+output-program:
+  (module (define L.safe-vector-init.1748.34 (lambda (c.1988 vec.1749 len.1750 i.1751) (let ((safe-vector-init.1748 (mref c.1988 14))) (if (= len.1750 i.1751) vec.1749 (begin (mset! vec.1749 (+ (* (arithmetic-shift-right i.1751 3) 8) 5) 0) (call (mref L.safe-vector-init.1748.34 -2) safe-vector-init.1748 vec.1749 len.1750 (+ i.1751 8))))))) (define L.safe-s.1803.33 (lambda (c.1987 tmp.1804) (let ((safe-vector-init.1748 (mref c.1987 14))) (if (= (bitwise-and tmp.1804 7) 0) (if (>= tmp.1804 0) (let ((tmp.1805 (let ((tmp.2038 (+ (alloc (* (+ 1 (arithmetic-shift-right tmp.1804 3)) 8)) 3))) (begin (mset! tmp.2038 -3 tmp.1804) tmp.2038)))) (call (mref L.safe-vector-init.1748.34 -2) safe-vector-init.1748 tmp.1805 tmp.1804 0)) 25406) 25662)))) (let ((safe-s.1803 (let ((tmp.2039 (+ (alloc 24) 2))) (begin (mset! tmp.2039 -2 L.safe-s.1803.33) (mset! tmp.2039 6 8) tmp.2039))) (safe-vector-init.1748 (let ((tmp.2040 (+ (alloc 24) 2))) (begin (mset! tmp.2040 -2 L.safe-vector-init.1748.34) (mset! tmp.2040 6 24) tmp.2040)))) (begin (mset! safe-vector-init.1748 14 safe-vector-init.1748) (mset! safe-s.1803 14 safe-vector-init.1748) (call (mref L.safe-s.1803.33 -2) safe-s.1803 16))))
+test-type:          "Checking output is interpretable"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:411:12
+params:             '(#<procedure:...est-suite/utils.rkt:412:13>)
+message:            "Exception raised"
+exception-message:
+  "+: contract violation\n  expected: number?\n  given: #<procedure:...c411/langs/base.rkt:499:8>"
+exception:
+  +: contract violation
+    expected: number?
+    given: #<procedure:...c411/langs/base.rkt:499:8>
+    context...:
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:465:0: mref
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:250:7
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > specify-representation suite
+FAILURE
+test-program:
+  (module (define L.safe-s.651.23 (lambda (c.1977 tmp.652 tmp.653) (let () (if (fixnum? tmp.653) (if (fixnum? tmp.652) (unsafe-fx+ tmp.652 tmp.653) (error 100)) (error 101))))) (define L.safe-s.660.22 (lambda (c.1976 tmp.661 tmp.662) (let () (eq? tmp.661 tmp.662)))) (let ((safe-s.660 (make-procedure L.safe-s.660.22 2 0)) (safe-s.651 (make-procedure L.safe-s.651.23 2 0))) (if (call (unsafe-procedure-label L.safe-s.660.22) safe-s.660 (call (unsafe-procedure-label L.safe-s.651.23) safe-s.651 5 6) 11) 4 6)))
+expected:           4
+src-interp:         interp-proc-exposed-lang-v9
+trg-interp:         interp-exprs-bits-lang-v8
+output-program:
+  (module (define L.safe-s.651.23 (lambda (c.1977 tmp.652 tmp.653) (let () (if (= (bitwise-and tmp.653 7) 0) (if (= (bitwise-and tmp.652 7) 0) (+ tmp.652 tmp.653) 25662) 25918)))) (define L.safe-s.660.22 (lambda (c.1976 tmp.661 tmp.662) (let () (if (= tmp.661 tmp.662) 14 6)))) (let ((safe-s.660 (let ((tmp.2044 (+ (alloc 16) 2))) (begin (mset! tmp.2044 -2 L.safe-s.660.22) (mset! tmp.2044 6 16) tmp.2044))) (safe-s.651 (let ((tmp.2045 (+ (alloc 16) 2))) (begin (mset! tmp.2045 -2 L.safe-s.651.23) (mset! tmp.2045 6 16) tmp.2045)))) (if (!= (call (mref L.safe-s.660.22 -2) safe-s.660 (call (mref L.safe-s.651.23 -2) safe-s.651 40 48) 88) 6) 32 48)))
+test-type:          "Checking output is interpretable"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:411:12
+params:             '(#<procedure:...est-suite/utils.rkt:412:13>)
+message:            "Exception raised"
+exception-message:
+  "+: contract violation\n  expected: number?\n  given: #<procedure:...c411/langs/base.rkt:499:8>"
+exception:
+  +: contract violation
+    expected: number?
+    given: #<procedure:...c411/langs/base.rkt:499:8>
+    context...:
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:465:0: mref
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:250:7
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > specify-representation suite
+FAILURE
+test-program:
+  (module (define L.fact.20.7 (lambda (c.1961 x.21) (let ((safe-s.936 (unsafe-procedure-ref c.1961 0)) (safe-s.927 (unsafe-procedure-ref c.1961 1)) (safe-s.924 (unsafe-procedure-ref c.1961 2)) (fact.20 (unsafe-procedure-ref c.1961 3))) (if (call (unsafe-procedure-label L.safe-s.936.4) safe-s.936 x.21 0) 1 (let ((z.22 (call (unsafe-procedure-label L.safe-s.927.5) safe-s.927 x.21 -1))) (let ((y.23 (call (unsafe-procedure-label L.fact.20.7) fact.20 z.22))) (call (unsafe-procedure-label L.safe-s.924.6) safe-s.924 x.21 y.23))))))) (define L.safe-s.924.6 (lambda (c.1960 tmp.925 tmp.926) (let () (if (fixnum? tmp.926) (if (fixnum? tmp.925) (unsafe-fx* tmp.925 tmp.926) (error 100)) (error 101))))) (define L.safe-s.927.5 (lambda (c.1959 tmp.928 tmp.929) (let () (if (fixnum? tmp.929) (if (fixnum? tmp.928) (unsafe-fx+ tmp.928 tmp.929) (error 100)) (error 101))))) (define L.safe-s.936.4 (lambda (c.1958 tmp.937 tmp.938) (let () (eq? tmp.937 tmp.938)))) (let ((safe-s.936 (make-procedure L.safe-s.936.4 2 0)) (safe-s.927 (make-procedure L.safe-s.927.5 2 0)) (safe-s.924 (make-procedure L.safe-s.924.6 2 0)) (fact.20 (make-procedure L.fact.20.7 1 4))) (begin (unsafe-procedure-set! fact.20 0 safe-s.936) (unsafe-procedure-set! fact.20 1 safe-s.927) (unsafe-procedure-set! fact.20 2 safe-s.924) (unsafe-procedure-set! fact.20 3 fact.20) (call (unsafe-procedure-label L.fact.20.7) fact.20 5))))
+expected:           120
+src-interp:         interp-proc-exposed-lang-v9
+trg-interp:         interp-exprs-bits-lang-v8
+output-program:
+  (module (define L.fact.20.7 (lambda (c.1961 x.21) (let ((safe-s.936 (mref c.1961 14)) (safe-s.927 (mref c.1961 22)) (safe-s.924 (mref c.1961 30)) (fact.20 (mref c.1961 38))) (if (!= (call (mref L.safe-s.936.4 -2) safe-s.936 x.21 0) 6) 8 (let ((z.22 (call (mref L.safe-s.927.5 -2) safe-s.927 x.21 -8))) (let ((y.23 (call (mref L.fact.20.7 -2) fact.20 z.22))) (call (mref L.safe-s.924.6 -2) safe-s.924 x.21 y.23))))))) (define L.safe-s.924.6 (lambda (c.1960 tmp.925 tmp.926) (let () (if (= (bitwise-and tmp.926 7) 0) (if (= (bitwise-and tmp.925 7) 0) (* tmp.925 (arithmetic-shift-right tmp.926 3)) 25662) 25918)))) (define L.safe-s.927.5 (lambda (c.1959 tmp.928 tmp.929) (let () (if (= (bitwise-and tmp.929 7) 0) (if (= (bitwise-and tmp.928 7) 0) (+ tmp.928 tmp.929) 25662) 25918)))) (define L.safe-s.936.4 (lambda (c.1958 tmp.937 tmp.938) (let () (if (= tmp.937 tmp.938) 14 6)))) (let ((safe-s.936 (let ((tmp.2046 (+ (alloc 16) 2))) (begin (mset! tmp.2046 -2 L.safe-s.936.4) (mset! tmp.2046 6 16) tmp.2046))) (safe-s.927 (let ((tmp.2047 (+ (alloc 16) 2))) (begin (mset! tmp.2047 -2 L.safe-s.927.5) (mset! tmp.2047 6 16) tmp.2047))) (safe-s.924 (let ((tmp.2048 (+ (alloc 16) 2))) (begin (mset! tmp.2048 -2 L.safe-s.924.6) (mset! tmp.2048 6 16) tmp.2048))) (fact.20 (let ((tmp.2049 (+ (alloc 48) 2))) (begin (mset! tmp.2049 -2 L.fact.20.7) (mset! tmp.2049 6 8) tmp.2049)))) (begin (mset! fact.20 14 safe-s.936) (mset! fact.20 22 safe-s.927) (mset! fact.20 30 safe-s.924) (mset! fact.20 38 fact.20) (call (mref L.fact.20.7 -2) fact.20 40))))
+test-type:          "Checking output is interpretable"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:411:12
+params:             '(#<procedure:...est-suite/utils.rkt:412:13>)
+message:            "Exception raised"
+exception-message:
+  "+: contract violation\n  expected: number?\n  given: #<procedure:...c411/langs/base.rkt:499:8>"
+exception:
+  +: contract violation
+    expected: number?
+    given: #<procedure:...c411/langs/base.rkt:499:8>
+    context...:
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:465:0: mref
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:250:7
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > specify-representation suite
+FAILURE
+test-program:
+  (module (define L.safe-vector-init.989.2 (lambda (c.1956 vec.990 len.991 i.992) (let ((safe-vector-init.989 (unsafe-procedure-ref c.1956 0))) (if (eq? len.991 i.992) vec.990 (begin (unsafe-vector-set! vec.990 i.992 0) (call (unsafe-procedure-label L.safe-vector-init.989.2) safe-vector-init.989 vec.990 len.991 (unsafe-fx+ i.992 1))))))) (define L.safe-s.1044.1 (lambda (c.1955 tmp.1045) (let ((safe-vector-init.989 (unsafe-procedure-ref c.1955 0))) (if (fixnum? tmp.1045) (if (unsafe-fx>= tmp.1045 0) (let ((tmp.1046 (unsafe-make-vector tmp.1045))) (call (unsafe-procedure-label L.safe-vector-init.989.2) safe-vector-init.989 tmp.1046 tmp.1045 0)) (error 99)) (error 100))))) (let ((safe-s.1044 (make-procedure L.safe-s.1044.1 1 1)) (safe-vector-init.989 (make-procedure L.safe-vector-init.989.2 3 1))) (begin (unsafe-procedure-set! safe-vector-init.989 0 safe-vector-init.989) (unsafe-procedure-set! safe-s.1044 0 safe-vector-init.989) (call (unsafe-procedure-label L.safe-s.1044.1) safe-s.1044 0))))
+expected:           #()
+src-interp:         interp-proc-exposed-lang-v9
+trg-interp:         interp-exprs-bits-lang-v8
+output-program:
+  (module (define L.safe-vector-init.989.2 (lambda (c.1956 vec.990 len.991 i.992) (let ((safe-vector-init.989 (mref c.1956 14))) (if (= len.991 i.992) vec.990 (begin (mset! vec.990 (+ (* (arithmetic-shift-right i.992 3) 8) 5) 0) (call (mref L.safe-vector-init.989.2 -2) safe-vector-init.989 vec.990 len.991 (+ i.992 8))))))) (define L.safe-s.1044.1 (lambda (c.1955 tmp.1045) (let ((safe-vector-init.989 (mref c.1955 14))) (if (= (bitwise-and tmp.1045 7) 0) (if (>= tmp.1045 0) (let ((tmp.1046 (let ((tmp.2050 (+ (alloc (* (+ 1 (arithmetic-shift-right tmp.1045 3)) 8)) 3))) (begin (mset! tmp.2050 -3 tmp.1045) tmp.2050)))) (call (mref L.safe-vector-init.989.2 -2) safe-vector-init.989 tmp.1046 tmp.1045 0)) 25406) 25662)))) (let ((safe-s.1044 (let ((tmp.2051 (+ (alloc 24) 2))) (begin (mset! tmp.2051 -2 L.safe-s.1044.1) (mset! tmp.2051 6 8) tmp.2051))) (safe-vector-init.989 (let ((tmp.2052 (+ (alloc 24) 2))) (begin (mset! tmp.2052 -2 L.safe-vector-init.989.2) (mset! tmp.2052 6 24) tmp.2052)))) (begin (mset! safe-vector-init.989 14 safe-vector-init.989) (mset! safe-s.1044 14 safe-vector-init.989) (call (mref L.safe-s.1044.1 -2) safe-s.1044 0))))
+test-type:          "Checking output is interpretable"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:411:12
+params:             '(#<procedure:...est-suite/utils.rkt:412:13>)
+message:            "Exception raised"
+exception-message:
+  "+: contract violation\n  expected: number?\n  given: #<procedure:...c411/langs/base.rkt:499:8>"
+exception:
+  +: contract violation
+    expected: number?
+    given: #<procedure:...c411/langs/base.rkt:499:8>
+    context...:
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:465:0: mref
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:250:7
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > specify-representation suite
+FAILURE
+test-program:
+  (module (define L.safe-s.372.47 (lambda (c.2001 tmp.373 tmp.374) (let () (if (fixnum? tmp.374) (if (fixnum? tmp.373) (unsafe-fx* tmp.373 tmp.374) (error 100)) (error 101))))) (define L.safe-s.384.46 (lambda (c.2000 tmp.385 tmp.386) (let () (eq? tmp.385 tmp.386)))) (define L.safe-s.416.45 (lambda (c.1999 tmp.417 tmp.418) (let () (cons tmp.417 tmp.418)))) (let ((safe-s.416 (make-procedure L.safe-s.416.45 2 0)) (safe-s.384 (make-procedure L.safe-s.384.46 2 0)) (safe-s.372 (make-procedure L.safe-s.372.47 2 0))) (call (unsafe-procedure-label L.safe-s.416.45) safe-s.416 (if (call (unsafe-procedure-label L.safe-s.384.46) safe-s.384 7 8) (call (unsafe-procedure-label L.safe-s.372.47) safe-s.372 7 8) (call (unsafe-procedure-label L.safe-s.372.47) safe-s.372 8 7)) empty)))
+expected:           (56)
+src-interp:         interp-proc-exposed-lang-v9
+trg-interp:         interp-exprs-bits-lang-v8
+output-program:
+  (module (define L.safe-s.372.47 (lambda (c.2001 tmp.373 tmp.374) (let () (if (= (bitwise-and tmp.374 7) 0) (if (= (bitwise-and tmp.373 7) 0) (* tmp.373 (arithmetic-shift-right tmp.374 3)) 25662) 25918)))) (define L.safe-s.384.46 (lambda (c.2000 tmp.385 tmp.386) (let () (if (= tmp.385 tmp.386) 14 6)))) (define L.safe-s.416.45 (lambda (c.1999 tmp.417 tmp.418) (let () (let ((tmp.2056 (+ (alloc 16) 1))) (begin (mset! tmp.2056 -1 tmp.417) (mset! tmp.2056 7 tmp.418) tmp.2056))))) (let ((safe-s.416 (let ((tmp.2057 (+ (alloc 16) 2))) (begin (mset! tmp.2057 -2 L.safe-s.416.45) (mset! tmp.2057 6 16) tmp.2057))) (safe-s.384 (let ((tmp.2058 (+ (alloc 16) 2))) (begin (mset! tmp.2058 -2 L.safe-s.384.46) (mset! tmp.2058 6 16) tmp.2058))) (safe-s.372 (let ((tmp.2059 (+ (alloc 16) 2))) (begin (mset! tmp.2059 -2 L.safe-s.372.47) (mset! tmp.2059 6 16) tmp.2059)))) (call (mref L.safe-s.416.45 -2) safe-s.416 (if (!= (call (mref L.safe-s.384.46 -2) safe-s.384 56 64) 6) (call (mref L.safe-s.372.47 -2) safe-s.372 56 64) (call (mref L.safe-s.372.47 -2) safe-s.372 64 56)) 22)))
+test-type:          "Checking output is interpretable"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:411:12
+params:             '(#<procedure:...est-suite/utils.rkt:412:13>)
+message:            "Exception raised"
+exception-message:
+  "+: contract violation\n  expected: number?\n  given: #<procedure:...c411/langs/base.rkt:499:8>"
+exception:
+  +: contract violation
+    expected: number?
+    given: #<procedure:...c411/langs/base.rkt:499:8>
+    context...:
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:465:0: mref
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:250:7
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > specify-representation suite
+FAILURE
+test-program:
+  (module (define L.id.24.3 (lambda (c.1957 x.25) (let () x.25))) (let ((id.24 (make-procedure L.id.24.3 1 0))) (let ((x.26 (call (unsafe-procedure-label L.id.24.3) id.24 5))) (call (unsafe-procedure-label L.id.24.3) id.24 x.26))))
+expected:           5
+src-interp:         interp-proc-exposed-lang-v9
+trg-interp:         interp-exprs-bits-lang-v8
+output-program:
+  (module (define L.id.24.3 (lambda (c.1957 x.25) (let () x.25))) (let ((id.24 (let ((tmp.2064 (+ (alloc 16) 2))) (begin (mset! tmp.2064 -2 L.id.24.3) (mset! tmp.2064 6 8) tmp.2064)))) (let ((x.26 (call (mref L.id.24.3 -2) id.24 40))) (call (mref L.id.24.3 -2) id.24 x.26))))
+test-type:          "Checking output is interpretable"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:411:12
+params:             '(#<procedure:...est-suite/utils.rkt:412:13>)
+message:            "Exception raised"
+exception-message:
+  "+: contract violation\n  expected: number?\n  given: #<procedure:...c411/langs/base.rkt:499:8>"
+exception:
+  +: contract violation
+    expected: number?
+    given: #<procedure:...c411/langs/base.rkt:499:8>
+    context...:
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:465:0: mref
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:250:7
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > specify-representation suite
+FAILURE
+test-program:
+  (module (define L.safe-vector-init.1058.42 (lambda (c.1996 vec.1059 len.1060 i.1061) (let ((safe-vector-init.1058 (unsafe-procedure-ref c.1996 0))) (if (eq? len.1060 i.1061) vec.1059 (begin (unsafe-vector-set! vec.1059 i.1061 0) (call (unsafe-procedure-label L.safe-vector-init.1058.42) safe-vector-init.1058 vec.1059 len.1060 (unsafe-fx+ i.1061 1))))))) (define L.safe-s.1122.41 (lambda (c.1995 tmp.1123 tmp.1124) (let () (if (fixnum? tmp.1124) (if (vector? tmp.1123) (if (unsafe-fx>= tmp.1124 0) (if (unsafe-fx< tmp.1124 (unsafe-vector-length tmp.1123)) (unsafe-vector-ref tmp.1123 tmp.1124) (error 99)) (error 99)) (error 100)) (error 101))))) (define L.safe-s.1118.40 (lambda (c.1994 tmp.1119 tmp.1120 tmp.1121) (let () (if (fixnum? tmp.1120) (if (vector? tmp.1119) (if (unsafe-fx>= tmp.1120 0) (if (unsafe-fx< tmp.1120 (unsafe-vector-length tmp.1119)) (begin (unsafe-vector-set! tmp.1119 tmp.1120 tmp.1121) (void)) (error 99)) (error 99)) (error 100)) (error 101))))) (define L.safe-s.1113.39 (lambda (c.1993 tmp.1114) (let ((safe-vector-init.1058 (unsafe-procedure-ref c.1993 0))) (if (fixnum? tmp.1114) (if (unsafe-fx>= tmp.1114 0) (let ((tmp.1115 (unsafe-make-vector tmp.1114))) (call (unsafe-procedure-label L.safe-vector-init.1058.42) safe-vector-init.1058 tmp.1115 tmp.1114 0)) (error 99)) (error 100))))) (let ((safe-s.1113 (make-procedure L.safe-s.1113.39 1 1)) (safe-s.1118 (make-procedure L.safe-s.1118.40 3 0)) (safe-s.1122 (make-procedure L.safe-s.1122.41 2 0)) (safe-vector-init.1058 (make-procedure L.safe-vector-init.1058.42 3 1))) (begin (unsafe-procedure-set! safe-vector-init.1058 0 safe-vector-init.1058) (unsafe-procedure-set! safe-s.1113 0 safe-vector-init.1058) (let ((x.1.84 (call (unsafe-procedure-label L.safe-s.1113.39) safe-s.1113 3))) (let ((x.2.85 (call (unsafe-procedure-label L.safe-s.1118.40) safe-s.1118 x.1.84 0 1))) (let ((x.3.86 (call (unsafe-procedure-label L.safe-s.1118.40) safe-s.1118 x.1.84 1 2))) (let ((x.4.87 (call (unsafe-procedure-label L.safe-s.1118.40) safe-s.1118 x.1.84 2 3))) (call (unsafe-procedure-label L.safe-s.1122.41) safe-s.1122 x.1.84 2))))))))
+expected:           3
+src-interp:         interp-proc-exposed-lang-v9
+trg-interp:         interp-exprs-bits-lang-v8
+output-program:
+  (module (define L.safe-vector-init.1058.42 (lambda (c.1996 vec.1059 len.1060 i.1061) (let ((safe-vector-init.1058 (mref c.1996 14))) (if (= len.1060 i.1061) vec.1059 (begin (mset! vec.1059 (+ (* (arithmetic-shift-right i.1061 3) 8) 5) 0) (call (mref L.safe-vector-init.1058.42 -2) safe-vector-init.1058 vec.1059 len.1060 (+ i.1061 8))))))) (define L.safe-s.1122.41 (lambda (c.1995 tmp.1123 tmp.1124) (let () (if (= (bitwise-and tmp.1124 7) 0) (if (= (bitwise-and tmp.1123 7) 3) (if (>= tmp.1124 0) (if (< tmp.1124 (mref tmp.1123 -3)) (mref tmp.1123 (+ (* (arithmetic-shift-right tmp.1124 3) 8) 5)) 25406) 25406) 25662) 25918)))) (define L.safe-s.1118.40 (lambda (c.1994 tmp.1119 tmp.1120 tmp.1121) (let () (if (= (bitwise-and tmp.1120 7) 0) (if (= (bitwise-and tmp.1119 7) 3) (if (>= tmp.1120 0) (if (< tmp.1120 (mref tmp.1119 -3)) (begin (mset! tmp.1119 (+ (* (arithmetic-shift-right tmp.1120 3) 8) 5) tmp.1121) 30) 25406) 25406) 25662) 25918)))) (define L.safe-s.1113.39 (lambda (c.1993 tmp.1114) (let ((safe-vector-init.1058 (mref c.1993 14))) (if (= (bitwise-and tmp.1114 7) 0) (if (>= tmp.1114 0) (let ((tmp.1115 (let ((tmp.2068 (+ (alloc (* (+ 1 (arithmetic-shift-right tmp.1114 3)) 8)) 3))) (begin (mset! tmp.2068 -3 tmp.1114) tmp.2068)))) (call (mref L.safe-vector-init.1058.42 -2) safe-vector-init.1058 tmp.1115 tmp.1114 0)) 25406) 25662)))) (let ((safe-s.1113 (let ((tmp.2069 (+ (alloc 24) 2))) (begin (mset! tmp.2069 -2 L.safe-s.1113.39) (mset! tmp.2069 6 8) tmp.2069))) (safe-s.1118 (let ((tmp.2070 (+ (alloc 16) 2))) (begin (mset! tmp.2070 -2 L.safe-s.1118.40) (mset! tmp.2070 6 24) tmp.2070))) (safe-s.1122 (let ((tmp.2071 (+ (alloc 16) 2))) (begin (mset! tmp.2071 -2 L.safe-s.1122.41) (mset! tmp.2071 6 16) tmp.2071))) (safe-vector-init.1058 (let ((tmp.2072 (+ (alloc 24) 2))) (begin (mset! tmp.2072 -2 L.safe-vector-init.1058.42) (mset! tmp.2072 6 24) tmp.2072)))) (begin (mset! safe-vector-init.1058 14 safe-vector-init.1058) (mset! safe-s.1113 14 safe-vector-init.1058) (let ((x.1.84 (call (mref L.safe-s.1113.39 -2) safe-s.1113 24))) (let ((x.2.85 (call (mref L.safe-s.1118.40 -2) safe-s.1118 x.1.84 0 8))) (let ((x.3.86 (call (mref L.safe-s.1118.40 -2) safe-s.1118 x.1.84 8 16))) (let ((x.4.87 (call (mref L.safe-s.1118.40 -2) safe-s.1118 x.1.84 16 24))) (call (mref L.safe-s.1122.41 -2) safe-s.1122 x.1.84 16))))))))
+test-type:          "Checking output is interpretable"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:411:12
+params:             '(#<procedure:...est-suite/utils.rkt:412:13>)
+message:            "Exception raised"
+exception-message:
+  "+: contract violation\n  expected: number?\n  given: #<procedure:...c411/langs/base.rkt:499:8>"
+exception:
+  +: contract violation
+    expected: number?
+    given: #<procedure:...c411/langs/base.rkt:499:8>
+    context...:
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:465:0: mref
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:250:7
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > specify-representation suite
+FAILURE
+test-program:
+  (module (define L.swap.8.32 (lambda (c.1986 x.9 y.10) (let ((safe-s.1623 (unsafe-procedure-ref c.1986 0)) (swap.8 (unsafe-procedure-ref c.1986 1))) (if (call (unsafe-procedure-label L.safe-s.1623.31) safe-s.1623 y.10 x.9) x.9 (let ((z.11 (call (unsafe-procedure-label L.swap.8.32) swap.8 y.10 x.9))) z.11))))) (define L.safe-s.1623.31 (lambda (c.1985 tmp.1624 tmp.1625) (let () (if (fixnum? tmp.1625) (if (fixnum? tmp.1624) (unsafe-fx< tmp.1624 tmp.1625) (error 100)) (error 101))))) (let ((safe-s.1623 (make-procedure L.safe-s.1623.31 2 0)) (swap.8 (make-procedure L.swap.8.32 2 2))) (begin (unsafe-procedure-set! swap.8 0 safe-s.1623) (unsafe-procedure-set! swap.8 1 swap.8) (call (unsafe-procedure-label L.swap.8.32) swap.8 1 2))))
+expected:           2
+src-interp:         interp-proc-exposed-lang-v9
+trg-interp:         interp-exprs-bits-lang-v8
+output-program:
+  (module (define L.swap.8.32 (lambda (c.1986 x.9 y.10) (let ((safe-s.1623 (mref c.1986 14)) (swap.8 (mref c.1986 22))) (if (!= (call (mref L.safe-s.1623.31 -2) safe-s.1623 y.10 x.9) 6) x.9 (let ((z.11 (call (mref L.swap.8.32 -2) swap.8 y.10 x.9))) z.11))))) (define L.safe-s.1623.31 (lambda (c.1985 tmp.1624 tmp.1625) (let () (if (= (bitwise-and tmp.1625 7) 0) (if (= (bitwise-and tmp.1624 7) 0) (if (< tmp.1624 tmp.1625) 14 6) 25662) 25918)))) (let ((safe-s.1623 (let ((tmp.2078 (+ (alloc 16) 2))) (begin (mset! tmp.2078 -2 L.safe-s.1623.31) (mset! tmp.2078 6 16) tmp.2078))) (swap.8 (let ((tmp.2079 (+ (alloc 32) 2))) (begin (mset! tmp.2079 -2 L.swap.8.32) (mset! tmp.2079 6 16) tmp.2079)))) (begin (mset! swap.8 14 safe-s.1623) (mset! swap.8 22 swap.8) (call (mref L.swap.8.32 -2) swap.8 8 16))))
+test-type:          "Checking output is interpretable"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:411:12
+params:             '(#<procedure:...est-suite/utils.rkt:412:13>)
+message:            "Exception raised"
+exception-message:
+  "+: contract violation\n  expected: number?\n  given: #<procedure:...c411/langs/base.rkt:499:8>"
+exception:
+  +: contract violation
+    expected: number?
+    given: #<procedure:...c411/langs/base.rkt:499:8>
+    context...:
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:465:0: mref
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:250:7
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > specify-representation suite
+FAILURE
+test-program:
+  (module (define L.fact.18.15 (lambda (c.1969 x.19) (let ((safe-s.1902 (unsafe-procedure-ref c.1969 0)) (fact.18 (unsafe-procedure-ref c.1969 1)) (safe-s.1896 (unsafe-procedure-ref c.1969 2)) (safe-s.1890 (unsafe-procedure-ref c.1969 3))) (if (call (unsafe-procedure-label L.safe-s.1902.12) safe-s.1902 x.19 0) 1 (call (unsafe-procedure-label L.safe-s.1890.14) safe-s.1890 x.19 (call (unsafe-procedure-label L.fact.18.15) fact.18 (call (unsafe-procedure-label L.safe-s.1896.13) safe-s.1896 x.19 1))))))) (define L.safe-s.1890.14 (lambda (c.1968 tmp.1891 tmp.1892) (let () (if (fixnum? tmp.1892) (if (fixnum? tmp.1891) (unsafe-fx* tmp.1891 tmp.1892) (error 100)) (error 101))))) (define L.safe-s.1896.13 (lambda (c.1967 tmp.1897 tmp.1898) (let () (if (fixnum? tmp.1898) (if (fixnum? tmp.1897) (unsafe-fx- tmp.1897 tmp.1898) (error 100)) (error 101))))) (define L.safe-s.1902.12 (lambda (c.1966 tmp.1903 tmp.1904) (let () (eq? tmp.1903 tmp.1904)))) (let ((safe-s.1902 (make-procedure L.safe-s.1902.12 2 0)) (safe-s.1896 (make-procedure L.safe-s.1896.13 2 0)) (safe-s.1890 (make-procedure L.safe-s.1890.14 2 0)) (fact.18 (make-procedure L.fact.18.15 1 4))) (begin (unsafe-procedure-set! fact.18 0 safe-s.1902) (unsafe-procedure-set! fact.18 1 fact.18) (unsafe-procedure-set! fact.18 2 safe-s.1896) (unsafe-procedure-set! fact.18 3 safe-s.1890) (call (unsafe-procedure-label L.fact.18.15) fact.18 5))))
+expected:           120
+src-interp:         interp-proc-exposed-lang-v9
+trg-interp:         interp-exprs-bits-lang-v8
+output-program:
+  (module (define L.fact.18.15 (lambda (c.1969 x.19) (let ((safe-s.1902 (mref c.1969 14)) (fact.18 (mref c.1969 22)) (safe-s.1896 (mref c.1969 30)) (safe-s.1890 (mref c.1969 38))) (if (!= (call (mref L.safe-s.1902.12 -2) safe-s.1902 x.19 0) 6) 8 (call (mref L.safe-s.1890.14 -2) safe-s.1890 x.19 (call (mref L.fact.18.15 -2) fact.18 (call (mref L.safe-s.1896.13 -2) safe-s.1896 x.19 8))))))) (define L.safe-s.1890.14 (lambda (c.1968 tmp.1891 tmp.1892) (let () (if (= (bitwise-and tmp.1892 7) 0) (if (= (bitwise-and tmp.1891 7) 0) (* tmp.1891 (arithmetic-shift-right tmp.1892 3)) 25662) 25918)))) (define L.safe-s.1896.13 (lambda (c.1967 tmp.1897 tmp.1898) (let () (if (= (bitwise-and tmp.1898 7) 0) (if (= (bitwise-and tmp.1897 7) 0) (- tmp.1897 tmp.1898) 25662) 25918)))) (define L.safe-s.1902.12 (lambda (c.1966 tmp.1903 tmp.1904) (let () (if (= tmp.1903 tmp.1904) 14 6)))) (let ((safe-s.1902 (let ((tmp.2086 (+ (alloc 16) 2))) (begin (mset! tmp.2086 -2 L.safe-s.1902.12) (mset! tmp.2086 6 16) tmp.2086))) (safe-s.1896 (let ((tmp.2087 (+ (alloc 16) 2))) (begin (mset! tmp.2087 -2 L.safe-s.1896.13) (mset! tmp.2087 6 16) tmp.2087))) (safe-s.1890 (let ((tmp.2088 (+ (alloc 16) 2))) (begin (mset! tmp.2088 -2 L.safe-s.1890.14) (mset! tmp.2088 6 16) tmp.2088))) (fact.18 (let ((tmp.2089 (+ (alloc 48) 2))) (begin (mset! tmp.2089 -2 L.fact.18.15) (mset! tmp.2089 6 8) tmp.2089)))) (begin (mset! fact.18 14 safe-s.1902) (mset! fact.18 22 fact.18) (mset! fact.18 30 safe-s.1896) (mset! fact.18 38 safe-s.1890) (call (mref L.fact.18.15 -2) fact.18 40))))
+test-type:          "Checking output is interpretable"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:411:12
+params:             '(#<procedure:...est-suite/utils.rkt:412:13>)
+message:            "Exception raised"
+exception-message:
+  "+: contract violation\n  expected: number?\n  given: #<procedure:...c411/langs/base.rkt:499:8>"
+exception:
+  +: contract violation
+    expected: number?
+    given: #<procedure:...c411/langs/base.rkt:499:8>
+    context...:
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:465:0: mref
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:250:7
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > specify-representation suite
+FAILURE
+test-program:
+  (module (define L.H.29.19 (lambda (c.1973 a.45 b.46 c.47 d.48 e.49 f.50 g.51 h.52 j.53) (let ((safe-s.858 (unsafe-procedure-ref c.1973 0))) (let ((r1.54 (call (unsafe-procedure-label L.safe-s.858.16) safe-s.858 a.45 b.46))) (let ((r2.55 (call (unsafe-procedure-label L.safe-s.858.16) safe-s.858 r1.54 c.47))) (let ((r3.56 (call (unsafe-procedure-label L.safe-s.858.16) safe-s.858 r2.55 d.48))) (let ((r4.57 (call (unsafe-procedure-label L.safe-s.858.16) safe-s.858 r3.56 e.49))) (let ((r5.58 (call (unsafe-procedure-label L.safe-s.858.16) safe-s.858 r4.57 f.50))) (let ((r6.59 (call (unsafe-procedure-label L.safe-s.858.16) safe-s.858 r5.58 g.51))) (let ((r7.60 (call (unsafe-procedure-label L.safe-s.858.16) safe-s.858 r6.59 h.52))) (call (unsafe-procedure-label L.safe-s.858.16) safe-s.858 r7.60 j.53))))))))))) (define L.G.28.18 (lambda (c.1972 a.37 b.38 c.39 d.40 e.41 f.42 g.43 h.44) (let ((H.29 (unsafe-procedure-ref c.1972 0))) (call (unsafe-procedure-label L.H.29.19) H.29 a.37 b.38 c.39 d.40 e.41 f.42 g.43 h.44 9)))) (define L.F.27.17 (lambda (c.1971 a.30 b.31 c.32 d.33 e.34 f.35 g.36) (let ((safe-s.858 (unsafe-procedure-ref c.1971 0)) (G.28 (unsafe-procedure-ref c.1971 1))) (call (unsafe-procedure-label L.safe-s.858.16) safe-s.858 10 (call (unsafe-procedure-label L.G.28.18) G.28 a.30 b.31 c.32 d.33 e.34 f.35 g.36 8))))) (define L.safe-s.858.16 (lambda (c.1970 tmp.859 tmp.860) (let () (if (fixnum? tmp.860) (if (fixnum? tmp.859) (unsafe-fx+ tmp.859 tmp.860) (error 100)) (error 101))))) (let ((safe-s.858 (make-procedure L.safe-s.858.16 2 0)) (F.27 (make-procedure L.F.27.17 7 2)) (G.28 (make-procedure L.G.28.18 8 1)) (H.29 (make-procedure L.H.29.19 9 1))) (begin (unsafe-procedure-set! H.29 0 safe-s.858) (unsafe-procedure-set! G.28 0 H.29) (unsafe-procedure-set! F.27 0 safe-s.858) (unsafe-procedure-set! F.27 1 G.28) (call (unsafe-procedure-label L.F.27.17) F.27 1 2 3 4 5 6 7))))
+expected:           55
+src-interp:         interp-proc-exposed-lang-v9
+trg-interp:         interp-exprs-bits-lang-v8
+output-program:
+  (module (define L.H.29.19 (lambda (c.1973 a.45 b.46 c.47 d.48 e.49 f.50 g.51 h.52 j.53) (let ((safe-s.858 (mref c.1973 14))) (let ((r1.54 (call (mref L.safe-s.858.16 -2) safe-s.858 a.45 b.46))) (let ((r2.55 (call (mref L.safe-s.858.16 -2) safe-s.858 r1.54 c.47))) (let ((r3.56 (call (mref L.safe-s.858.16 -2) safe-s.858 r2.55 d.48))) (let ((r4.57 (call (mref L.safe-s.858.16 -2) safe-s.858 r3.56 e.49))) (let ((r5.58 (call (mref L.safe-s.858.16 -2) safe-s.858 r4.57 f.50))) (let ((r6.59 (call (mref L.safe-s.858.16 -2) safe-s.858 r5.58 g.51))) (let ((r7.60 (call (mref L.safe-s.858.16 -2) safe-s.858 r6.59 h.52))) (call (mref L.safe-s.858.16 -2) safe-s.858 r7.60 j.53))))))))))) (define L.G.28.18 (lambda (c.1972 a.37 b.38 c.39 d.40 e.41 f.42 g.43 h.44) (let ((H.29 (mref c.1972 14))) (call (mref L.H.29.19 -2) H.29 a.37 b.38 c.39 d.40 e.41 f.42 g.43 h.44 72)))) (define L.F.27.17 (lambda (c.1971 a.30 b.31 c.32 d.33 e.34 f.35 g.36) (let ((safe-s.858 (mref c.1971 14)) (G.28 (mref c.1971 22))) (call (mref L.safe-s.858.16 -2) safe-s.858 80 (call (mref L.G.28.18 -2) G.28 a.30 b.31 c.32 d.33 e.34 f.35 g.36 64))))) (define L.safe-s.858.16 (lambda (c.1970 tmp.859 tmp.860) (let () (if (= (bitwise-and tmp.860 7) 0) (if (= (bitwise-and tmp.859 7) 0) (+ tmp.859 tmp.860) 25662) 25918)))) (let ((safe-s.858 (let ((tmp.2099 (+ (alloc 16) 2))) (begin (mset! tmp.2099 -2 L.safe-s.858.16) (mset! tmp.2099 6 16) tmp.2099))) (F.27 (let ((tmp.2100 (+ (alloc 32) 2))) (begin (mset! tmp.2100 -2 L.F.27.17) (mset! tmp.2100 6 56) tmp.2100))) (G.28 (let ((tmp.2101 (+ (alloc 24) 2))) (begin (mset! tmp.2101 -2 L.G.28.18) (mset! tmp.2101 6 64) tmp.2101))) (H.29 (let ((tmp.2102 (+ (alloc 24) 2))) (begin (mset! tmp.2102 -2 L.H.29.19) (mset! tmp.2102 6 72) tmp.2102)))) (begin (mset! H.29 14 safe-s.858) (mset! G.28 14 H.29) (mset! F.27 14 safe-s.858) (mset! F.27 22 G.28) (call (mref L.F.27.17 -2) F.27 8 16 24 32 40 48 56))))
+test-type:          "Checking output is interpretable"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:411:12
+params:             '(#<procedure:...est-suite/utils.rkt:412:13>)
+message:            "Exception raised"
+exception-message:
+  "+: contract violation\n  expected: number?\n  given: #<procedure:...c411/langs/base.rkt:499:8>"
+exception:
+  +: contract violation
+    expected: number?
+    given: #<procedure:...c411/langs/base.rkt:499:8>
+    context...:
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:465:0: mref
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:250:7
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > specify-representation suite
+FAILURE
+test-program:
+  (module (define L.fib_loop.12.60 (lambda (c.2014 n.13 acc1.14 acc2.15) (let ((safe-s.522 (unsafe-procedure-ref c.2014 0)) (safe-s.513 (unsafe-procedure-ref c.2014 1)) (fib_loop.12 (unsafe-procedure-ref c.2014 2))) (if (call (unsafe-procedure-label L.safe-s.522.58) safe-s.522 n.13 0) acc1.14 (if (call (unsafe-procedure-label L.safe-s.522.58) safe-s.522 n.13 1) acc2.15 (let ((new-n.16 (call (unsafe-procedure-label L.safe-s.513.59) safe-s.513 n.13 -1))) (let ((new-acc2.17 (call (unsafe-procedure-label L.safe-s.513.59) safe-s.513 acc1.14 acc2.15))) (call (unsafe-procedure-label L.fib_loop.12.60) fib_loop.12 new-n.16 acc2.15 new-acc2.17)))))))) (define L.safe-s.513.59 (lambda (c.2013 tmp.514 tmp.515) (let () (if (fixnum? tmp.515) (if (fixnum? tmp.514) (unsafe-fx+ tmp.514 tmp.515) (error 100)) (error 101))))) (define L.safe-s.522.58 (lambda (c.2012 tmp.523 tmp.524) (let () (eq? tmp.523 tmp.524)))) (let ((safe-s.522 (make-procedure L.safe-s.522.58 2 0)) (safe-s.513 (make-procedure L.safe-s.513.59 2 0)) (fib_loop.12 (make-procedure L.fib_loop.12.60 3 3))) (begin (unsafe-procedure-set! fib_loop.12 0 safe-s.522) (unsafe-procedure-set! fib_loop.12 1 safe-s.513) (unsafe-procedure-set! fib_loop.12 2 fib_loop.12) (call (unsafe-procedure-label L.fib_loop.12.60) fib_loop.12 5 0 1))))
+expected:           5
+src-interp:         interp-proc-exposed-lang-v9
+trg-interp:         interp-exprs-bits-lang-v8
+output-program:
+  (module (define L.fib_loop.12.60 (lambda (c.2014 n.13 acc1.14 acc2.15) (let ((safe-s.522 (mref c.2014 14)) (safe-s.513 (mref c.2014 22)) (fib_loop.12 (mref c.2014 30))) (if (!= (call (mref L.safe-s.522.58 -2) safe-s.522 n.13 0) 6) acc1.14 (if (!= (call (mref L.safe-s.522.58 -2) safe-s.522 n.13 8) 6) acc2.15 (let ((new-n.16 (call (mref L.safe-s.513.59 -2) safe-s.513 n.13 -8))) (let ((new-acc2.17 (call (mref L.safe-s.513.59 -2) safe-s.513 acc1.14 acc2.15))) (call (mref L.fib_loop.12.60 -2) fib_loop.12 new-n.16 acc2.15 new-acc2.17)))))))) (define L.safe-s.513.59 (lambda (c.2013 tmp.514 tmp.515) (let () (if (= (bitwise-and tmp.515 7) 0) (if (= (bitwise-and tmp.514 7) 0) (+ tmp.514 tmp.515) 25662) 25918)))) (define L.safe-s.522.58 (lambda (c.2012 tmp.523 tmp.524) (let () (if (= tmp.523 tmp.524) 14 6)))) (let ((safe-s.522 (let ((tmp.2105 (+ (alloc 16) 2))) (begin (mset! tmp.2105 -2 L.safe-s.522.58) (mset! tmp.2105 6 16) tmp.2105))) (safe-s.513 (let ((tmp.2106 (+ (alloc 16) 2))) (begin (mset! tmp.2106 -2 L.safe-s.513.59) (mset! tmp.2106 6 16) tmp.2106))) (fib_loop.12 (let ((tmp.2107 (+ (alloc 40) 2))) (begin (mset! tmp.2107 -2 L.fib_loop.12.60) (mset! tmp.2107 6 24) tmp.2107)))) (begin (mset! fib_loop.12 14 safe-s.522) (mset! fib_loop.12 22 safe-s.513) (mset! fib_loop.12 30 fib_loop.12) (call (mref L.fib_loop.12.60 -2) fib_loop.12 40 0 8))))
+test-type:          "Checking output is interpretable"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:411:12
+params:             '(#<procedure:...est-suite/utils.rkt:412:13>)
+message:            "Exception raised"
+exception-message:
+  "+: contract violation\n  expected: number?\n  given: #<procedure:...c411/langs/base.rkt:499:8>"
+exception:
+  +: contract violation
+    expected: number?
+    given: #<procedure:...c411/langs/base.rkt:499:8>
+    context...:
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:465:0: mref
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:250:7
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > specify-representation suite
+FAILURE
+test-program:
+  (module (define L.safe-s.352.21 (lambda (c.1975 tmp.353) (let () (if (pair? tmp.353) (unsafe-cdr tmp.353) (error 100))))) (define L.safe-s.347.20 (lambda (c.1974 tmp.348 tmp.349) (let () (cons tmp.348 tmp.349)))) (let ((safe-s.347 (make-procedure L.safe-s.347.20 2 0)) (safe-s.352 (make-procedure L.safe-s.352.21 1 0))) (call (unsafe-procedure-label L.safe-s.352.21) safe-s.352 (call (unsafe-procedure-label L.safe-s.347.20) safe-s.347 7 empty))))
+expected:           ()
+src-interp:         interp-proc-exposed-lang-v9
+trg-interp:         interp-exprs-bits-lang-v8
+output-program:
+  (module (define L.safe-s.352.21 (lambda (c.1975 tmp.353) (let () (if (= (bitwise-and tmp.353 7) 1) (mref tmp.353 7) 25662)))) (define L.safe-s.347.20 (lambda (c.1974 tmp.348 tmp.349) (let () (let ((tmp.2116 (+ (alloc 16) 1))) (begin (mset! tmp.2116 -1 tmp.348) (mset! tmp.2116 7 tmp.349) tmp.2116))))) (let ((safe-s.347 (let ((tmp.2117 (+ (alloc 16) 2))) (begin (mset! tmp.2117 -2 L.safe-s.347.20) (mset! tmp.2117 6 16) tmp.2117))) (safe-s.352 (let ((tmp.2118 (+ (alloc 16) 2))) (begin (mset! tmp.2118 -2 L.safe-s.352.21) (mset! tmp.2118 6 8) tmp.2118)))) (call (mref L.safe-s.352.21 -2) safe-s.352 (call (mref L.safe-s.347.20 -2) safe-s.347 56 22))))
+test-type:          "Checking output is interpretable"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:411:12
+params:             '(#<procedure:...est-suite/utils.rkt:412:13>)
+message:            "Exception raised"
+exception-message:
+  "+: contract violation\n  expected: number?\n  given: #<procedure:...c411/langs/base.rkt:499:8>"
+exception:
+  +: contract violation
+    expected: number?
+    given: #<procedure:...c411/langs/base.rkt:499:8>
+    context...:
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:465:0: mref
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:250:7
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > specify-representation suite
+FAILURE
+test-program:
+  (module (define L.fact.88.51 (lambda (c.2005 x.89) (let ((safe-s.1212 (unsafe-procedure-ref c.2005 0)) (safe-s.1203 (unsafe-procedure-ref c.2005 1)) (safe-s.1200 (unsafe-procedure-ref c.2005 2)) (fact.88 (unsafe-procedure-ref c.2005 3))) (if (call (unsafe-procedure-label L.safe-s.1212.48) safe-s.1212 x.89 0) 1 (let ((z.90 (call (unsafe-procedure-label L.safe-s.1203.49) safe-s.1203 x.89 -1))) (let ((y.91 (call (unsafe-procedure-label L.fact.88.51) fact.88 z.90))) (call (unsafe-procedure-label L.safe-s.1200.50) safe-s.1200 x.89 y.91))))))) (define L.safe-s.1200.50 (lambda (c.2004 tmp.1201 tmp.1202) (let () (if (fixnum? tmp.1202) (if (fixnum? tmp.1201) (unsafe-fx* tmp.1201 tmp.1202) (error 100)) (error 101))))) (define L.safe-s.1203.49 (lambda (c.2003 tmp.1204 tmp.1205) (let () (if (fixnum? tmp.1205) (if (fixnum? tmp.1204) (unsafe-fx+ tmp.1204 tmp.1205) (error 100)) (error 101))))) (define L.safe-s.1212.48 (lambda (c.2002 tmp.1213 tmp.1214) (let () (eq? tmp.1213 tmp.1214)))) (let ((safe-s.1212 (make-procedure L.safe-s.1212.48 2 0)) (safe-s.1203 (make-procedure L.safe-s.1203.49 2 0)) (safe-s.1200 (make-procedure L.safe-s.1200.50 2 0)) (fact.88 (make-procedure L.fact.88.51 1 4))) (begin (unsafe-procedure-set! fact.88 0 safe-s.1212) (unsafe-procedure-set! fact.88 1 safe-s.1203) (unsafe-procedure-set! fact.88 2 safe-s.1200) (unsafe-procedure-set! fact.88 3 fact.88) (call (unsafe-procedure-label L.fact.88.51) fact.88 10))))
+expected:           3628800
+src-interp:         interp-proc-exposed-lang-v9
+trg-interp:         interp-exprs-bits-lang-v8
+output-program:
+  (module (define L.fact.88.51 (lambda (c.2005 x.89) (let ((safe-s.1212 (mref c.2005 14)) (safe-s.1203 (mref c.2005 22)) (safe-s.1200 (mref c.2005 30)) (fact.88 (mref c.2005 38))) (if (!= (call (mref L.safe-s.1212.48 -2) safe-s.1212 x.89 0) 6) 8 (let ((z.90 (call (mref L.safe-s.1203.49 -2) safe-s.1203 x.89 -8))) (let ((y.91 (call (mref L.fact.88.51 -2) fact.88 z.90))) (call (mref L.safe-s.1200.50 -2) safe-s.1200 x.89 y.91))))))) (define L.safe-s.1200.50 (lambda (c.2004 tmp.1201 tmp.1202) (let () (if (= (bitwise-and tmp.1202 7) 0) (if (= (bitwise-and tmp.1201 7) 0) (* tmp.1201 (arithmetic-shift-right tmp.1202 3)) 25662) 25918)))) (define L.safe-s.1203.49 (lambda (c.2003 tmp.1204 tmp.1205) (let () (if (= (bitwise-and tmp.1205 7) 0) (if (= (bitwise-and tmp.1204 7) 0) (+ tmp.1204 tmp.1205) 25662) 25918)))) (define L.safe-s.1212.48 (lambda (c.2002 tmp.1213 tmp.1214) (let () (if (= tmp.1213 tmp.1214) 14 6)))) (let ((safe-s.1212 (let ((tmp.2119 (+ (alloc 16) 2))) (begin (mset! tmp.2119 -2 L.safe-s.1212.48) (mset! tmp.2119 6 16) tmp.2119))) (safe-s.1203 (let ((tmp.2120 (+ (alloc 16) 2))) (begin (mset! tmp.2120 -2 L.safe-s.1203.49) (mset! tmp.2120 6 16) tmp.2120))) (safe-s.1200 (let ((tmp.2121 (+ (alloc 16) 2))) (begin (mset! tmp.2121 -2 L.safe-s.1200.50) (mset! tmp.2121 6 16) tmp.2121))) (fact.88 (let ((tmp.2122 (+ (alloc 48) 2))) (begin (mset! tmp.2122 -2 L.fact.88.51) (mset! tmp.2122 6 8) tmp.2122)))) (begin (mset! fact.88 14 safe-s.1212) (mset! fact.88 22 safe-s.1203) (mset! fact.88 30 safe-s.1200) (mset! fact.88 38 fact.88) (call (mref L.fact.88.51 -2) fact.88 80))))
+test-type:          "Checking output is interpretable"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:411:12
+params:             '(#<procedure:...est-suite/utils.rkt:412:13>)
+message:            "Exception raised"
+exception-message:
+  "+: contract violation\n  expected: number?\n  given: #<procedure:...c411/langs/base.rkt:499:8>"
+exception:
+  +: contract violation
+    expected: number?
+    given: #<procedure:...c411/langs/base.rkt:499:8>
+    context...:
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:465:0: mref
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:250:7
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > specify-representation suite
+FAILURE
+test-program:
+  (module (define L.safe-s.1520.8 (lambda (c.1962 tmp.1521 tmp.1522) (let () (cons tmp.1521 tmp.1522)))) (let ((safe-s.1520 (make-procedure L.safe-s.1520.8 2 0))) (call (unsafe-procedure-label L.safe-s.1520.8) safe-s.1520 7 empty)))
+expected:           (7)
+src-interp:         interp-proc-exposed-lang-v9
+trg-interp:         interp-exprs-bits-lang-v8
+output-program:
+  (module (define L.safe-s.1520.8 (lambda (c.1962 tmp.1521 tmp.1522) (let () (let ((tmp.2123 (+ (alloc 16) 1))) (begin (mset! tmp.2123 -1 tmp.1521) (mset! tmp.2123 7 tmp.1522) tmp.2123))))) (let ((safe-s.1520 (let ((tmp.2124 (+ (alloc 16) 2))) (begin (mset! tmp.2124 -2 L.safe-s.1520.8) (mset! tmp.2124 6 16) tmp.2124)))) (call (mref L.safe-s.1520.8 -2) safe-s.1520 56 22)))
+test-type:          "Checking output is interpretable"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:411:12
+params:             '(#<procedure:...est-suite/utils.rkt:412:13>)
+message:            "Exception raised"
+exception-message:
+  "+: contract violation\n  expected: number?\n  given: #<procedure:...c411/langs/base.rkt:499:8>"
+exception:
+  +: contract violation
+    expected: number?
+    given: #<procedure:...c411/langs/base.rkt:499:8>
+    context...:
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:465:0: mref
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:250:7
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > specify-representation suite
+FAILURE
+test-program:
+  (module (define L.safe-s.1454.28 (lambda (c.1982 tmp.1455) (let () (if (pair? tmp.1455) (unsafe-car tmp.1455) (error 100))))) (define L.safe-s.1451.27 (lambda (c.1981 tmp.1452 tmp.1453) (let () (cons tmp.1452 tmp.1453)))) (let ((safe-s.1451 (make-procedure L.safe-s.1451.27 2 0)) (safe-s.1454 (make-procedure L.safe-s.1454.28 1 0))) (call (unsafe-procedure-label L.safe-s.1454.28) safe-s.1454 (call (unsafe-procedure-label L.safe-s.1451.27) safe-s.1451 7 empty))))
+expected:           7
+src-interp:         interp-proc-exposed-lang-v9
+trg-interp:         interp-exprs-bits-lang-v8
+output-program:
+  (module (define L.safe-s.1454.28 (lambda (c.1982 tmp.1455) (let () (if (= (bitwise-and tmp.1455 7) 1) (mref tmp.1455 -1) 25662)))) (define L.safe-s.1451.27 (lambda (c.1981 tmp.1452 tmp.1453) (let () (let ((tmp.2144 (+ (alloc 16) 1))) (begin (mset! tmp.2144 -1 tmp.1452) (mset! tmp.2144 7 tmp.1453) tmp.2144))))) (let ((safe-s.1451 (let ((tmp.2145 (+ (alloc 16) 2))) (begin (mset! tmp.2145 -2 L.safe-s.1451.27) (mset! tmp.2145 6 16) tmp.2145))) (safe-s.1454 (let ((tmp.2146 (+ (alloc 16) 2))) (begin (mset! tmp.2146 -2 L.safe-s.1454.28) (mset! tmp.2146 6 8) tmp.2146)))) (call (mref L.safe-s.1454.28 -2) safe-s.1454 (call (mref L.safe-s.1451.27 -2) safe-s.1451 56 22))))
+test-type:          "Checking output is interpretable"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:411:12
+params:             '(#<procedure:...est-suite/utils.rkt:412:13>)
+message:            "Exception raised"
+exception-message:
+  "+: contract violation\n  expected: number?\n  given: #<procedure:...c411/langs/base.rkt:499:8>"
+exception:
+  +: contract violation
+    expected: number?
+    given: #<procedure:...c411/langs/base.rkt:499:8>
+    context...:
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:465:0: mref
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:250:7
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > specify-representation suite
+FAILURE
+test-program:
+  (module (define L.safe-vector-init.1541.26 (lambda (c.1980 vec.1542 len.1543 i.1544) (let ((safe-vector-init.1541 (unsafe-procedure-ref c.1980 0))) (if (eq? len.1543 i.1544) vec.1542 (begin (unsafe-vector-set! vec.1542 i.1544 0) (call (unsafe-procedure-label L.safe-vector-init.1541.26) safe-vector-init.1541 vec.1542 len.1543 (unsafe-fx+ i.1544 1))))))) (define L.safe-s.1605.25 (lambda (c.1979 tmp.1606 tmp.1607) (let () (if (fixnum? tmp.1607) (if (vector? tmp.1606) (if (unsafe-fx>= tmp.1607 0) (if (unsafe-fx< tmp.1607 (unsafe-vector-length tmp.1606)) (unsafe-vector-ref tmp.1606 tmp.1607) (error 99)) (error 99)) (error 100)) (error 101))))) (define L.safe-s.1596.24 (lambda (c.1978 tmp.1597) (let ((safe-vector-init.1541 (unsafe-procedure-ref c.1978 0))) (if (fixnum? tmp.1597) (if (unsafe-fx>= tmp.1597 0) (let ((tmp.1598 (unsafe-make-vector tmp.1597))) (call (unsafe-procedure-label L.safe-vector-init.1541.26) safe-vector-init.1541 tmp.1598 tmp.1597 0)) (error 99)) (error 100))))) (let ((safe-s.1596 (make-procedure L.safe-s.1596.24 1 1)) (safe-s.1605 (make-procedure L.safe-s.1605.25 2 0)) (safe-vector-init.1541 (make-procedure L.safe-vector-init.1541.26 3 1))) (begin (unsafe-procedure-set! safe-vector-init.1541 0 safe-vector-init.1541) (unsafe-procedure-set! safe-s.1596 0 safe-vector-init.1541) (call (unsafe-procedure-label L.safe-s.1605.25) safe-s.1605 (call (unsafe-procedure-label L.safe-s.1596.24) safe-s.1596 2) 0))))
+expected:           0
+src-interp:         interp-proc-exposed-lang-v9
+trg-interp:         interp-exprs-bits-lang-v8
+output-program:
+  (module (define L.safe-vector-init.1541.26 (lambda (c.1980 vec.1542 len.1543 i.1544) (let ((safe-vector-init.1541 (mref c.1980 14))) (if (= len.1543 i.1544) vec.1542 (begin (mset! vec.1542 (+ (* (arithmetic-shift-right i.1544 3) 8) 5) 0) (call (mref L.safe-vector-init.1541.26 -2) safe-vector-init.1541 vec.1542 len.1543 (+ i.1544 8))))))) (define L.safe-s.1605.25 (lambda (c.1979 tmp.1606 tmp.1607) (let () (if (= (bitwise-and tmp.1607 7) 0) (if (= (bitwise-and tmp.1606 7) 3) (if (>= tmp.1607 0) (if (< tmp.1607 (mref tmp.1606 -3)) (mref tmp.1606 (+ (* (arithmetic-shift-right tmp.1607 3) 8) 5)) 25406) 25406) 25662) 25918)))) (define L.safe-s.1596.24 (lambda (c.1978 tmp.1597) (let ((safe-vector-init.1541 (mref c.1978 14))) (if (= (bitwise-and tmp.1597 7) 0) (if (>= tmp.1597 0) (let ((tmp.1598 (let ((tmp.2147 (+ (alloc (* (+ 1 (arithmetic-shift-right tmp.1597 3)) 8)) 3))) (begin (mset! tmp.2147 -3 tmp.1597) tmp.2147)))) (call (mref L.safe-vector-init.1541.26 -2) safe-vector-init.1541 tmp.1598 tmp.1597 0)) 25406) 25662)))) (let ((safe-s.1596 (let ((tmp.2148 (+ (alloc 24) 2))) (begin (mset! tmp.2148 -2 L.safe-s.1596.24) (mset! tmp.2148 6 8) tmp.2148))) (safe-s.1605 (let ((tmp.2149 (+ (alloc 16) 2))) (begin (mset! tmp.2149 -2 L.safe-s.1605.25) (mset! tmp.2149 6 16) tmp.2149))) (safe-vector-init.1541 (let ((tmp.2150 (+ (alloc 24) 2))) (begin (mset! tmp.2150 -2 L.safe-vector-init.1541.26) (mset! tmp.2150 6 24) tmp.2150)))) (begin (mset! safe-vector-init.1541 14 safe-vector-init.1541) (mset! safe-s.1596 14 safe-vector-init.1541) (call (mref L.safe-s.1605.25 -2) safe-s.1605 (call (mref L.safe-s.1596.24 -2) safe-s.1596 16) 0))))
+test-type:          "Checking output is interpretable"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:411:12
+params:             '(#<procedure:...est-suite/utils.rkt:412:13>)
+message:            "Exception raised"
+exception-message:
+  "+: contract violation\n  expected: number?\n  given: #<procedure:...c411/langs/base.rkt:499:8>"
+exception:
+  +: contract violation
+    expected: number?
+    given: #<procedure:...c411/langs/base.rkt:499:8>
+    context...:
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:465:0: mref
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:250:7
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > specify-representation suite
+FAILURE
+test-program:
+  (module (define L.fact_loop.5.38 (lambda (c.1992 n.6 acc.7) (let ((safe-s.798 (unsafe-procedure-ref c.1992 0)) (safe-s.786 (unsafe-procedure-ref c.1992 1)) (safe-s.792 (unsafe-procedure-ref c.1992 2)) (fact_loop.5 (unsafe-procedure-ref c.1992 3))) (if (call (unsafe-procedure-label L.safe-s.798.35) safe-s.798 n.6 0) acc.7 (call (unsafe-procedure-label L.fact_loop.5.38) fact_loop.5 (call (unsafe-procedure-label L.safe-s.792.36) safe-s.792 n.6 1) (call (unsafe-procedure-label L.safe-s.786.37) safe-s.786 acc.7 n.6)))))) (define L.safe-s.786.37 (lambda (c.1991 tmp.787 tmp.788) (let () (if (fixnum? tmp.788) (if (fixnum? tmp.787) (unsafe-fx* tmp.787 tmp.788) (error 100)) (error 101))))) (define L.safe-s.792.36 (lambda (c.1990 tmp.793 tmp.794) (let () (if (fixnum? tmp.794) (if (fixnum? tmp.793) (unsafe-fx- tmp.793 tmp.794) (error 100)) (error 101))))) (define L.safe-s.798.35 (lambda (c.1989 tmp.799 tmp.800) (let () (eq? tmp.799 tmp.800)))) (let ((safe-s.798 (make-procedure L.safe-s.798.35 2 0)) (safe-s.792 (make-procedure L.safe-s.792.36 2 0)) (safe-s.786 (make-procedure L.safe-s.786.37 2 0)) (fact_loop.5 (make-procedure L.fact_loop.5.38 2 4))) (begin (unsafe-procedure-set! fact_loop.5 0 safe-s.798) (unsafe-procedure-set! fact_loop.5 1 safe-s.786) (unsafe-procedure-set! fact_loop.5 2 safe-s.792) (unsafe-procedure-set! fact_loop.5 3 fact_loop.5) (call (unsafe-procedure-label L.fact_loop.5.38) fact_loop.5 5 1))))
+expected:           120
+src-interp:         interp-proc-exposed-lang-v9
+trg-interp:         interp-exprs-bits-lang-v8
+output-program:
+  (module (define L.fact_loop.5.38 (lambda (c.1992 n.6 acc.7) (let ((safe-s.798 (mref c.1992 14)) (safe-s.786 (mref c.1992 22)) (safe-s.792 (mref c.1992 30)) (fact_loop.5 (mref c.1992 38))) (if (!= (call (mref L.safe-s.798.35 -2) safe-s.798 n.6 0) 6) acc.7 (call (mref L.fact_loop.5.38 -2) fact_loop.5 (call (mref L.safe-s.792.36 -2) safe-s.792 n.6 8) (call (mref L.safe-s.786.37 -2) safe-s.786 acc.7 n.6)))))) (define L.safe-s.786.37 (lambda (c.1991 tmp.787 tmp.788) (let () (if (= (bitwise-and tmp.788 7) 0) (if (= (bitwise-and tmp.787 7) 0) (* tmp.787 (arithmetic-shift-right tmp.788 3)) 25662) 25918)))) (define L.safe-s.792.36 (lambda (c.1990 tmp.793 tmp.794) (let () (if (= (bitwise-and tmp.794 7) 0) (if (= (bitwise-and tmp.793 7) 0) (- tmp.793 tmp.794) 25662) 25918)))) (define L.safe-s.798.35 (lambda (c.1989 tmp.799 tmp.800) (let () (if (= tmp.799 tmp.800) 14 6)))) (let ((safe-s.798 (let ((tmp.2151 (+ (alloc 16) 2))) (begin (mset! tmp.2151 -2 L.safe-s.798.35) (mset! tmp.2151 6 16) tmp.2151))) (safe-s.792 (let ((tmp.2152 (+ (alloc 16) 2))) (begin (mset! tmp.2152 -2 L.safe-s.792.36) (mset! tmp.2152 6 16) tmp.2152))) (safe-s.786 (let ((tmp.2153 (+ (alloc 16) 2))) (begin (mset! tmp.2153 -2 L.safe-s.786.37) (mset! tmp.2153 6 16) tmp.2153))) (fact_loop.5 (let ((tmp.2154 (+ (alloc 48) 2))) (begin (mset! tmp.2154 -2 L.fact_loop.5.38) (mset! tmp.2154 6 16) tmp.2154)))) (begin (mset! fact_loop.5 14 safe-s.798) (mset! fact_loop.5 22 safe-s.786) (mset! fact_loop.5 30 safe-s.792) (mset! fact_loop.5 38 fact_loop.5) (call (mref L.fact_loop.5.38 -2) fact_loop.5 40 8))))
+test-type:          "Checking output is interpretable"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:411:12
+params:             '(#<procedure:...est-suite/utils.rkt:412:13>)
+message:            "Exception raised"
+exception-message:
+  "+: contract violation\n  expected: number?\n  given: #<procedure:...c411/langs/base.rkt:499:8>"
+exception:
+  +: contract violation
+    expected: number?
+    given: #<procedure:...c411/langs/base.rkt:499:8>
+    context...:
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:465:0: mref
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:250:7
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > specify-representation suite
+FAILURE
+test-program:
+  (module (define L.swap.65.62 (lambda (c.2016 x.66 y.67) (let ((safe-s.243 (unsafe-procedure-ref c.2016 0)) (swap.65 (unsafe-procedure-ref c.2016 1))) (if (call (unsafe-procedure-label L.safe-s.243.61) safe-s.243 y.67 x.66) x.66 (call (unsafe-procedure-label L.swap.65.62) swap.65 y.67 x.66))))) (define L.safe-s.243.61 (lambda (c.2015 tmp.244 tmp.245) (let () (if (fixnum? tmp.245) (if (fixnum? tmp.244) (unsafe-fx< tmp.244 tmp.245) (error 100)) (error 101))))) (let ((safe-s.243 (make-procedure L.safe-s.243.61 2 0)) (swap.65 (make-procedure L.swap.65.62 2 2))) (begin (unsafe-procedure-set! swap.65 0 safe-s.243) (unsafe-procedure-set! swap.65 1 swap.65) (call (unsafe-procedure-label L.swap.65.62) swap.65 1 2))))
+expected:           2
+src-interp:         interp-proc-exposed-lang-v9
+trg-interp:         interp-exprs-bits-lang-v8
+output-program:
+  (module (define L.swap.65.62 (lambda (c.2016 x.66 y.67) (let ((safe-s.243 (mref c.2016 14)) (swap.65 (mref c.2016 22))) (if (!= (call (mref L.safe-s.243.61 -2) safe-s.243 y.67 x.66) 6) x.66 (call (mref L.swap.65.62 -2) swap.65 y.67 x.66))))) (define L.safe-s.243.61 (lambda (c.2015 tmp.244 tmp.245) (let () (if (= (bitwise-and tmp.245 7) 0) (if (= (bitwise-and tmp.244 7) 0) (if (< tmp.244 tmp.245) 14 6) 25662) 25918)))) (let ((safe-s.243 (let ((tmp.2155 (+ (alloc 16) 2))) (begin (mset! tmp.2155 -2 L.safe-s.243.61) (mset! tmp.2155 6 16) tmp.2155))) (swap.65 (let ((tmp.2156 (+ (alloc 32) 2))) (begin (mset! tmp.2156 -2 L.swap.65.62) (mset! tmp.2156 6 16) tmp.2156)))) (begin (mset! swap.65 14 safe-s.243) (mset! swap.65 22 swap.65) (call (mref L.swap.65.62 -2) swap.65 8 16))))
+test-type:          "Checking output is interpretable"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:411:12
+params:             '(#<procedure:...est-suite/utils.rkt:412:13>)
+message:            "Exception raised"
+exception-message:
+  "+: contract violation\n  expected: number?\n  given: #<procedure:...c411/langs/base.rkt:499:8>"
+exception:
+  +: contract violation
+    expected: number?
+    given: #<procedure:...c411/langs/base.rkt:499:8>
+    context...:
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:465:0: mref
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:250:7
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+2022 success(es) 46 failure(s) 0 error(s) 2068 test(s) run
+46
+46/2068 test failures
