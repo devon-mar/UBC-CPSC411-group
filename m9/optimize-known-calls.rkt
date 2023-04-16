@@ -49,11 +49,11 @@
           ,aloc-closure-pairs
           ,(optimize-known-calls-value vt known))]
       [`(let ([,alocs ,vs] ...) ,vt)
-       (define new-vs
-         (for/list ([v vs])
-           (optimize-known-calls-value v known)))
+       (define new-aloc-vs
+         (for/list ([aloc alocs] [v vs])
+           `[,aloc ,(optimize-known-calls-value v known)]))
        `(let
-          ,(map list alocs new-vs)
+          ,new-aloc-vs
           ,(optimize-known-calls-value vt known))]
       [`(if ,vp ,vt ,vf)
        `(if
