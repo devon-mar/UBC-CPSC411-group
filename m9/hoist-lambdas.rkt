@@ -51,34 +51,47 @@
   (define (hoist-lambdas-value v)
     (match v
       [`(closure-ref ,v1 ,v2)
-        (void)]
+        `(closure-ref ,(hoist-lambdas-value v1) ,(hoist-lambdas-value v2))]
       [`(closure-call ,v1 ,vs ...)
-        (void)]
-      ['(cletrec ([,alocs (make-closure ,labels ,arity ,vs ...)] ...) ,value)
-        (void)]
+        `(closure-call ,(hoist-lambdas-value v1) ,@(map hoist-lambdas-value vs))]
+      ['(cletrec ([,alocs (make-closure ,labels ,arity ,vs-list ...)] ...) ,value)
+        `(cletrec 
+          ,(map
+            (lambda (aloc label a vs) 
+              `(,aloc 
+                (make-closure 
+                  ,label
+                  ,a 
+                  ,@(map hoist-lambdas-value vs))))
+            alocs labels arity vs-list)
+            ,(hoist-lambdas-value value))]
       [`(closure-call ,v ,vs ...)
-        (void)]
+        (closure-call ,(hoist-lambdas-value v) ,@(map hoist-lambdas-value vs))]
       [`(call ,v ,vs ...)
-        (void)]
+        `(closure-call ,(hoist-lambdas-value v) ,@(map hoist-lambdas-value vs))]
       [`(let ([,as ,vs] ...) ,v)
-        (void)]
+        `(let
+            ,(map (lambda (a v) `(a ,(hoist-lambdas-value v))) as vs) ,(hoist-lambdas-value v))]
       [`(if ,v1 ,v2 ,v3)
-        (void)]
+        `(if 
+          ,(hoist-lambdas-value v1)
+          ,(hoist-lambdas-value v2)
+          ,(hoist-lambdas-value v3))]
       [`(begin ,es ... ,v)
-        (void)]
+        (begin ,@(map hoist-lambdas-effect es) ,(hoist-lambdas-value v))]
       [`(,primop ,vs ...)
         #:when (primop? primop)
-        (void)]
+        `(,primop ,@(map hoist-lambdas-value vs))]
       [triv
-        (void)]))
+        triv]))
 
   ;; closure-lang-v9-effect -> hoisted-lang-v9-effect
   (define (hoist-lambdas-effect e)
     (match e
       [`(begin ,es ... ,e)
-        (void)]
+        (begin ,@(map hoist-lambdas-effect es) ,(hoist-lambdas-effect e))]
       [`(,primop ,vs ...)
-        (void)]))
+        `(,primop ,@(map hoist-lambdas-value vs))]))
 
   ;; Unused
   #;
