@@ -64,22 +64,22 @@
         (define let-assignments 
           (for/list
             ([a alocs]
-            [ar arity]
-            [v-list vs]
-            [l labels])
+             [ar arity]
+             [v-list vs]
+             [l labels])
             `[,a (make-procedure ,l ,ar ,(length v-list))]))
         (define let-body 
           (for/fold
-            ([outer-acc '()])
+            ([acc '()])
             ([a alocs]
              [ar arity]
              [v-list vs])
               (append 
                 (for/list
                   ([v v-list]
-                  [idx (range (length v-list))])
+                   [idx (range (length v-list))])
                   `(unsafe-procedure-set! ,a ,idx ,(implement-closures-value v)))
-                outer-acc)))
+                acc)))
         (define let-value (implement-closures-value value))
         (if
           (< 0 (length let-body))
