@@ -4,6 +4,8 @@
 
 (provide optimize-direct-calls)
 
+;; Milestone 9 Exercise 6
+;;
 ;; Inline all direct calls to first-class procedures.
 (define/contract (optimize-direct-calls p)
   (-> just-exprs-lang-v9? just-exprs-lang-v9?)
@@ -58,7 +60,7 @@
                ,(optimize-direct-calls-value v)
                ,@(map optimize-direct-calls-value vs))])]
       [`(letrec ([,alocs (lambda (,params ...) ,vs)] ...) ,v)
-        `(letrec ,(map (lambda (a ps v) `[,a (lambda ,ps ,v)]) alocs params vs)
+        `(letrec ,(map (lambda (a ps v) `[,a (lambda ,ps ,(optimize-direct-calls-value v))]) alocs params vs)
            ,(optimize-direct-calls-value v))]
       [`(let ([,as ,vs] ...) ,v)
         `(let ,(map (lambda (a v) `[,a ,(optimize-direct-calls-value v)]) as vs)
@@ -100,6 +102,8 @@
       [`(error ,uint8)
         (void)]
       [(? ascii-char-literal?)
+       (void)]
+      ['(void)
        (void)]
       [`(lambda (,as ...) ,v)
         (void)]
@@ -175,17 +179,17 @@
       (interp-just-exprs-lang-v9 (optimize-direct-calls p))
       42))
 
-  (define-syntax (t stx)
+  (define-syntax (test-case stx)
     (syntax-case stx ()
       [(_ in out) #`(check-equal? (optimize-direct-calls 'in) 'out)]
-      [(_ in) #`(t in in)]))
+      [(_ in) #`(test-case in in)]))
 
-  (t
+  (test-case
     (module (unsafe-procedure-call (lambda (x.1 y.1) 42) 1 2))
     (module (let ([x.1 1] [y.1 2])
               42)))
 
-  (t
+  (test-case
     ;; value/(unsafe-procedure-call value value ...)
     (module
       (unsafe-procedure-call
@@ -196,7 +200,7 @@
                   [y.1 2])
               42)))
 
-  (t (module (unsafe-procedure-call foo.1 1 2 3)))
+  (test-case (module (unsafe-procedure-call foo.1 1 2 3)))
 
   (check-42
     '(module
