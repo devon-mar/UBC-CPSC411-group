@@ -42,7 +42,7 @@
  "m9/dox-lambdas.rkt"
  "m9/uncover-free.rkt"
  "m9/convert-closures.rkt"
- "m9/optimize-unknown-calls.rkt"
+ "m9/optimize-known-calls.rkt"
  "m9/hoist-lambdas.rkt"
  "m9/implement-closures.rkt")
 
@@ -99,7 +99,7 @@
   ;; suite.
   (define pass-map
     (list
-     #;(cons check-exprs-lang #f)
+     (cons check-exprs-lang #f)
      (cons uniquify interp-exprs-lang-v9)
      (cons implement-safe-primops interp-exprs-unique-lang-v9)
      (cons implement-safe-call interp-exprs-unsafe-data-lang-v9)

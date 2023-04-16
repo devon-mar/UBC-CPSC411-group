@@ -188,7 +188,7 @@ For versions of the skeletons from prior versions of the course, see the tags.
 | 7        | `dox-lambdas`                  | `m9/dox-lambdas.rkt`                  |
 | 8        | `uncover-free`                 | `m9/uncover-free.rkt`                 |
 | 9        | `convert-closures`             | `m9/convert-closures.rkt`             |
-| 10       | `optimize-unknown-calls`       | `m9/optimize-unknown-calls.rkt`       |
+| 10       | `optimize-known-calls`         | `m9/optimize-known-calls.rkt`         |
 | 11       | `hoist-lambdas`                | `m9/hoist-lambdas.rkt`                |
 | 12       | `implement-closures`           | `m9/implement-closures.rkt`           |
 | 13       | `specify-representation`       | `m7/specify-representation.rkt`       |

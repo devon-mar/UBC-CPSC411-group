@@ -38,7 +38,6 @@
     (for ([v vs])
       (check-values-lang-value env v))
     (check-duplicate-bindings xs))
-    
 
   (define/contract (relop? r)
     (-> any/c boolean?)
@@ -47,7 +46,7 @@
 
   (define/contract (binop? b)
     (-> any/c boolean?)
-    (and 
+    (and
       (member b '(* +))
       #t))
 
@@ -98,8 +97,8 @@
         (check-values-lang-value env v2)]
       [`(,binop ,t1 ,t2)
         (unless (binop? binop)
-					(error "invalid binop " binop))
-				(check-values-lang-tail env t1)
+          (error "invalid binop " binop))
+        (check-values-lang-tail env t1)
         (check-values-lang-tail env t2)]
       [_ (check-values-lang-triv env v)]))
 
