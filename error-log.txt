@@ -1,0 +1,893 @@
+ > compiler testomatic test suite > v9 public test suite > implement-safe-call suite
+FAILURE
+test-program:
+  (module (define safe-s.1382 (lambda (tmp.1383 tmp.1384) (cons tmp.1383 tmp.1384))) (define safe-s.1387 (lambda (tmp.1388) (if (pair? tmp.1388) (unsafe-cdr tmp.1388) (error 100)))) (define safe-s.1350 (lambda (tmp.1351 tmp.1352) (eq? tmp.1351 tmp.1352))) (define safe-s.1341 (lambda (tmp.1342 tmp.1343) (if (fixnum? tmp.1343) (if (fixnum? tmp.1342) (unsafe-fx+ tmp.1342 tmp.1343) (error 100)) (error 101)))) (define safe-s.1385 (lambda (tmp.1386) (if (pair? tmp.1386) (unsafe-car tmp.1386) (error 100)))) (define map.68 (lambda (f.69 ls.70) (if (call safe-s.1350 empty ls.70) empty (call safe-s.1382 (call f.69 (call safe-s.1385 ls.70)) (call map.68 f.69 (call safe-s.1387 ls.70)))))) (call map.68 (lambda (x.71) (call safe-s.1341 1 x.71)) (call safe-s.1382 1 empty)))
+expected:           (2)
+src-interp:         interp-exprs-unsafe-data-lang-v9
+trg-interp:         interp-exprs-unsafe-lang-v9
+test-type:          "Checking test-program compiles without error"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:400:10
+params:             '(#<procedure:...est-suite/utils.rkt:401:11>)
+message:            "Exception raised"
+exception-message:
+  "implement-safe-call: broke its own contract\n  promised: exprs-unsafe-lang-v9?\n  produced: '(module (define safe-s.1382 (lambda (tmp.1383 tmp.1384) (cons tmp.1383 tmp.1384))) (define safe-s.1387 (lambda (tmp.1388) (if (pair? tmp.1388) (unsafe-cdr tmp.1388) (error 100)))) (define safe-s.1350 (lambda (tmp.1351 tmp.1352) (eq? tmp.1351 tmp.1352))...\n  in: the range of\n      (->\n       exprs-unsafe-data-lang-v9?\n       exprs-unsafe-lang-v9?)\n  contract from: \n      (function implement-safe-call)\n  blaming: (function implement-safe-call)\n   (assuming the contract is correct)\n  at: /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/implement-safe-call.rkt:14:18"
+exception:
+  implement-safe-call: broke its own contract
+    promised: exprs-unsafe-lang-v9?
+    produced: '(module (define safe-s.1382 (lambda (tmp.1383 tmp.1384) (cons tmp.1383 tmp.1384))) (define safe-s.1387 (lambda (tmp.1388) (if (pair? tmp.1388) (unsafe-cdr tmp.1388) (error 100)))) (define safe-s.1350 (lambda (tmp.1351 tmp.1352) (eq? tmp.1351 tmp.1352))...
+    in: the range of
+        (->
+         exprs-unsafe-data-lang-v9?
+         exprs-unsafe-lang-v9?)
+    contract from: 
+        (function implement-safe-call)
+    blaming: (function implement-safe-call)
+     (assuming the contract is correct)
+    at: /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/implement-safe-call.rkt:14:18
+    context...:
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/contract/private/blame.rkt:346:0: raise-blame-error
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/contract/private/arrow-higher-order.rkt:375:33
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > implement-safe-call suite
+FAILURE
+test-program:
+  (module (define safe-s.1313 (lambda (tmp.1314 tmp.1315) (cons tmp.1314 tmp.1315))) (define safe-s.1318 (lambda (tmp.1319) (if (pair? tmp.1319) (unsafe-cdr tmp.1319) (error 100)))) (define safe-s.1281 (lambda (tmp.1282 tmp.1283) (eq? tmp.1282 tmp.1283))) (define safe-s.1272 (lambda (tmp.1273 tmp.1274) (if (fixnum? tmp.1274) (if (fixnum? tmp.1273) (unsafe-fx+ tmp.1273 tmp.1274) (error 100)) (error 101)))) (define safe-s.1316 (lambda (tmp.1317) (if (pair? tmp.1317) (unsafe-car tmp.1317) (error 100)))) (define map.1 (lambda (f.2 ls.3) (if (call safe-s.1281 empty ls.3) empty (call safe-s.1313 (call f.2 (call safe-s.1316 ls.3)) (call map.1 f.2 (call safe-s.1318 ls.3)))))) (call map.1 (lambda (x.4) (call safe-s.1272 1 x.4)) (call safe-s.1313 1 (call safe-s.1313 2 (call safe-s.1313 3 empty)))))
+expected:           (2 3 4)
+src-interp:         interp-exprs-unsafe-data-lang-v9
+trg-interp:         interp-exprs-unsafe-lang-v9
+test-type:          "Checking test-program compiles without error"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:400:10
+params:             '(#<procedure:...est-suite/utils.rkt:401:11>)
+message:            "Exception raised"
+exception-message:
+  "implement-safe-call: broke its own contract\n  promised: exprs-unsafe-lang-v9?\n  produced: '(module (define safe-s.1313 (lambda (tmp.1314 tmp.1315) (cons tmp.1314 tmp.1315))) (define safe-s.1318 (lambda (tmp.1319) (if (pair? tmp.1319) (unsafe-cdr tmp.1319) (error 100)))) (define safe-s.1281 (lambda (tmp.1282 tmp.1283) (eq? tmp.1282 tmp.1283))...\n  in: the range of\n      (->\n       exprs-unsafe-data-lang-v9?\n       exprs-unsafe-lang-v9?)\n  contract from: \n      (function implement-safe-call)\n  blaming: (function implement-safe-call)\n   (assuming the contract is correct)\n  at: /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/implement-safe-call.rkt:14:18"
+exception:
+  implement-safe-call: broke its own contract
+    promised: exprs-unsafe-lang-v9?
+    produced: '(module (define safe-s.1313 (lambda (tmp.1314 tmp.1315) (cons tmp.1314 tmp.1315))) (define safe-s.1318 (lambda (tmp.1319) (if (pair? tmp.1319) (unsafe-cdr tmp.1319) (error 100)))) (define safe-s.1281 (lambda (tmp.1282 tmp.1283) (eq? tmp.1282 tmp.1283))...
+    in: the range of
+        (->
+         exprs-unsafe-data-lang-v9?
+         exprs-unsafe-lang-v9?)
+    contract from: 
+        (function implement-safe-call)
+    blaming: (function implement-safe-call)
+     (assuming the contract is correct)
+    at: /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/implement-safe-call.rkt:14:18
+    context...:
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/contract/private/blame.rkt:346:0: raise-blame-error
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/contract/private/arrow-higher-order.rkt:375:33
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > dox-lambdas suite
+FAILURE
+test-program:
+  (module (letrec ((safe-s.630 (lambda (tmp.631) (if (fixnum? tmp.631) (if (unsafe-fx>= tmp.631 0) (let ((tmp.632 (unsafe-make-vector tmp.631))) (unsafe-procedure-call safe-vector-init.575 tmp.632 tmp.631 0)) (error 99)) (error 100)))) (safe-s.635 (lambda (tmp.636 tmp.637 tmp.638) (if (fixnum? tmp.637) (if (vector? tmp.636) (if (unsafe-fx>= tmp.637 0) (if (unsafe-fx< tmp.637 (unsafe-vector-length tmp.636)) (begin (unsafe-vector-set! tmp.636 tmp.637 tmp.638) (void)) (error 99)) (error 99)) (error 100)) (error 101)))) (safe-vector-init.575 (lambda (vec.576 len.577 i.578) (if (eq? len.577 i.578) vec.576 (begin (unsafe-vector-set! vec.576 i.578 0) (unsafe-procedure-call safe-vector-init.575 vec.576 len.577 (unsafe-fx+ i.578 1))))))) (let ((x.1.61 (unsafe-procedure-call safe-s.630 3))) (let ((x.2.62 (unsafe-procedure-call safe-s.635 x.1.61 0 1))) (let ((x.3.63 (unsafe-procedure-call safe-s.635 x.1.61 1 2))) (let ((x.4.64 (unsafe-procedure-call safe-s.635 x.1.61 2 3))) x.1.61))))))
+expected:           #(1 2 3)
+src-interp:         interp-just-exprs-lang-v9
+trg-interp:         interp-lam-opticon-lang-v9
+test-type:          "Checking test-program compiles without error"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:400:10
+params:             '(#<procedure:...est-suite/utils.rkt:401:11>)
+message:            "Exception raised"
+exception-message:  "match: no matching clause for '(void)"
+exception:
+  match: no matching clause for '(void)
+    location...:
+     m9/dox-lambdas.rkt:96:4
+    context...:
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/match/compiler.rkt:548:40: f201
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/match/compiler.rkt:548:40: f159
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/dox-lambdas.rkt:55:2: dox-lambdas-value
+     [repeats 3 more times]
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/dox-lambdas.rkt:63:17
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/private/map.rkt:259:4: loop
+     [repeats 1 more time]
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/dox-lambdas.rkt:55:2: dox-lambdas-value
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/dox-lambdas.rkt:12:0: dox-lambdas
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/contract/private/arrow-higher-order.rkt:379:33
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > dox-lambdas suite
+FAILURE
+test-program:
+  (module (letrec ((safe-s.1113 (lambda (tmp.1114) (if (fixnum? tmp.1114) (if (unsafe-fx>= tmp.1114 0) (let ((tmp.1115 (unsafe-make-vector tmp.1114))) (unsafe-procedure-call safe-vector-init.1058 tmp.1115 tmp.1114 0)) (error 99)) (error 100)))) (safe-s.1118 (lambda (tmp.1119 tmp.1120 tmp.1121) (if (fixnum? tmp.1120) (if (vector? tmp.1119) (if (unsafe-fx>= tmp.1120 0) (if (unsafe-fx< tmp.1120 (unsafe-vector-length tmp.1119)) (begin (unsafe-vector-set! tmp.1119 tmp.1120 tmp.1121) (void)) (error 99)) (error 99)) (error 100)) (error 101)))) (safe-s.1122 (lambda (tmp.1123 tmp.1124) (if (fixnum? tmp.1124) (if (vector? tmp.1123) (if (unsafe-fx>= tmp.1124 0) (if (unsafe-fx< tmp.1124 (unsafe-vector-length tmp.1123)) (unsafe-vector-ref tmp.1123 tmp.1124) (error 99)) (error 99)) (error 100)) (error 101)))) (safe-vector-init.1058 (lambda (vec.1059 len.1060 i.1061) (if (eq? len.1060 i.1061) vec.1059 (begin (unsafe-vector-set! vec.1059 i.1061 0) (unsafe-procedure-call safe-vector-init.1058 vec.1059 len.1060 (unsafe-fx+ i.1061 1))))))) (let ((x.1.84 (unsafe-procedure-call safe-s.1113 3))) (let ((x.2.85 (unsafe-procedure-call safe-s.1118 x.1.84 0 1))) (let ((x.3.86 (unsafe-procedure-call safe-s.1118 x.1.84 1 2))) (let ((x.4.87 (unsafe-procedure-call safe-s.1118 x.1.84 2 3))) (unsafe-procedure-call safe-s.1122 x.1.84 2)))))))
+expected:           3
+src-interp:         interp-just-exprs-lang-v9
+trg-interp:         interp-lam-opticon-lang-v9
+test-type:          "Checking test-program compiles without error"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:400:10
+params:             '(#<procedure:...est-suite/utils.rkt:401:11>)
+message:            "Exception raised"
+exception-message:  "match: no matching clause for '(void)"
+exception:
+  match: no matching clause for '(void)
+    location...:
+     m9/dox-lambdas.rkt:96:4
+    context...:
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/match/compiler.rkt:548:40: f201
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/match/compiler.rkt:548:40: f159
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/dox-lambdas.rkt:55:2: dox-lambdas-value
+     [repeats 3 more times]
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/dox-lambdas.rkt:63:17
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/private/map.rkt:259:4: loop
+     [repeats 1 more time]
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/dox-lambdas.rkt:55:2: dox-lambdas-value
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/dox-lambdas.rkt:12:0: dox-lambdas
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/contract/private/arrow-higher-order.rkt:379:33
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > uncover-free suite
+FAILURE
+test-program:
+  (module (letrec ((safe-s.177 (lambda (tmp.178 tmp.179) (eq? tmp.178 tmp.179))) (safe-s.171 (lambda (tmp.172 tmp.173) (if (fixnum? tmp.173) (if (fixnum? tmp.172) (unsafe-fx- tmp.172 tmp.173) (error 100)) (error 101)))) (safe-s.168 (lambda (tmp.169 tmp.170) (if (fixnum? tmp.170) (if (fixnum? tmp.169) (unsafe-fx+ tmp.169 tmp.170) (error 100)) (error 101)))) (safe-s.165 (lambda (tmp.166 tmp.167) (if (fixnum? tmp.167) (if (fixnum? tmp.166) (unsafe-fx* tmp.166 tmp.167) (error 100)) (error 101)))) (identity.72 (lambda (x.74) (if (unsafe-procedure-call safe-s.177 x.74 0) 0 (let ((y.75 (unsafe-procedure-call safe-s.171 x.74 1))) (let ((x.76 (unsafe-procedure-call identity.72 y.75))) (unsafe-procedure-call safe-s.168 1 x.76)))))) (fact.73 (lambda (x.77) (let ((x.78 (unsafe-procedure-call identity.72 x.77)) (y.79 (unsafe-procedure-call identity.72 0))) (if (unsafe-procedure-call safe-s.177 x.78 y.79) (let ((z.80 (unsafe-procedure-call identity.72 1))) z.80) (let ((n.81 (unsafe-procedure-call identity.72 1))) (let ((z.82 (unsafe-procedure-call safe-s.171 x.78 n.81))) (let ((y.83 (unsafe-procedure-call fact.73 z.82))) (unsafe-procedure-call safe-s.165 x.78 y.83))))))))) (unsafe-procedure-call fact.73 5)))
+expected:           120
+src-interp:         interp-lam-opticon-lang-v9
+trg-interp:         interp-lam-free-lang-v9
+test-type:          "Checking test-program compiles without error"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:400:10
+params:             '(#<procedure:...est-suite/utils.rkt:401:11>)
+message:            "Exception raised"
+exception-message:  "match: no matching clause for '(error 100)"
+exception:
+  match: no matching clause for '(error 100)
+    location...:
+     m9/uncover-free.rkt:116:4
+    context...:
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:115:2: uncover-free-triv
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/match/compiler.rkt:548:40: f26
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:28:2: uncover-free-value
+     [repeats 1 more time]
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:40:15
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/compiler-lib.rkt:169:0: map-n
+     [repeats 1 more time]
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:28:2: uncover-free-value
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:17:2: uncover-free-p
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/contract/private/arrow-higher-order.rkt:375:33
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > uncover-free suite
+FAILURE
+test-program:
+  (module (letrec ((safe-s.798 (lambda (tmp.799 tmp.800) (eq? tmp.799 tmp.800))) (safe-s.792 (lambda (tmp.793 tmp.794) (if (fixnum? tmp.794) (if (fixnum? tmp.793) (unsafe-fx- tmp.793 tmp.794) (error 100)) (error 101)))) (safe-s.786 (lambda (tmp.787 tmp.788) (if (fixnum? tmp.788) (if (fixnum? tmp.787) (unsafe-fx* tmp.787 tmp.788) (error 100)) (error 101)))) (fact_loop.5 (lambda (n.6 acc.7) (if (unsafe-procedure-call safe-s.798 n.6 0) acc.7 (unsafe-procedure-call fact_loop.5 (unsafe-procedure-call safe-s.792 n.6 1) (unsafe-procedure-call safe-s.786 acc.7 n.6)))))) (unsafe-procedure-call fact_loop.5 5 1)))
+expected:           120
+src-interp:         interp-lam-opticon-lang-v9
+trg-interp:         interp-lam-free-lang-v9
+test-type:          "Checking test-program compiles without error"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:400:10
+params:             '(#<procedure:...est-suite/utils.rkt:401:11>)
+message:            "Exception raised"
+exception-message:  "match: no matching clause for '(error 100)"
+exception:
+  match: no matching clause for '(error 100)
+    location...:
+     m9/uncover-free.rkt:116:4
+    context...:
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:115:2: uncover-free-triv
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/match/compiler.rkt:548:40: f26
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:28:2: uncover-free-value
+     [repeats 1 more time]
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:40:15
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/compiler-lib.rkt:169:0: map-n
+     [repeats 1 more time]
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:28:2: uncover-free-value
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:17:2: uncover-free-p
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/contract/private/arrow-higher-order.rkt:375:33
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > uncover-free suite
+FAILURE
+test-program:
+  (module (letrec ((safe-s.1623 (lambda (tmp.1624 tmp.1625) (if (fixnum? tmp.1625) (if (fixnum? tmp.1624) (unsafe-fx< tmp.1624 tmp.1625) (error 100)) (error 101)))) (swap.8 (lambda (x.9 y.10) (if (unsafe-procedure-call safe-s.1623 y.10 x.9) x.9 (let ((z.11 (unsafe-procedure-call swap.8 y.10 x.9))) z.11))))) (unsafe-procedure-call swap.8 1 2)))
+expected:           2
+src-interp:         interp-lam-opticon-lang-v9
+trg-interp:         interp-lam-free-lang-v9
+test-type:          "Checking test-program compiles without error"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:400:10
+params:             '(#<procedure:...est-suite/utils.rkt:401:11>)
+message:            "Exception raised"
+exception-message:  "match: no matching clause for '(error 100)"
+exception:
+  match: no matching clause for '(error 100)
+    location...:
+     m9/uncover-free.rkt:116:4
+    context...:
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:115:2: uncover-free-triv
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/match/compiler.rkt:548:40: f26
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:28:2: uncover-free-value
+     [repeats 1 more time]
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:40:15
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/compiler-lib.rkt:169:0: map-n
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:28:2: uncover-free-value
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:17:2: uncover-free-p
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/contract/private/arrow-higher-order.rkt:375:33
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > uncover-free suite
+FAILURE
+test-program:
+  (module (letrec ((safe-s.347 (lambda (tmp.348 tmp.349) (cons tmp.348 tmp.349))) (safe-s.352 (lambda (tmp.353) (if (pair? tmp.353) (unsafe-cdr tmp.353) (error 100))))) (unsafe-procedure-call safe-s.352 (unsafe-procedure-call safe-s.347 7 empty))))
+expected:           ()
+src-interp:         interp-lam-opticon-lang-v9
+trg-interp:         interp-lam-free-lang-v9
+test-type:          "Checking test-program compiles without error"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:400:10
+params:             '(#<procedure:...est-suite/utils.rkt:401:11>)
+message:            "Exception raised"
+exception-message:  "match: no matching clause for '(error 100)"
+exception:
+  match: no matching clause for '(error 100)
+    location...:
+     m9/uncover-free.rkt:116:4
+    context...:
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:115:2: uncover-free-triv
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/match/compiler.rkt:548:40: f26
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:28:2: uncover-free-value
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:40:15
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/compiler-lib.rkt:169:0: map-n
+     [repeats 1 more time]
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:28:2: uncover-free-value
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:17:2: uncover-free-p
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/contract/private/arrow-higher-order.rkt:375:33
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > uncover-free suite
+FAILURE
+test-program:
+  (module (letrec ((safe-s.416 (lambda (tmp.417 tmp.418) (cons tmp.417 tmp.418))) (safe-s.384 (lambda (tmp.385 tmp.386) (eq? tmp.385 tmp.386))) (safe-s.372 (lambda (tmp.373 tmp.374) (if (fixnum? tmp.374) (if (fixnum? tmp.373) (unsafe-fx* tmp.373 tmp.374) (error 100)) (error 101))))) (unsafe-procedure-call safe-s.416 (if (unsafe-procedure-call safe-s.384 7 8) (unsafe-procedure-call safe-s.372 7 8) (unsafe-procedure-call safe-s.372 8 7)) empty)))
+expected:           (56)
+src-interp:         interp-lam-opticon-lang-v9
+trg-interp:         interp-lam-free-lang-v9
+test-type:          "Checking test-program compiles without error"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:400:10
+params:             '(#<procedure:...est-suite/utils.rkt:401:11>)
+message:            "Exception raised"
+exception-message:  "match: no matching clause for '(error 100)"
+exception:
+  match: no matching clause for '(error 100)
+    location...:
+     m9/uncover-free.rkt:116:4
+    context...:
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:115:2: uncover-free-triv
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/match/compiler.rkt:548:40: f26
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:28:2: uncover-free-value
+     [repeats 1 more time]
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:40:15
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/compiler-lib.rkt:169:0: map-n
+     [repeats 2 more times]
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:28:2: uncover-free-value
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:17:2: uncover-free-p
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/contract/private/arrow-higher-order.rkt:375:33
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > uncover-free suite
+FAILURE
+test-program:
+  (module (letrec ((safe-s.858 (lambda (tmp.859 tmp.860) (if (fixnum? tmp.860) (if (fixnum? tmp.859) (unsafe-fx+ tmp.859 tmp.860) (error 100)) (error 101)))) (F.27 (lambda (a.30 b.31 c.32 d.33 e.34 f.35 g.36) (unsafe-procedure-call safe-s.858 10 (unsafe-procedure-call G.28 a.30 b.31 c.32 d.33 e.34 f.35 g.36 8)))) (G.28 (lambda (a.37 b.38 c.39 d.40 e.41 f.42 g.43 h.44) (unsafe-procedure-call H.29 a.37 b.38 c.39 d.40 e.41 f.42 g.43 h.44 9))) (H.29 (lambda (a.45 b.46 c.47 d.48 e.49 f.50 g.51 h.52 j.53) (let ((r1.54 (unsafe-procedure-call safe-s.858 a.45 b.46))) (let ((r2.55 (unsafe-procedure-call safe-s.858 r1.54 c.47))) (let ((r3.56 (unsafe-procedure-call safe-s.858 r2.55 d.48))) (let ((r4.57 (unsafe-procedure-call safe-s.858 r3.56 e.49))) (let ((r5.58 (unsafe-procedure-call safe-s.858 r4.57 f.50))) (let ((r6.59 (unsafe-procedure-call safe-s.858 r5.58 g.51))) (let ((r7.60 (unsafe-procedure-call safe-s.858 r6.59 h.52))) (unsafe-procedure-call safe-s.858 r7.60 j.53))))))))))) (unsafe-procedure-call F.27 1 2 3 4 5 6 7)))
+expected:           55
+src-interp:         interp-lam-opticon-lang-v9
+trg-interp:         interp-lam-free-lang-v9
+test-type:          "Checking test-program compiles without error"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:400:10
+params:             '(#<procedure:...est-suite/utils.rkt:401:11>)
+message:            "Exception raised"
+exception-message:  "match: no matching clause for '(error 100)"
+exception:
+  match: no matching clause for '(error 100)
+    location...:
+     m9/uncover-free.rkt:116:4
+    context...:
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:115:2: uncover-free-triv
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/match/compiler.rkt:548:40: f26
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:28:2: uncover-free-value
+     [repeats 1 more time]
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:40:15
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/compiler-lib.rkt:169:0: map-n
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:28:2: uncover-free-value
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:17:2: uncover-free-p
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/contract/private/arrow-higher-order.rkt:375:33
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > uncover-free suite
+FAILURE
+test-program:
+  (module (letrec ((safe-s.243 (lambda (tmp.244 tmp.245) (if (fixnum? tmp.245) (if (fixnum? tmp.244) (unsafe-fx< tmp.244 tmp.245) (error 100)) (error 101)))) (swap.65 (lambda (x.66 y.67) (if (unsafe-procedure-call safe-s.243 y.67 x.66) x.66 (unsafe-procedure-call swap.65 y.67 x.66))))) (unsafe-procedure-call swap.65 1 2)))
+expected:           2
+src-interp:         interp-lam-opticon-lang-v9
+trg-interp:         interp-lam-free-lang-v9
+test-type:          "Checking test-program compiles without error"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:400:10
+params:             '(#<procedure:...est-suite/utils.rkt:401:11>)
+message:            "Exception raised"
+exception-message:  "match: no matching clause for '(error 100)"
+exception:
+  match: no matching clause for '(error 100)
+    location...:
+     m9/uncover-free.rkt:116:4
+    context...:
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:115:2: uncover-free-triv
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/match/compiler.rkt:548:40: f26
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:28:2: uncover-free-value
+     [repeats 1 more time]
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:40:15
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/compiler-lib.rkt:169:0: map-n
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:28:2: uncover-free-value
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:17:2: uncover-free-p
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/contract/private/arrow-higher-order.rkt:375:33
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > uncover-free suite
+FAILURE
+test-program:
+  (module (letrec ((safe-s.1902 (lambda (tmp.1903 tmp.1904) (eq? tmp.1903 tmp.1904))) (safe-s.1896 (lambda (tmp.1897 tmp.1898) (if (fixnum? tmp.1898) (if (fixnum? tmp.1897) (unsafe-fx- tmp.1897 tmp.1898) (error 100)) (error 101)))) (safe-s.1890 (lambda (tmp.1891 tmp.1892) (if (fixnum? tmp.1892) (if (fixnum? tmp.1891) (unsafe-fx* tmp.1891 tmp.1892) (error 100)) (error 101)))) (fact.18 (lambda (x.19) (if (unsafe-procedure-call safe-s.1902 x.19 0) 1 (unsafe-procedure-call safe-s.1890 x.19 (unsafe-procedure-call fact.18 (unsafe-procedure-call safe-s.1896 x.19 1))))))) (unsafe-procedure-call fact.18 5)))
+expected:           120
+src-interp:         interp-lam-opticon-lang-v9
+trg-interp:         interp-lam-free-lang-v9
+test-type:          "Checking test-program compiles without error"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:400:10
+params:             '(#<procedure:...est-suite/utils.rkt:401:11>)
+message:            "Exception raised"
+exception-message:  "match: no matching clause for '(error 100)"
+exception:
+  match: no matching clause for '(error 100)
+    location...:
+     m9/uncover-free.rkt:116:4
+    context...:
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:115:2: uncover-free-triv
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/match/compiler.rkt:548:40: f26
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:28:2: uncover-free-value
+     [repeats 1 more time]
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:40:15
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/compiler-lib.rkt:169:0: map-n
+     [repeats 1 more time]
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:28:2: uncover-free-value
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:17:2: uncover-free-p
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/contract/private/arrow-higher-order.rkt:375:33
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > uncover-free suite
+FAILURE
+test-program:
+  (module (letrec ((safe-s.522 (lambda (tmp.523 tmp.524) (eq? tmp.523 tmp.524))) (safe-s.513 (lambda (tmp.514 tmp.515) (if (fixnum? tmp.515) (if (fixnum? tmp.514) (unsafe-fx+ tmp.514 tmp.515) (error 100)) (error 101)))) (fib_loop.12 (lambda (n.13 acc1.14 acc2.15) (if (unsafe-procedure-call safe-s.522 n.13 0) acc1.14 (if (unsafe-procedure-call safe-s.522 n.13 1) acc2.15 (let ((new-n.16 (unsafe-procedure-call safe-s.513 n.13 -1))) (let ((new-acc2.17 (unsafe-procedure-call safe-s.513 acc1.14 acc2.15))) (unsafe-procedure-call fib_loop.12 new-n.16 acc2.15 new-acc2.17)))))))) (unsafe-procedure-call fib_loop.12 5 0 1)))
+expected:           5
+src-interp:         interp-lam-opticon-lang-v9
+trg-interp:         interp-lam-free-lang-v9
+test-type:          "Checking test-program compiles without error"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:400:10
+params:             '(#<procedure:...est-suite/utils.rkt:401:11>)
+message:            "Exception raised"
+exception-message:  "match: no matching clause for '(error 100)"
+exception:
+  match: no matching clause for '(error 100)
+    location...:
+     m9/uncover-free.rkt:116:4
+    context...:
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:115:2: uncover-free-triv
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/match/compiler.rkt:548:40: f26
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:28:2: uncover-free-value
+     [repeats 1 more time]
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:40:15
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/compiler-lib.rkt:169:0: map-n
+     [repeats 1 more time]
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:28:2: uncover-free-value
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:17:2: uncover-free-p
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/contract/private/arrow-higher-order.rkt:375:33
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > uncover-free suite
+FAILURE
+test-program:
+  (module (letrec ((safe-s.720 (lambda (tmp.721 tmp.722) (if (fixnum? tmp.722) (if (fixnum? tmp.721) (unsafe-fx+ tmp.721 tmp.722) (error 100)) (error 101)))) (safe-s.717 (lambda (tmp.718 tmp.719) (if (fixnum? tmp.719) (if (fixnum? tmp.718) (unsafe-fx* tmp.718 tmp.719) (error 100)) (error 101))))) (unsafe-procedure-call safe-s.720 (unsafe-procedure-call safe-s.720 5 6) (unsafe-procedure-call safe-s.717 4 5))))
+expected:           31
+src-interp:         interp-lam-opticon-lang-v9
+trg-interp:         interp-lam-free-lang-v9
+test-type:          "Checking test-program compiles without error"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:400:10
+params:             '(#<procedure:...est-suite/utils.rkt:401:11>)
+message:            "Exception raised"
+exception-message:  "match: no matching clause for '(error 100)"
+exception:
+  match: no matching clause for '(error 100)
+    location...:
+     m9/uncover-free.rkt:116:4
+    context...:
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:115:2: uncover-free-triv
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/match/compiler.rkt:548:40: f26
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:28:2: uncover-free-value
+     [repeats 1 more time]
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:40:15
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/compiler-lib.rkt:169:0: map-n
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:28:2: uncover-free-value
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:17:2: uncover-free-p
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/contract/private/arrow-higher-order.rkt:375:33
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > uncover-free suite
+FAILURE
+test-program:
+  (module (letrec ((safe-s.1212 (lambda (tmp.1213 tmp.1214) (eq? tmp.1213 tmp.1214))) (safe-s.1203 (lambda (tmp.1204 tmp.1205) (if (fixnum? tmp.1205) (if (fixnum? tmp.1204) (unsafe-fx+ tmp.1204 tmp.1205) (error 100)) (error 101)))) (safe-s.1200 (lambda (tmp.1201 tmp.1202) (if (fixnum? tmp.1202) (if (fixnum? tmp.1201) (unsafe-fx* tmp.1201 tmp.1202) (error 100)) (error 101)))) (fact.88 (lambda (x.89) (if (unsafe-procedure-call safe-s.1212 x.89 0) 1 (let ((z.90 (unsafe-procedure-call safe-s.1203 x.89 -1))) (let ((y.91 (unsafe-procedure-call fact.88 z.90))) (unsafe-procedure-call safe-s.1200 x.89 y.91))))))) (unsafe-procedure-call fact.88 10)))
+expected:           3628800
+src-interp:         interp-lam-opticon-lang-v9
+trg-interp:         interp-lam-free-lang-v9
+test-type:          "Checking test-program compiles without error"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:400:10
+params:             '(#<procedure:...est-suite/utils.rkt:401:11>)
+message:            "Exception raised"
+exception-message:  "match: no matching clause for '(error 100)"
+exception:
+  match: no matching clause for '(error 100)
+    location...:
+     m9/uncover-free.rkt:116:4
+    context...:
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:115:2: uncover-free-triv
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/match/compiler.rkt:548:40: f26
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:28:2: uncover-free-value
+     [repeats 1 more time]
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:40:15
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/compiler-lib.rkt:169:0: map-n
+     [repeats 1 more time]
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:28:2: uncover-free-value
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:17:2: uncover-free-p
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/contract/private/arrow-higher-order.rkt:375:33
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > uncover-free suite
+FAILURE
+test-program:
+  (module (letrec ((safe-s.1451 (lambda (tmp.1452 tmp.1453) (cons tmp.1452 tmp.1453))) (safe-s.1454 (lambda (tmp.1455) (if (pair? tmp.1455) (unsafe-car tmp.1455) (error 100))))) (unsafe-procedure-call safe-s.1454 (unsafe-procedure-call safe-s.1451 7 empty))))
+expected:           7
+src-interp:         interp-lam-opticon-lang-v9
+trg-interp:         interp-lam-free-lang-v9
+test-type:          "Checking test-program compiles without error"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:400:10
+params:             '(#<procedure:...est-suite/utils.rkt:401:11>)
+message:            "Exception raised"
+exception-message:  "match: no matching clause for '(error 100)"
+exception:
+  match: no matching clause for '(error 100)
+    location...:
+     m9/uncover-free.rkt:116:4
+    context...:
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:115:2: uncover-free-triv
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/match/compiler.rkt:548:40: f26
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:28:2: uncover-free-value
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:40:15
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/compiler-lib.rkt:169:0: map-n
+     [repeats 1 more time]
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:28:2: uncover-free-value
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:17:2: uncover-free-p
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/contract/private/arrow-higher-order.rkt:375:33
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > uncover-free suite
+FAILURE
+test-program:
+  (module (letrec ((safe-s.1596 (lambda (tmp.1597) (if (fixnum? tmp.1597) (if (unsafe-fx>= tmp.1597 0) (let ((tmp.1598 (unsafe-make-vector tmp.1597))) (unsafe-procedure-call safe-vector-init.1541 tmp.1598 tmp.1597 0)) (error 99)) (error 100)))) (safe-s.1605 (lambda (tmp.1606 tmp.1607) (if (fixnum? tmp.1607) (if (vector? tmp.1606) (if (unsafe-fx>= tmp.1607 0) (if (unsafe-fx< tmp.1607 (unsafe-vector-length tmp.1606)) (unsafe-vector-ref tmp.1606 tmp.1607) (error 99)) (error 99)) (error 100)) (error 101)))) (safe-vector-init.1541 (lambda (vec.1542 len.1543 i.1544) (if (eq? len.1543 i.1544) vec.1542 (begin (unsafe-vector-set! vec.1542 i.1544 0) (unsafe-procedure-call safe-vector-init.1541 vec.1542 len.1543 (unsafe-fx+ i.1544 1))))))) (unsafe-procedure-call safe-s.1605 (unsafe-procedure-call safe-s.1596 2) 0)))
+expected:           0
+src-interp:         interp-lam-opticon-lang-v9
+trg-interp:         interp-lam-free-lang-v9
+test-type:          "Checking test-program compiles without error"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:400:10
+params:             '(#<procedure:...est-suite/utils.rkt:401:11>)
+message:            "Exception raised"
+exception-message:  "match: no matching clause for '(error 99)"
+exception:
+  match: no matching clause for '(error 99)
+    location...:
+     m9/uncover-free.rkt:116:4
+    context...:
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:115:2: uncover-free-triv
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/match/compiler.rkt:548:40: f26
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:28:2: uncover-free-value
+     [repeats 1 more time]
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:40:15
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/compiler-lib.rkt:169:0: map-n
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:28:2: uncover-free-value
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:17:2: uncover-free-p
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/contract/private/arrow-higher-order.rkt:375:33
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > uncover-free suite
+FAILURE
+test-program:
+  (module (letrec ((safe-s.1727 (lambda (tmp.1728 tmp.1729) (cons tmp.1728 tmp.1729))) (safe-s.1683 (lambda (tmp.1684 tmp.1685) (if (fixnum? tmp.1685) (if (fixnum? tmp.1684) (unsafe-fx* tmp.1684 tmp.1685) (error 100)) (error 101))))) (unsafe-procedure-call safe-s.1727 (unsafe-procedure-call safe-s.1683 7 8) empty)))
+expected:           (56)
+src-interp:         interp-lam-opticon-lang-v9
+trg-interp:         interp-lam-free-lang-v9
+test-type:          "Checking test-program compiles without error"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:400:10
+params:             '(#<procedure:...est-suite/utils.rkt:401:11>)
+message:            "Exception raised"
+exception-message:  "match: no matching clause for '(error 100)"
+exception:
+  match: no matching clause for '(error 100)
+    location...:
+     m9/uncover-free.rkt:116:4
+    context...:
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:115:2: uncover-free-triv
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/match/compiler.rkt:548:40: f26
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:28:2: uncover-free-value
+     [repeats 1 more time]
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:40:15
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/compiler-lib.rkt:169:0: map-n
+     [repeats 1 more time]
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:28:2: uncover-free-value
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:17:2: uncover-free-p
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/contract/private/arrow-higher-order.rkt:375:33
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > uncover-free suite
+FAILURE
+test-program:
+  (module (letrec ((safe-s.660 (lambda (tmp.661 tmp.662) (eq? tmp.661 tmp.662))) (safe-s.651 (lambda (tmp.652 tmp.653) (if (fixnum? tmp.653) (if (fixnum? tmp.652) (unsafe-fx+ tmp.652 tmp.653) (error 100)) (error 101))))) (if (unsafe-procedure-call safe-s.660 (unsafe-procedure-call safe-s.651 5 6) 11) 4 6)))
+expected:           4
+src-interp:         interp-lam-opticon-lang-v9
+trg-interp:         interp-lam-free-lang-v9
+test-type:          "Checking test-program compiles without error"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:400:10
+params:             '(#<procedure:...est-suite/utils.rkt:401:11>)
+message:            "Exception raised"
+exception-message:  "match: no matching clause for '(error 100)"
+exception:
+  match: no matching clause for '(error 100)
+    location...:
+     m9/uncover-free.rkt:116:4
+    context...:
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:115:2: uncover-free-triv
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/match/compiler.rkt:548:40: f26
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:28:2: uncover-free-value
+     [repeats 1 more time]
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:40:15
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/compiler-lib.rkt:169:0: map-n
+     [repeats 1 more time]
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:28:2: uncover-free-value
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:17:2: uncover-free-p
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/contract/private/arrow-higher-order.rkt:375:33
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > uncover-free suite
+FAILURE
+test-program:
+  (module (letrec ((safe-s.1803 (lambda (tmp.1804) (if (fixnum? tmp.1804) (if (unsafe-fx>= tmp.1804 0) (let ((tmp.1805 (unsafe-make-vector tmp.1804))) (unsafe-procedure-call safe-vector-init.1748 tmp.1805 tmp.1804 0)) (error 99)) (error 100)))) (safe-vector-init.1748 (lambda (vec.1749 len.1750 i.1751) (if (eq? len.1750 i.1751) vec.1749 (begin (unsafe-vector-set! vec.1749 i.1751 0) (unsafe-procedure-call safe-vector-init.1748 vec.1749 len.1750 (unsafe-fx+ i.1751 1))))))) (unsafe-procedure-call safe-s.1803 2)))
+expected:           #(0 0)
+src-interp:         interp-lam-opticon-lang-v9
+trg-interp:         interp-lam-free-lang-v9
+test-type:          "Checking test-program compiles without error"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:400:10
+params:             '(#<procedure:...est-suite/utils.rkt:401:11>)
+message:            "Exception raised"
+exception-message:  "match: no matching clause for '(error 99)"
+exception:
+  match: no matching clause for '(error 99)
+    location...:
+     m9/uncover-free.rkt:116:4
+    context...:
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:115:2: uncover-free-triv
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/match/compiler.rkt:548:40: f26
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:28:2: uncover-free-value
+     [repeats 1 more time]
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:40:15
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/compiler-lib.rkt:169:0: map-n
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:28:2: uncover-free-value
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:17:2: uncover-free-p
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/contract/private/arrow-higher-order.rkt:375:33
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > uncover-free suite
+FAILURE
+test-program:
+  (module (letrec ((safe-s.936 (lambda (tmp.937 tmp.938) (eq? tmp.937 tmp.938))) (safe-s.927 (lambda (tmp.928 tmp.929) (if (fixnum? tmp.929) (if (fixnum? tmp.928) (unsafe-fx+ tmp.928 tmp.929) (error 100)) (error 101)))) (safe-s.924 (lambda (tmp.925 tmp.926) (if (fixnum? tmp.926) (if (fixnum? tmp.925) (unsafe-fx* tmp.925 tmp.926) (error 100)) (error 101)))) (fact.20 (lambda (x.21) (if (unsafe-procedure-call safe-s.936 x.21 0) 1 (let ((z.22 (unsafe-procedure-call safe-s.927 x.21 -1))) (let ((y.23 (unsafe-procedure-call fact.20 z.22))) (unsafe-procedure-call safe-s.924 x.21 y.23))))))) (unsafe-procedure-call fact.20 5)))
+expected:           120
+src-interp:         interp-lam-opticon-lang-v9
+trg-interp:         interp-lam-free-lang-v9
+test-type:          "Checking test-program compiles without error"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:400:10
+params:             '(#<procedure:...est-suite/utils.rkt:401:11>)
+message:            "Exception raised"
+exception-message:  "match: no matching clause for '(error 100)"
+exception:
+  match: no matching clause for '(error 100)
+    location...:
+     m9/uncover-free.rkt:116:4
+    context...:
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:115:2: uncover-free-triv
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/match/compiler.rkt:548:40: f26
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:28:2: uncover-free-value
+     [repeats 1 more time]
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:40:15
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/compiler-lib.rkt:169:0: map-n
+     [repeats 1 more time]
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:28:2: uncover-free-value
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:17:2: uncover-free-p
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/contract/private/arrow-higher-order.rkt:375:33
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > uncover-free suite
+FAILURE
+test-program:
+  (module (letrec ((safe-s.1044 (lambda (tmp.1045) (if (fixnum? tmp.1045) (if (unsafe-fx>= tmp.1045 0) (let ((tmp.1046 (unsafe-make-vector tmp.1045))) (unsafe-procedure-call safe-vector-init.989 tmp.1046 tmp.1045 0)) (error 99)) (error 100)))) (safe-vector-init.989 (lambda (vec.990 len.991 i.992) (if (eq? len.991 i.992) vec.990 (begin (unsafe-vector-set! vec.990 i.992 0) (unsafe-procedure-call safe-vector-init.989 vec.990 len.991 (unsafe-fx+ i.992 1))))))) (unsafe-procedure-call safe-s.1044 0)))
+expected:           #()
+src-interp:         interp-lam-opticon-lang-v9
+trg-interp:         interp-lam-free-lang-v9
+test-type:          "Checking test-program compiles without error"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:400:10
+params:             '(#<procedure:...est-suite/utils.rkt:401:11>)
+message:            "Exception raised"
+exception-message:  "match: no matching clause for '(error 99)"
+exception:
+  match: no matching clause for '(error 99)
+    location...:
+     m9/uncover-free.rkt:116:4
+    context...:
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:115:2: uncover-free-triv
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/match/compiler.rkt:548:40: f26
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:28:2: uncover-free-value
+     [repeats 1 more time]
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:40:15
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/compiler-lib.rkt:169:0: map-n
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:28:2: uncover-free-value
+     /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/uncover-free.rkt:17:2: uncover-free-p
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/contract/private/arrow-higher-order.rkt:375:33
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > optimize-known-calls suite
+FAILURE
+test-program:
+  (module (letrec ((L.id.24.1 (lambda (c.1955 x.25) (let () x.25)))) (cletrec ((id.24 (make-closure L.id.24.1 1))) (let ((x.26 (call L.id.24.1 id.24 5))) (call L.id.24.1 id.24 x.26)))))
+expected:           5
+src-interp:         interp-closure-lang-v9
+trg-interp:         interp-closure-lang-v9
+test-type:          "Checking test-program compiles without error"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:400:10
+params:             '(#<procedure:...est-suite/utils.rkt:401:11>)
+message:            "Exception raised"
+exception-message:
+  "optimize-known-calls: broke its own contract\n  promised: closure-lang-v9?\n  produced: '(module (letrec ((L.id.24.1 (lambda (c.1955 x.25) (let () x.25)))) (cletrec ((id.24 (make-closure L.id.24.1 1))) (let ((x.26 (call L.id.24.1 (id.24 5)))) (call L.id.24.1 (id.24 x.26))))))\n  in: the range of\n      (-> closure-lang-v9? closure-lang-v9?)\n  contract from: \n      (function optimize-known-calls)\n  blaming: (function optimize-known-calls)\n   (assuming the contract is correct)\n  at: /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/optimize-known-calls.rkt:12:18"
+exception:
+  optimize-known-calls: broke its own contract
+    promised: closure-lang-v9?
+    produced: '(module (letrec ((L.id.24.1 (lambda (c.1955 x.25) (let () x.25)))) (cletrec ((id.24 (make-closure L.id.24.1 1))) (let ((x.26 (call L.id.24.1 (id.24 5)))) (call L.id.24.1 (id.24 x.26))))))
+    in: the range of
+        (-> closure-lang-v9? closure-lang-v9?)
+    contract from: 
+        (function optimize-known-calls)
+    blaming: (function optimize-known-calls)
+     (assuming the contract is correct)
+    at: /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/optimize-known-calls.rkt:12:18
+    context...:
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/contract/private/blame.rkt:346:0: raise-blame-error
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/contract/private/arrow-higher-order.rkt:375:33
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > optimize-known-calls suite
+FAILURE
+test-program:
+  (module (letrec ((L.safe-s.1520.2 (lambda (c.1956 tmp.1521 tmp.1522) (let () (cons tmp.1521 tmp.1522))))) (cletrec ((safe-s.1520 (make-closure L.safe-s.1520.2 2))) (call L.safe-s.1520.2 safe-s.1520 7 empty))))
+expected:           (7)
+src-interp:         interp-closure-lang-v9
+trg-interp:         interp-closure-lang-v9
+test-type:          "Checking test-program compiles without error"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:400:10
+params:             '(#<procedure:...est-suite/utils.rkt:401:11>)
+message:            "Exception raised"
+exception-message:
+  "optimize-known-calls: broke its own contract\n  promised: closure-lang-v9?\n  produced: '(module (letrec ((L.safe-s.1520.2 (lambda (c.1956 tmp.1521 tmp.1522) (let () (cons tmp.1521 tmp.1522))))) (cletrec ((safe-s.1520 (make-closure L.safe-s.1520.2 2))) (call L.safe-s.1520.2 (safe-s.1520 7 empty)))))\n  in: the range of\n      (-> closure-lang-v9? closure-lang-v9?)\n  contract from: \n      (function optimize-known-calls)\n  blaming: (function optimize-known-calls)\n   (assuming the contract is correct)\n  at: /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/optimize-known-calls.rkt:12:18"
+exception:
+  optimize-known-calls: broke its own contract
+    promised: closure-lang-v9?
+    produced: '(module (letrec ((L.safe-s.1520.2 (lambda (c.1956 tmp.1521 tmp.1522) (let () (cons tmp.1521 tmp.1522))))) (cletrec ((safe-s.1520 (make-closure L.safe-s.1520.2 2))) (call L.safe-s.1520.2 (safe-s.1520 7 empty)))))
+    in: the range of
+        (-> closure-lang-v9? closure-lang-v9?)
+    contract from: 
+        (function optimize-known-calls)
+    blaming: (function optimize-known-calls)
+     (assuming the contract is correct)
+    at: /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/optimize-known-calls.rkt:12:18
+    context...:
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/contract/private/blame.rkt:346:0: raise-blame-error
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/contract/private/arrow-higher-order.rkt:375:33
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > hoist-lambdas suite
+FAILURE
+test-program:
+  (module (letrec ((L.id.24.1 (lambda (c.1955 x.25) (let () x.25)))) (cletrec ((id.24 (make-closure L.id.24.1 1))) (let ((x.26 (closure-call id.24 id.24 5))) (closure-call id.24 id.24 x.26)))))
+expected:           5
+src-interp:         interp-closure-lang-v9
+trg-interp:         interp-hoisted-lang-v9
+test-type:          "Checking test-program compiles without error"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:400:10
+params:             '(#<procedure:...est-suite/utils.rkt:401:11>)
+message:            "Exception raised"
+exception-message:
+  "hoist-lambdas: broke its own contract\n  promised: hoisted-lang-v9?\n  produced: '(module (define L.id.24.1 (lambda (c.1955 x.25) (let () x.25))) (cletrec ((id.24 (make-closure L.id.24.1 1))) (let ((a (closure-call id.24 id.24 5))) (closure-call id.24 id.24 x.26))))\n  in: the range of\n      (-> closure-lang-v9? hoisted-lang-v9?)\n  contract from: (function hoist-lambdas)\n  blaming: (function hoist-lambdas)\n   (assuming the contract is correct)\n  at: /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/hoist-lambdas.rkt:11:18"
+exception:
+  hoist-lambdas: broke its own contract
+    promised: hoisted-lang-v9?
+    produced: '(module (define L.id.24.1 (lambda (c.1955 x.25) (let () x.25))) (cletrec ((id.24 (make-closure L.id.24.1 1))) (let ((a (closure-call id.24 id.24 5))) (closure-call id.24 id.24 x.26))))
+    in: the range of
+        (-> closure-lang-v9? hoisted-lang-v9?)
+    contract from: (function hoist-lambdas)
+    blaming: (function hoist-lambdas)
+     (assuming the contract is correct)
+    at: /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/hoist-lambdas.rkt:11:18
+    context...:
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/contract/private/blame.rkt:346:0: raise-blame-error
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/contract/private/arrow-higher-order.rkt:379:33
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > hoist-lambdas suite
+FAILURE
+test-program:
+  (module (letrec ((L.id.24.1 (lambda (c.1955 x.25) (let () x.25)))) (cletrec ((id.24 (make-closure L.id.24.1 1))) (let ((x.26 (call L.id.24.1 id.24 5))) (call L.id.24.1 id.24 x.26)))))
+expected:           5
+src-interp:         interp-closure-lang-v9
+trg-interp:         interp-hoisted-lang-v9
+test-type:          "Checking test-program compiles without error"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:400:10
+params:             '(#<procedure:...est-suite/utils.rkt:401:11>)
+message:            "Exception raised"
+exception-message:
+  "hoist-lambdas: broke its own contract\n  promised: hoisted-lang-v9?\n  produced: '(module (define L.id.24.1 (lambda (c.1955 x.25) (let () x.25))) (cletrec ((id.24 (make-closure L.id.24.1 1))) (let ((a (closure-call L.id.24.1 id.24 5))) (closure-call L.id.24.1 id.24 x.26))))\n  in: the range of\n      (-> closure-lang-v9? hoisted-lang-v9?)\n  contract from: (function hoist-lambdas)\n  blaming: (function hoist-lambdas)\n   (assuming the contract is correct)\n  at: /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/hoist-lambdas.rkt:11:18"
+exception:
+  hoist-lambdas: broke its own contract
+    promised: hoisted-lang-v9?
+    produced: '(module (define L.id.24.1 (lambda (c.1955 x.25) (let () x.25))) (cletrec ((id.24 (make-closure L.id.24.1 1))) (let ((a (closure-call L.id.24.1 id.24 5))) (closure-call L.id.24.1 id.24 x.26))))
+    in: the range of
+        (-> closure-lang-v9? hoisted-lang-v9?)
+    contract from: (function hoist-lambdas)
+    blaming: (function hoist-lambdas)
+     (assuming the contract is correct)
+    at: /home/e/emts/cs-411/project/cpsc411-prj_0dvq8/m9/hoist-lambdas.rkt:11:18
+    context...:
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/contract/private/blame.rkt:346:0: raise-blame-error
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/contract/private/arrow-higher-order.rkt:379:33
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > specify-representation suite
+FAILURE
+test-program:
+  (module (define L.safe-s.1520.2 (lambda (c.1956 tmp.1521 tmp.1522) (let () (cons tmp.1521 tmp.1522)))) (let ((safe-s.1520 (make-procedure L.safe-s.1520.2 2 0))) (call (unsafe-procedure-label L.safe-s.1520.2) safe-s.1520 7 empty)))
+expected:           (7)
+src-interp:         interp-proc-exposed-lang-v9
+trg-interp:         interp-exprs-bits-lang-v8
+output-program:
+  (module (define L.safe-s.1520.2 (lambda (c.1956 tmp.1521 tmp.1522) (let () (let ((tmp.1957 (+ (alloc 16) 1))) (begin (mset! tmp.1957 -1 tmp.1521) (mset! tmp.1957 7 tmp.1522) tmp.1957))))) (let ((safe-s.1520 (let ((tmp.1958 (+ (alloc 16) 2))) (begin (mset! tmp.1958 -2 L.safe-s.1520.2) (mset! tmp.1958 6 16) tmp.1958)))) (call (mref L.safe-s.1520.2 -2) safe-s.1520 56 22)))
+test-type:          "Checking output is interpretable"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:411:12
+params:             '(#<procedure:...est-suite/utils.rkt:412:13>)
+message:            "Exception raised"
+exception-message:
+  "+: contract violation\n  expected: number?\n  given: #<procedure:...c411/langs/base.rkt:499:8>"
+exception:
+  +: contract violation
+    expected: number?
+    given: #<procedure:...c411/langs/base.rkt:499:8>
+    context...:
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:465:0: mref
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:250:7
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+v9 public test suite > Unnamed test
+ERROR
+
+match: no matching clause for '(error 126)
+--------------------
+--------------------
+v9 public test suite > Unnamed test
+ERROR
+
+match: no matching clause for '(error 125)
+--------------------
+1231 success(es) 27 failure(s) 2 error(s) 1260 test(s) run
+29
+29/1260 test failures
