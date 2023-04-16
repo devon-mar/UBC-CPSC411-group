@@ -37,7 +37,7 @@
  "m8/implement-mops.rkt"
 
  "m9/implement-safe-call.rkt"
- "m9/define->letrec.rkt"
+ "m9/define-letrec.rkt"
  "m9/optimize-direct-calls.rkt"
  "m9/dox-lambdas.rkt"
  "m9/uncover-free.rkt"
