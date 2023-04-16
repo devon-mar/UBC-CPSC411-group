@@ -97,7 +97,7 @@
         (check-values-lang-value env v2)]
       [`(,binop ,t1 ,t2)
         (unless (binop? binop)
-        (error "invalid binop " binop))
+          (error "invalid binop " binop))
         (check-values-lang-tail env t1)
         (check-values-lang-tail env t2)]
       [_ (check-values-lang-triv env v)]))
