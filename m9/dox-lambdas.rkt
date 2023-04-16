@@ -44,14 +44,14 @@
          #t))
 
 
-  ;; just-exprs-lang-v9-p? lam-opticon-lang-v9-p?
+  ;; just-exprs-lang-v9-p -> lam-opticon-lang-v9-p
   (define (dox-lambdas-p p)
     (match p
       [`(module ,v)
         `(module
            ,(dox-lambdas-value v))]))
 
-  ;; just-exprs-lang-v9-value? lam-opticon-lang-v9-value?
+  ;; just-exprs-lang-v9-value -> lam-opticon-lang-v9-value
   (define (dox-lambdas-value v)
     (match v
       ;; modified template - combined both args since they're
@@ -81,7 +81,7 @@
       ;; triv
       [_ (dox-lambdas-triv v)]))
 
-  ;; just-exprs-lang-v9-effect? lam-opticon-lang-v9-effect?
+  ;; just-exprs-lang-v9-effect -> lam-opticon-lang-v9-effect
   (define (dox-lambdas-effect e)
     (match e
       ;; modified template - removed tail e since we assume
@@ -91,7 +91,7 @@
       [`(,primop ,vs ...)
         `(,primop ,@(map dox-lambdas-value vs))]))
 
-  ;; just-exprs-lang-v9-triv? lam-opticon-lang-v9-triv?
+  ;; just-exprs-lang-v9-triv -> lam-opticon-lang-v9-value
   (define (dox-lambdas-triv t)
     (match t
       [#t t]
@@ -100,6 +100,7 @@
       ;; (error uint8)
       [`(error ,_) t]
       [(? ascii-char-literal?) t]
+      ['(void) t]
       [`(lambda (,as ...) ,v)
         (define tmp (fresh 'lambda))
         `(letrec ([,tmp (lambda ,as ,(dox-lambdas-value v))])
@@ -237,4 +238,10 @@
        (if #t
          (if #f #\a (if (eq? 1 1) 42 empty))
          (error 1))))
+
+  (check-42
+    '(module
+       (if #t
+         42
+         (unsafe-procedure-call (lambda () (void))))))
   )
