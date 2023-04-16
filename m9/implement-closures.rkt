@@ -59,22 +59,22 @@
       [`(closure-ref ,v1 ,v2)
         `(unsafe-procedure-ref ,(implement-closures-value v1) ,(implement-closures-value v2))]
       [`(closure-call ,v ,vs ...)
-        `(call ,(implement-closures-value v) ,@(map implement-closures-value vs))]
+        `(call (unsafe-procedure-label ,(implement-closures-value v)) ,@(map implement-closures-value vs))]
       [`(cletrec ([,alocs (make-closure ,labels ,arity ,vs ...)] ...) ,value)
-        (define let-assignments
+        (define let-assignments 
           (for/list
             ([a alocs]
              [ar arity]
              [v-list vs]
              [l labels])
             `[,a (make-procedure ,l ,ar ,(length v-list))]))
-        (define let-body
+        (define let-body 
           (for/fold
             ([acc '()])
             ([a alocs]
              [ar arity]
              [v-list vs])
-              (append
+              (append 
                 (for/list
                   ([v v-list]
                    [idx (range (length v-list))])
@@ -90,7 +90,7 @@
       [`(let ([,as ,vs] ...) ,v)
       `(let ,(map (lambda (a v) `[,a ,(implement-closures-value v)]) as vs) ,(implement-closures-value v))]
       [`(if ,v1 ,v2 ,v3)
-        `(if
+        `(if 
           ,(implement-closures-value v1)
           ,(implement-closures-value v2)
           ,(implement-closures-value v3))]
@@ -203,8 +203,8 @@
   ;; Check single make-procedure in cletrec
   (check-match
     (implement-closures
-    `(module
-      (cletrec
+    `(module 
+      (cletrec 
         ([x.1 (make-closure L.func.1 1 1 2 3 4)])
         5)))
     `(module
@@ -223,8 +223,8 @@
   ;; Check multiple make-procedure in cletrec
   (check-match
     (implement-closures
-      `(module
-        (cletrec
+      `(module 
+        (cletrec 
             ([x.1 (make-closure L.foo.1 1 1 2 3 4)]
             [x.2 (make-closure L.bar.1 2 8 9 10)])
             5)))
@@ -243,7 +243,7 @@
               (unsafe-procedure-set! x.2 0 8)
               (unsafe-procedure-set! x.2 1 9)
               (unsafe-procedure-set! x.2 2 10))))
-          (equal?
+          (equal? 
             (list->set assignments)
             (list->set `((x.1 (make-procedure L.foo.1 1 4)) (x.2 (make-procedure L.bar.1 2 3)))))))
 
@@ -251,20 +251,20 @@
   ;; There mustn't be a beign scope
   (check-equal?
     (implement-closures
-      `(module
-        (cletrec
+      `(module 
+        (cletrec 
           ([x.1 (make-closure L.func.1 0)])
           5)))
-    `(module
-      (let
+    `(module 
+      (let 
         ((x.1 (make-procedure L.func.1 0 0)))
         5)))
 
   ;; closure-call
   (check-equal?
     (implement-closures
-      `(module
-        (cletrec
+      `(module 
+        (cletrec 
           ([x.1 (make-closure L.func.1 1)])
           (closure-call L.func.1 5))))
     `(module
@@ -274,8 +274,8 @@
   ;; closure-call with no args
   (check-equal?
     (implement-closures
-      `(module
-        (cletrec
+      `(module 
+        (cletrec 
           ([x.1 (make-closure L.func.1 0)])
           (closure-call L.func.1))))
     `(module
@@ -285,9 +285,9 @@
   ;; closure-call on cletrec
   (check-equal?
     (implement-closures
-      `(module
-        (closure-call L.func.1
-          (cletrec
+      `(module 
+        (closure-call L.func.1 
+          (cletrec 
             ([x.1 (make-closure L.func.1 1)])
             5))))
     `(module
@@ -296,16 +296,16 @@
         (let
           ((x.1 (make-procedure L.func.1 1 0)))
           5))))
-
+  
   ;; closure-ref on cletrec
   (check-equal?
     (implement-closures
-      `(module
-        (closure-ref
-          (cletrec
+      `(module 
+        (closure-ref 
+          (cletrec 
             ([x.1 (make-closure L.func.1 1)])
             5)
-          (cletrec
+          (cletrec 
             ([x.1 (make-closure L.func.1 1)])
             5))))
     `(module
