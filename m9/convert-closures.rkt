@@ -37,24 +37,27 @@
        (define lambdas
          (for/list ([ps params] [v vs] [free frees])
            (define closure-aloc (fresh 'c))
-           (define closure-refs
-             (for/list ([i (range (length free))])
-               `(closure-ref ,closure-aloc ,i)))
+           (define faloc-closure-ref-pairs
+             (for/list ([faloc free] [i (range (length free))])
+               `[,faloc (closure-ref ,closure-aloc ,i)]))
            `(lambda (,closure-aloc ,@ps)
-              (let ,(map list free closure-refs)
+              (let ,faloc-closure-ref-pairs
                 ,(convert-closures-value v)))))
-       (define label-lambda-pairs (map list labels lambdas))
-       (define closures
-         (for/list ([ps params] [label labels] [free frees])
-           `(make-closure ,label ,(length ps) ,@free)))
+       (define label-lambda-pairs
+         (map (lambda (la lm) `[,la ,lm]) labels lambdas))
+       (define aloc-closure-pairs
+         (for/list ([aloc alocs] [ps params] [label labels] [free frees])
+           `[,aloc (make-closure ,label ,(length ps) ,@free)]))
        `(letrec
-          ,(map list labels lambdas)
-          (cletrec ,(map list alocs closures)
+          ,label-lambda-pairs
+          (cletrec ,aloc-closure-pairs
             ,(convert-closures-value vt)))]
       [`(let ([,alocs ,vs] ...) ,vt)
-       (define new-vs (map convert-closures-value vs))
+       (define new-av-pairs
+         (for/list ([aloc alocs] [v vs])
+           `[,aloc ,(convert-closures-value v)]))
        `(let
-          ,(map list alocs new-vs)
+          ,new-av-pairs
           ,(convert-closures-value vt))]
       [`(if ,vp ,vt ,vf)
        `(if
