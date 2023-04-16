@@ -23,6 +23,7 @@
 ;;
 ;; Implementation details:
 ;; - A mutable set is used to keep track of what safe primop procs we need to insert.
+;;   Whenever we see a exprs-unique-lang-v9-primop used, we add the prim-f to the set.
 (define/contract (implement-safe-primops p)
   (-> exprs-unique-lang-v9? exprs-unsafe-data-lang-v9?)
 
@@ -45,6 +46,8 @@
 
   ;; keep track of the primops that are actually called in p
   (define used-prim-fs (mutable-set))
+  ;; Mark the prim-f p as used.
+  ;; p: exprs-unique-lang-v9-primop
   (define/contract (mark-prim-f-used! p)
     (-> symbol? void?)
     (set-add! used-prim-fs p))
@@ -89,9 +92,9 @@
   ;; check = procedure?
   ;;
   ;; safe: The "safe" primop. It will be automatically quoted.
-  ;; unsafe: The corresponding quoted "unsafe" symbol or procedure. If a procedure, it must take
+  ;; unsafe: The corresponding quoted "unsafe" primop or procedure. If a procedure, it must take
   ;;         exactly (length type) args.
-  ;; type: Quoted symbol for each argument. The symbol should probably end with a ?.
+  ;; type: Quoted symbol for each argument. The symbol should most likely end with a ?.
   ;; check: A procedure? that takes (length type) args. It must return an exprs-unsafe-data-lang-v9-value.
   ;;        This should be used to implement any additional argument checks.
   ;;
