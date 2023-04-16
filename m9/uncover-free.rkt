@@ -123,7 +123,7 @@
       [#f (list)]
       ['empty (list)]
       [`(void) (list)]
-      [`(error _uint8) (list)]
+      [`(error ,_uint8) (list)]
       [(? ascii-char-literal?) (list)]))
 
   (define/contract (primop? p)
@@ -164,10 +164,19 @@
     rackunit
     "../utils/gen-utils.rkt")
 
+  ;; p -> void
+  ;; Check that compiled program is the same as the original
+  (define-check (check-no-change p)
+    (check-equal? (uncover-free p) p))
+
   ;; base cases
-  (check-equal?
-    (uncover-free '(module 2))
-    '(module 2))
+  (check-no-change '(module 2))
+  (check-no-change '(module #t))
+  (check-no-change '(module #f))
+  (check-no-change '(module empty))
+  (check-no-change '(module (void)))
+  (check-no-change '(module (error 10)))
+  (check-no-change '(module #\a))
 
   ;; all bound
   (check-equal?
