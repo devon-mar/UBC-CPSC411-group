@@ -9,7 +9,6 @@
 ;; Milestone 9 Exercise 11
 (define/contract (hoist-lambdas p)
   (-> closure-lang-v9? hoisted-lang-v9?)
-
   (define/contract (primop? p)
     (-> any/c boolean?)
     (and (memq p
@@ -41,44 +40,64 @@
                  unsafe-procedure-arity))
          #t))
 
+  ;; Holds list of values. Each value
+  ;; (values label (aloc ...) value) ...
+  (define lambdas-to-hoist '())
+
   ;; closure-lang-v9-p -> hoisted-lang-v9-p
   (define (hoist-lambdas-p p)
     (match p
       [`(module ,value)
-        `(module ,(hoist-lambdas-value value))]))
+        (define new-value (hoist-lambdas-value value))
+        `(module ,@(hoist-lambdas-proc) ,new-value)]))
+
+  ;; Constructs lambdas from the lambdas-to-hoist environment variable
+  ;; (void) -> ((define label (lambda (aloc ...) value)) ...)
+  (define (hoist-lambdas-proc)
+    (for/list
+      ([lam lambdas-to-hoist])
+      (define-values (l a v) lam)
+      `(define ,l (lambda ,a ,v))))
 
   ;; closure-lang-v9-value -> hoisted-lang-v9-value
   (define (hoist-lambdas-value v)
     (match v
+      [`(letrec ([,labels (lambda ,alocs ,vs)] ...) ,value)
+        (begin0 (hoist-lambdas-value value)
+          (for
+            ([l labels]
+             [a alocs]
+             [v vs])
+             (set! lambdas-to-hoist (cons (values l a v) lambdas-to-hoist))))]
       [`(closure-ref ,v1 ,v2)
         `(closure-ref ,(hoist-lambdas-value v1) ,(hoist-lambdas-value v2))]
       [`(closure-call ,v1 ,vs ...)
         `(closure-call ,(hoist-lambdas-value v1) ,@(map hoist-lambdas-value vs))]
-      ['(cletrec ([,alocs (make-closure ,labels ,arity ,vs-list ...)] ...) ,value)
+      [`(cletrec ([,alocs (make-closure ,labels ,arity ,vs-list ...)] ...) ,value)
         `(cletrec 
           ,(map
             (lambda (aloc label a vs) 
               `(,aloc 
                 (make-closure 
                   ,label
-                  ,a 
+                  ,a
                   ,@(map hoist-lambdas-value vs))))
             alocs labels arity vs-list)
             ,(hoist-lambdas-value value))]
       [`(closure-call ,v ,vs ...)
-        (closure-call ,(hoist-lambdas-value v) ,@(map hoist-lambdas-value vs))]
+        `(closure-call ,(hoist-lambdas-value v) ,@(map hoist-lambdas-value vs))]
       [`(call ,v ,vs ...)
         `(closure-call ,(hoist-lambdas-value v) ,@(map hoist-lambdas-value vs))]
       [`(let ([,as ,vs] ...) ,v)
         `(let
-            ,(map (lambda (a v) `(a ,(hoist-lambdas-value v))) as vs) ,(hoist-lambdas-value v))]
+          ,(map (lambda (a v) `(a ,(hoist-lambdas-value v))) as vs) ,(hoist-lambdas-value v))]
       [`(if ,v1 ,v2 ,v3)
         `(if 
           ,(hoist-lambdas-value v1)
           ,(hoist-lambdas-value v2)
           ,(hoist-lambdas-value v3))]
       [`(begin ,es ... ,v)
-        (begin ,@(map hoist-lambdas-effect es) ,(hoist-lambdas-value v))]
+        `(begin ,@(map hoist-lambdas-effect es) ,(hoist-lambdas-value v))]
       [`(,primop ,vs ...)
         #:when (primop? primop)
         `(,primop ,@(map hoist-lambdas-value vs))]
@@ -89,7 +108,7 @@
   (define (hoist-lambdas-effect e)
     (match e
       [`(begin ,es ... ,e)
-        (begin ,@(map hoist-lambdas-effect es) ,(hoist-lambdas-effect e))]
+        `(begin ,@(map hoist-lambdas-effect es) ,(hoist-lambdas-effect e))]
       [`(,primop ,vs ...)
         `(,primop ,@(map hoist-lambdas-value vs))]))
 
