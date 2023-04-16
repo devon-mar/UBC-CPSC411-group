@@ -72,7 +72,6 @@
           (for/fold
             ([acc '()])
             ([a alocs]
-             [ar arity]
              [v-list vs])
               (append 
                 (for/list
@@ -82,13 +81,13 @@
                 acc)))
         (define let-value (implement-closures-value value))
         (if
-          (< 0 (length let-body))
-          `(let ,let-assignments (begin ,@let-body ,let-value))
-          `(let ,let-assignments ,let-value))]
+          (empty? let-body)
+          `(let ,let-assignments ,let-value)
+          `(let ,let-assignments (begin ,@let-body ,let-value)))]
       [`(call ,v ,vs ...)
         `(call ,(implement-closures-value v) ,@(map implement-closures-value vs))]
       [`(let ([,as ,vs] ...) ,v)
-      `(let ,(map (lambda (a v) `[,a ,(implement-closures-value v)]) as vs) ,(implement-closures-value v))]
+        `(let ,(map (lambda (a v) `[,a ,(implement-closures-value v)]) as vs) ,(implement-closures-value v))]
       [`(if ,v1 ,v2 ,v3)
         `(if 
           ,(implement-closures-value v1)
@@ -312,4 +311,73 @@
       (unsafe-procedure-ref
         (let ((x.1 (make-procedure L.func.1 1 0))) 5)
         (let ((x.1 (make-procedure L.func.1 1 0))) 5))))
+
+
+  (check-equal?
+    (implement-closures `(module
+      (closure-ref
+          (cletrec 
+            ([x.1 (make-closure L.func.1 1)])
+            5)
+        (closure-call 
+          (cletrec 
+            ([x.1 (make-closure L.func.2 1)])
+            (call
+              (cletrec 
+                ([x.1 (make-closure L.func.3 1)])
+                (let
+                  ([x.1
+                    (cletrec 
+                      ([x.1 (make-closure L.func.4 1)])
+                      5)])
+                  (cletrec 
+                    ([x.1 (make-closure L.func.5 1)])
+                    (begin
+                      (begin
+                        (unsafe-fx+ 
+                          x.1
+                          (cletrec 
+                            ([x.1 (make-closure L.func.6 1)])
+                            5)))
+                      (cletrec 
+                        ([x.1 (make-closure L.func.7 1)])
+                        (if
+                          (cletrec 
+                            ([x.1 (make-closure L.func.8 1)])
+                            #t)
+                          (cletrec 
+                            ([x.1 (make-closure L.func.9 1)])
+                            5)
+                          (cletrec 
+                            ([x.1 (make-closure L.func.10 1 
+                              (cletrec 
+                                ([x.1 (make-closure L.func.11 1)])
+                                5))])
+                            5)))))))))))))
+
+  `(module
+    (unsafe-procedure-ref
+    (let ((x.1 (make-procedure L.func.1 1 0))) 5)
+    (call
+      (unsafe-procedure-label
+      (let ((x.1 (make-procedure L.func.2 1 0)))
+        (call
+          (let ((x.1 (make-procedure L.func.3 1 0)))
+            (let ((x.1 (let ((x.1 (make-procedure L.func.4 1 0))) 5)))
+              (let ((x.1 (make-procedure L.func.5 1 0)))
+                (begin
+                  (begin
+                    (unsafe-fx+
+                    x.1
+                    (let ((x.1 (make-procedure L.func.6 1 0))) 5)))
+                  (let ((x.1 (make-procedure L.func.7 1 0)))
+                    (if (let ((x.1 (make-procedure L.func.8 1 0))) #t)
+                      (let ((x.1 (make-procedure L.func.9 1 0))) 5)
+                      (let ((x.1 (make-procedure L.func.10 1 1)))
+                        (begin
+                          (unsafe-procedure-set!
+                          x.1
+                          0
+                          (let ((x.1 (make-procedure L.func.11 1 0))) 5))
+                          5)))))))))))))))
 )
