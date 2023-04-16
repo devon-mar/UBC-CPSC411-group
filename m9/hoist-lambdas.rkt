@@ -89,7 +89,7 @@
       [`(closure-call ,v ,vs ...)
         `(closure-call ,(hoist-lambdas-value v) ,@(map hoist-lambdas-value vs))]
       [`(call ,v ,vs ...)
-        `(closure-call ,(hoist-lambdas-value v) ,@(map hoist-lambdas-value vs))]
+        `(call ,(hoist-lambdas-value v) ,@(map hoist-lambdas-value vs))]
       [`(let ([,as ,vs] ...) ,v)
         `(let
           ,(map (lambda (a v) `(,a ,(hoist-lambdas-value v))) as vs) ,(hoist-lambdas-value v))]
@@ -248,4 +248,78 @@
       (list->set procs)
       (list->set 
       `((define L.foo.1 (lambda () 5)) (define L.bar.2 (lambda () 4))))))
+
+
+  ; Check hoisting in closure-ref, closure-call, call,
+  (check-match
+    (hoist-lambdas 
+    `(module
+      (closure-ref 
+        (letrec 
+          ([L.foo.1 (lambda (x.1 x.2) (unsafe-fx+ x.1 x.2))])
+          5)
+        (closure-call
+          (letrec 
+            ([L.foo.2 (lambda (x.1 x.2) (unsafe-fx+ x.1 x.2))]) 
+            (call 
+              (letrec 
+                ([L.foo.3 (lambda (x.1 x.2) (unsafe-fx+ x.1 x.2))]) 
+                (cletrec ([x.1 (make-closure L.bar.1 0)])
+                  (letrec 
+                    ([L.foo.4 (lambda (x.1 x.2) (unsafe-fx+ x.1 x.2))])
+                    5)))))))))
+    `(module
+      ,procs ...
+      (closure-ref
+      5
+      (closure-call (call (cletrec ((x.1 (make-closure L.bar.1 0))) 5)))))
+    (equal? 
+      (list->set procs)
+      (list->set 
+        `((define L.foo.4 (lambda (x.1 x.2) (unsafe-fx+ x.1 x.2)))
+          (define L.foo.3 (lambda (x.1 x.2) (unsafe-fx+ x.1 x.2)))
+          (define L.foo.2 (lambda (x.1 x.2) (unsafe-fx+ x.1 x.2)))
+          (define L.foo.1 (lambda (x.1 x.2) (unsafe-fx+ x.1 x.2)))))))
+
+
+ ;; Check hoisting in let, if, & begin
+  (check-match
+    (hoist-lambdas 
+    `(module
+      (begin
+        (begin
+          (unsafe-fx+ x.1 x.2)
+          (unsafe-fx+
+            x.1 
+            (letrec 
+              ([L.foo.1 (lambda (x.1 x.2) (unsafe-fx+ x.1 x.2))])
+              5)))
+        (if
+          (letrec 
+            ([L.foo.2 (lambda (x.1 x.2) (unsafe-fx+ x.1 x.2))])
+            #t)
+          (let 
+              ([x.1
+              (letrec 
+                ([L.foo.3 (lambda (x.1 x.2) (unsafe-fx+ x.1 x.2))])
+                5)])
+              (letrec 
+                ([L.foo.4 (lambda (x.1 x.2) (unsafe-fx+ x.1 x.2))])
+                6))
+          (letrec 
+            ([L.foo.5 (lambda (x.1 x.2) (unsafe-fx+ x.1 x.2))])
+            5)))))
+    `(module
+      ,procs ...
+      (begin
+        (begin (unsafe-fx+ x.1 x.2) (unsafe-fx+ x.1 5))
+        (if #t (let ((x.1 5)) 6) 5)))
+    (equal?
+      (list->set procs)
+      (list->set 
+        `((define L.foo.5 (lambda (x.1 x.2) (unsafe-fx+ x.1 x.2)))
+          (define L.foo.4 (lambda (x.1 x.2) (unsafe-fx+ x.1 x.2)))
+          (define L.foo.3 (lambda (x.1 x.2) (unsafe-fx+ x.1 x.2)))
+          (define L.foo.2 (lambda (x.1 x.2) (unsafe-fx+ x.1 x.2)))
+          (define L.foo.1 (lambda (x.1 x.2) (unsafe-fx+ x.1 x.2)))))))
 )
