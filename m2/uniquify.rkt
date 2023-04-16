@@ -2,7 +2,7 @@
 
 (require
   cpsc411/compiler-lib
-  cpsc411/langs/v8)
+  cpsc411/langs/v9)
 
 (provide uniquify)
 
@@ -12,15 +12,19 @@
 ;; Milestone 6 Exercise 2
 ;; Milestone 7 Exercise 3
 ;; Milestone 8 Exercise 2
+;; Milestone 9 Exercise 2
 ;;
 ;; Compiles Exprs-Lang to Exprs-Unique-Lang by
-;; resolving top-level lexical identifiers into unique labels,
-;; and all other lexical identifiers into unique abstract locations
+;; resolving all lexical identifiers into unique abstract locations.
 (define/contract (uniquify p)
-  (-> exprs-lang-v8? exprs-unique-lang-v8?)
+  (-> exprs-lang-v9? exprs-unique-lang-v9?)
 
-  ;; value exprs-lang-v8-value
-  ;; -> exprs-unique-lang-v8-value
+  ;; dict: dict(name?, aloc?)
+  ;; name: name?
+  ;; params: (listof name?)
+  ;; value: exprs-lang-v9-value
+  ;; -> exprs-unique-lang-v9-value
+  ;;
   ;; Resolve names inside of (define name (lambda (params...) value)).
   ;; Assumes dict contains name->label map for name.
   (define/contract (uniquify-define dict name params value)
@@ -32,7 +36,14 @@
          ,(map (lambda (p) (dict-ref new-dict p)) params)
          ,(uniquify-value new-dict value))))
 
-  ;; Replace all xs with alocs. The new name->aloc|label mappings will be passed
+  ;; dict: dict(name?, aloc?)
+  ;; xs: (listof name?)
+  ;; vs: (listof value)
+  ;; f: (dict? value -> value)
+  ;; body: value
+  ;; -> exprs-unique-lang-v9-let
+  ;;
+  ;; Replace all xs with alocs. The new name->aloc mappings will be passed
   ;; as the first arg to f. The second arg to f will be body.
   ;; The value of (f new-dict body) will be used as the body in the returned let.
   (define/contract (uniquify-let dict xs vs f body)
@@ -42,17 +53,17 @@
       ,(map (lambda (x v) `[,(dict-ref new-dict x) ,(uniquify-value dict v)]) xs vs)
       ,(f new-dict body)))
 
-  ;; dict(name?, aloc?|label?) exprs-lang-v8-p -> exprs-unique-lang-v8-p
+  ;; dict(name?, aloc?) exprs-lang-v9-p -> exprs-unique-lang-v9-p
   (define/contract (uniquify-p dict p)
     (-> dict? any/c any/c)
     (match p
       [`(module (define ,x1s (lambda (,x2s ...) ,vs)) ... ,vt)
-       (define new-dict (foldl (lambda (x acc) (dict-set acc x (fresh-label x))) dict x1s))
+       (define new-dict (foldl (lambda (x acc) (dict-set acc x (fresh x))) dict x1s))
        `(module
          ,@(map (lambda (name x2s value) (uniquify-define new-dict name x2s value)) x1s x2s vs)
          ,(uniquify-value new-dict vt))]))
 
-  ;; dict(name?, aloc?|label?) exprs-lang-v8-value -> exprs-unique-lang-v8-value
+  ;; dict(name?, aloc?) exprs-lang-v9-value -> exprs-unique-lang-v9-value
   (define/contract (uniquify-value dict v)
     (-> dict? any/c any/c)
     (match v
@@ -67,23 +78,28 @@
        `(call
          ,(uniquify-value dict vc)
          ,@(map (lambda (v) (uniquify-value dict v)) vs))]
-      [_ (uniquify-triv dict v)]))
+      [triv (uniquify-triv dict triv)]))
 
-  ;; dict(name?, aloc?|label?) exprs-lang-v8-triv -> exprs-unique-lang-v8-triv
+  ;; dict(name?, aloc?) exprs-lang-v9-triv -> exprs-unique-lang-v9-triv
   (define/contract (uniquify-triv dict t)
     (-> dict? any/c any/c)
     ;; Merged template with x
     (match t
       ;; if prim-f|empty (or any symbol) gets shadowed by user-defined names
-      ;; it should be replaced with a label|aloc
+      ;; it should be replaced with an aloc
       [(? name?) (dict-ref dict t t)]
       [(? int61?) t]
       [#t t]
       [#f t]
       [`empty t]
       [`(void) t]
-      [`(error ,_) t]
+      [`(error ,_uint8) t]
       [(? ascii-char-literal?) t]
+      [`(lambda (,xs ...) ,value)
+       (define new-dict (foldl (lambda (x acc) (dict-set acc x (fresh x))) dict xs))
+       `(lambda
+         ,(map (lambda (x) (dict-ref new-dict x)) xs)
+         ,(uniquify-value new-dict value))]
       [prim-f prim-f]))
 
   #;
@@ -95,7 +111,7 @@
       ['< (void)]
       ['<= (void)]
       ['>= (void)]
-      ['> (void)])
+      ['> (void)]
       ['eq? (void)]
       ['fixnum? (void)]
       ['boolean? (void)]
@@ -105,6 +121,7 @@
       ['error? (void)]
       ['not (void)]
       ['pair? (void)]
+      ['procedure? (void)]
       ['vector? (void)]
       ['cons (void)]
       ['car (void)]
@@ -112,7 +129,8 @@
       ['make-vector (void)]
       ['vector-length (void)]
       ['vector-set! (void)]
-      ['vector-ref (void)])
+      ['vector-ref (void)]
+      ['procedure-arity (void)]))
 
   (uniquify-p '() p))
 
@@ -123,7 +141,7 @@
   ;; Check that compiled program interprets to 42
   (define-check (check-42 p)
     (check-equal?
-      (interp-exprs-unique-lang-v8 (uniquify p))
+      (interp-exprs-unique-lang-v9 (uniquify p))
       42))
 
   ;; M5 tests
@@ -318,4 +336,40 @@
             [fixnum? (call - 24 3)]
             [empty 2])
         (call - fixnum? empty))))
+
+  ;; lambda in call
+  (check-42
+    `(module
+      (call
+        (lambda (fn) (call fn (lambda () 22)))
+        (lambda (fn) (call + (call fn) 20)))))
+
+  ;; lambda in let
+  (check-42
+    `(module
+      (let ([fn1 (lambda (x) (call * x 2))]
+            [fn2
+             (lambda (x y)
+               (let ([z -2]
+                     [fn3 (lambda (x y) (call + x y))])
+                (call * x (call fn3 y z))))])
+        (call fn1 (call fn2 3 9)))))
+
+  ;; lambda in if
+  (check-42
+    `(module
+      (if #t
+          (call
+            (if #f
+                (lambda (x y) (call * x y))
+                (lambda (x y) (call + x y)))
+            40
+            2)
+          -1)))
+
+  ;; lambda in define
+  (check-42
+    `(module
+      (define fn (lambda (x y) (lambda (y z) (call + x (call - y z)))))
+      (call (call fn 10 5) 28 -4)))
   )
