@@ -52,8 +52,10 @@
         "No more patch registers"
         (current-continuation-marks))))
 
-  ;; ([triv (triv -> boolean)])
-  ;; (triv -> paren-x64-mops-v8-s))
+  ;; Syntax:
+  ;; (use-tmp
+  ;;   ([triv (-> triv boolean)] ...)
+  ;;   (-> triv paren-x64-mops-v8-s))
   ;; -> (List-of paren-x64-mops-v8-s) or exn:no-more-patch-regs
   ;;
   ;; triv ::= label|int64|reg|addr
@@ -65,12 +67,24 @@
   ;; and the 'set!' created by 'create-s'.
   ;; Raises exn:no-more-patch-regs if we run out of patch registers.
   (define-syntax-rule (use-tmp ([vals checks] ...) create-s)
+    (use-tmp-impl (list vals ...) (list checks ...) create-s))
+
+  ;; (List-of triv)
+  ;; (List-of (triv -> boolean))
+  ;; (triv -> paren-x64-mops-v8-s)
+  ;; -> (List-of paren-x64-mops-v8-s) or exn:no-more-patch-regs
+  ;;
+  ;; triv ::= label|int64|reg|addr
+  ;;
+  ;; Use patch registers for unsupported 's'. See above; do not call directly!
+  ;; Raises exn:no-more-patch-regs if we run out of patch registers.
+  (define (use-tmp-impl vals checks create-s)
     (for/fold ([new-vals '()]
                [set-list '()]
                [regs (current-patch-instructions-registers)]
                #:result `(,@set-list ,@(apply create-s new-vals)))
-              ([val (list vals ...)]
-               [check? (list checks ...)])
+              ([val vals]
+               [check? checks])
       (cond
         [(check? val)
          (when (empty? regs) (raise-no-more-patch-regs))
