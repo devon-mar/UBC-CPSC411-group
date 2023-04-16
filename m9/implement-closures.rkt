@@ -41,6 +41,7 @@
                  unsafe-procedure-arity))
          #t))
 
+  ;; hoisted-lang-v9-p proc-exposed-lang-v9-p
   (define (implement-closures-p p)
     (match p
       [`(module (define ,labels (lambda ,alocs ,lambda-values)) ... ,value)
