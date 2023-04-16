@@ -1,0 +1,676 @@
+raco test: (submod "compiler.rkt" test)
+--------------------
+ > compiler testomatic test suite > v9 public test suite > specify-representation suite
+FAILURE
+test-program:
+  (module (define L.swap.8.74 (lambda (c.2030 x.9 y.10) (let ((safe-<.1623 (unsafe-procedure-ref c.2030 0)) (swap.8 (unsafe-procedure-ref c.2030 1))) (if (call (unsafe-procedure-label L.safe-<.1623.73) safe-<.1623 y.10 x.9) x.9 (let ((z.11 (call (unsafe-procedure-label L.swap.8.74) swap.8 y.10 x.9))) z.11))))) (define L.safe-<.1623.73 (lambda (c.2029 tmp.1624 tmp.1625) (let () (if (fixnum? tmp.1625) (if (fixnum? tmp.1624) (unsafe-fx< tmp.1624 tmp.1625) (error 100)) (error 101))))) (let ((safe-<.1623 (make-procedure L.safe-<.1623.73 2 0)) (swap.8 (make-procedure L.swap.8.74 2 2))) (begin (unsafe-procedure-set! swap.8 0 safe-<.1623) (unsafe-procedure-set! swap.8 1 swap.8) (call (unsafe-procedure-label L.swap.8.74) swap.8 1 2))))
+expected:           2
+src-interp:         interp-proc-exposed-lang-v9
+trg-interp:         interp-exprs-bits-lang-v8
+output-program:
+  (module (define L.swap.8.74 (lambda (c.2030 x.9 y.10) (let ((safe-<.1623 (mref c.2030 14)) (swap.8 (mref c.2030 22))) (if (!= (call (mref L.safe-<.1623.73 -2) safe-<.1623 y.10 x.9) 6) x.9 (let ((z.11 (call (mref L.swap.8.74 -2) swap.8 y.10 x.9))) z.11))))) (define L.safe-<.1623.73 (lambda (c.2029 tmp.1624 tmp.1625) (let () (if (= (bitwise-and tmp.1625 7) 0) (if (= (bitwise-and tmp.1624 7) 0) (if (< tmp.1624 tmp.1625) 14 6) 25662) 25918)))) (let ((safe-<.1623 (let ((tmp.2036 (+ (alloc 16) 2))) (begin (mset! tmp.2036 -2 L.safe-<.1623.73) (mset! tmp.2036 6 16) tmp.2036))) (swap.8 (let ((tmp.2037 (+ (alloc 32) 2))) (begin (mset! tmp.2037 -2 L.swap.8.74) (mset! tmp.2037 6 16) tmp.2037)))) (begin (mset! swap.8 14 safe-<.1623) (mset! swap.8 22 swap.8) (call (mref L.swap.8.74 -2) swap.8 8 16))))
+test-type:          "Checking output is interpretable"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:411:12
+params:             '(#<procedure:...est-suite/utils.rkt:412:13>)
+message:            "Exception raised"
+exception-message:
+  "+: contract violation\n  expected: number?\n  given: #<procedure:...c411/langs/base.rkt:499:8>"
+exception:
+  +: contract violation
+    expected: number?
+    given: #<procedure:...c411/langs/base.rkt:499:8>
+    context...:
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:465:0: mref
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:250:7
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > specify-representation suite
+FAILURE
+test-program:
+  (module (define L.safe-vector-init.1058.4 (lambda (c.1960 vec.1059 len.1060 i.1061) (let ((safe-vector-init.1058 (unsafe-procedure-ref c.1960 0))) (if (eq? len.1060 i.1061) vec.1059 (begin (unsafe-vector-set! vec.1059 i.1061 0) (call (unsafe-procedure-label L.safe-vector-init.1058.4) safe-vector-init.1058 vec.1059 len.1060 (unsafe-fx+ i.1061 1))))))) (define L.safe-vector-ref.1122.3 (lambda (c.1959 tmp.1123 tmp.1124) (let () (if (fixnum? tmp.1124) (if (vector? tmp.1123) (if (unsafe-fx>= tmp.1124 0) (if (unsafe-fx< tmp.1124 (unsafe-vector-length tmp.1123)) (unsafe-vector-ref tmp.1123 tmp.1124) (error 99)) (error 99)) (error 100)) (error 101))))) (define L.safe-vector-set!.1118.2 (lambda (c.1958 tmp.1119 tmp.1120 tmp.1121) (let () (if (fixnum? tmp.1120) (if (vector? tmp.1119) (if (unsafe-fx>= tmp.1120 0) (if (unsafe-fx< tmp.1120 (unsafe-vector-length tmp.1119)) (begin (unsafe-vector-set! tmp.1119 tmp.1120 tmp.1121) (void)) (error 99)) (error 99)) (error 100)) (error 101))))) (define L.safe-make-vector.1113.1 (lambda (c.1957 tmp.1114) (let ((safe-vector-init.1058 (unsafe-procedure-ref c.1957 0))) (if (fixnum? tmp.1114) (if (unsafe-fx>= tmp.1114 0) (let ((tmp.1115 (unsafe-make-vector tmp.1114))) (call (unsafe-procedure-label L.safe-vector-init.1058.4) safe-vector-init.1058 tmp.1115 tmp.1114 0)) (error 99)) (error 100))))) (let ((safe-make-vector.1113 (make-procedure L.safe-make-vector.1113.1 1 1)) (safe-vector-set!.1118 (make-procedure L.safe-vector-set!.1118.2 3 0)) (safe-vector-ref.1122 (make-procedure L.safe-vector-ref.1122.3 2 0)) (safe-vector-init.1058 (make-procedure L.safe-vector-init.1058.4 3 1))) (begin (unsafe-procedure-set! safe-vector-init.1058 0 safe-vector-init.1058) (unsafe-procedure-set! safe-make-vector.1113 0 safe-vector-init.1058) (let ((x.1.84 (call (unsafe-procedure-label L.safe-make-vector.1113.1) safe-make-vector.1113 3))) (let ((x.2.85 (call (unsafe-procedure-label L.safe-vector-set!.1118.2) safe-vector-set!.1118 x.1.84 0 1))) (let ((x.3.86 (call (unsafe-procedure-label L.safe-vector-set!.1118.2) safe-vector-set!.1118 x.1.84 1 2))) (let ((x.4.87 (call (unsafe-procedure-label L.safe-vector-set!.1118.2) safe-vector-set!.1118 x.1.84 2 3))) (call (unsafe-procedure-label L.safe-vector-ref.1122.3) safe-vector-ref.1122 x.1.84 2))))))))
+expected:           3
+src-interp:         interp-proc-exposed-lang-v9
+trg-interp:         interp-exprs-bits-lang-v8
+output-program:
+  (module (define L.safe-vector-init.1058.4 (lambda (c.1960 vec.1059 len.1060 i.1061) (let ((safe-vector-init.1058 (mref c.1960 14))) (if (= len.1060 i.1061) vec.1059 (begin (mset! vec.1059 (+ (* (arithmetic-shift-right i.1061 3) 8) 5) 0) (call (mref L.safe-vector-init.1058.4 -2) safe-vector-init.1058 vec.1059 len.1060 (+ i.1061 8))))))) (define L.safe-vector-ref.1122.3 (lambda (c.1959 tmp.1123 tmp.1124) (let () (if (= (bitwise-and tmp.1124 7) 0) (if (= (bitwise-and tmp.1123 7) 3) (if (>= tmp.1124 0) (if (< tmp.1124 (mref tmp.1123 -3)) (mref tmp.1123 (+ (* (arithmetic-shift-right tmp.1124 3) 8) 5)) 25406) 25406) 25662) 25918)))) (define L.safe-vector-set!.1118.2 (lambda (c.1958 tmp.1119 tmp.1120 tmp.1121) (let () (if (= (bitwise-and tmp.1120 7) 0) (if (= (bitwise-and tmp.1119 7) 3) (if (>= tmp.1120 0) (if (< tmp.1120 (mref tmp.1119 -3)) (begin (mset! tmp.1119 (+ (* (arithmetic-shift-right tmp.1120 3) 8) 5) tmp.1121) 30) 25406) 25406) 25662) 25918)))) (define L.safe-make-vector.1113.1 (lambda (c.1957 tmp.1114) (let ((safe-vector-init.1058 (mref c.1957 14))) (if (= (bitwise-and tmp.1114 7) 0) (if (>= tmp.1114 0) (let ((tmp.1115 (let ((tmp.2046 (+ (alloc (* (+ 1 (arithmetic-shift-right tmp.1114 3)) 8)) 3))) (begin (mset! tmp.2046 -3 tmp.1114) tmp.2046)))) (call (mref L.safe-vector-init.1058.4 -2) safe-vector-init.1058 tmp.1115 tmp.1114 0)) 25406) 25662)))) (let ((safe-make-vector.1113 (let ((tmp.2047 (+ (alloc 24) 2))) (begin (mset! tmp.2047 -2 L.safe-make-vector.1113.1) (mset! tmp.2047 6 8) tmp.2047))) (safe-vector-set!.1118 (let ((tmp.2048 (+ (alloc 16) 2))) (begin (mset! tmp.2048 -2 L.safe-vector-set!.1118.2) (mset! tmp.2048 6 24) tmp.2048))) (safe-vector-ref.1122 (let ((tmp.2049 (+ (alloc 16) 2))) (begin (mset! tmp.2049 -2 L.safe-vector-ref.1122.3) (mset! tmp.2049 6 16) tmp.2049))) (safe-vector-init.1058 (let ((tmp.2050 (+ (alloc 24) 2))) (begin (mset! tmp.2050 -2 L.safe-vector-init.1058.4) (mset! tmp.2050 6 24) tmp.2050)))) (begin (mset! safe-vector-init.1058 14 safe-vector-init.1058) (mset! safe-make-vector.1113 14 safe-vector-init.1058) (let ((x.1.84 (call (mref L.safe-make-vector.1113.1 -2) safe-make-vector.1113 24))) (let ((x.2.85 (call (mref L.safe-vector-set!.1118.2 -2) safe-vector-set!.1118 x.1.84 0 8))) (let ((x.3.86 (call (mref L.safe-vector-set!.1118.2 -2) safe-vector-set!.1118 x.1.84 8 16))) (let ((x.4.87 (call (mref L.safe-vector-set!.1118.2 -2) safe-vector-set!.1118 x.1.84 16 24))) (call (mref L.safe-vector-ref.1122.3 -2) safe-vector-ref.1122 x.1.84 16))))))))
+test-type:          "Checking output is interpretable"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:411:12
+params:             '(#<procedure:...est-suite/utils.rkt:412:13>)
+message:            "Exception raised"
+exception-message:
+  "+: contract violation\n  expected: number?\n  given: #<procedure:...c411/langs/base.rkt:499:8>"
+exception:
+  +: contract violation
+    expected: number?
+    given: #<procedure:...c411/langs/base.rkt:499:8>
+    context...:
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:465:0: mref
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:250:7
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > specify-representation suite
+FAILURE
+test-program:
+  (module (define L.fact.73.58 (lambda (c.2014 x.77) (let ((safe--.171 (unsafe-procedure-ref c.2014 0)) (safe-*.165 (unsafe-procedure-ref c.2014 1)) (fact.73 (unsafe-procedure-ref c.2014 2)) (identity.72 (unsafe-procedure-ref c.2014 3)) (safe-eq?.177 (unsafe-procedure-ref c.2014 4))) (let ((x.78 (call (unsafe-procedure-label L.identity.72.57) identity.72 x.77)) (y.79 (call (unsafe-procedure-label L.identity.72.57) identity.72 0))) (if (call (unsafe-procedure-label L.safe-eq?.177.53) safe-eq?.177 x.78 y.79) (let ((z.80 (call (unsafe-procedure-label L.identity.72.57) identity.72 1))) z.80) (let ((n.81 (call (unsafe-procedure-label L.identity.72.57) identity.72 1))) (let ((z.82 (call (unsafe-procedure-label L.safe--.171.54) safe--.171 x.78 n.81))) (let ((y.83 (call (unsafe-procedure-label L.fact.73.58) fact.73 z.82))) (call (unsafe-procedure-label L.safe-*.165.56) safe-*.165 x.78 y.83))))))))) (define L.identity.72.57 (lambda (c.2013 x.74) (let ((safe-eq?.177 (unsafe-procedure-ref c.2013 0)) (safe--.171 (unsafe-procedure-ref c.2013 1)) (safe-+.168 (unsafe-procedure-ref c.2013 2)) (identity.72 (unsafe-procedure-ref c.2013 3))) (if (call (unsafe-procedure-label L.safe-eq?.177.53) safe-eq?.177 x.74 0) 0 (let ((y.75 (call (unsafe-procedure-label L.safe--.171.54) safe--.171 x.74 1))) (let ((x.76 (call (unsafe-procedure-label L.identity.72.57) identity.72 y.75))) (call (unsafe-procedure-label L.safe-+.168.55) safe-+.168 1 x.76))))))) (define L.safe-*.165.56 (lambda (c.2012 tmp.166 tmp.167) (let () (if (fixnum? tmp.167) (if (fixnum? tmp.166) (unsafe-fx* tmp.166 tmp.167) (error 100)) (error 101))))) (define L.safe-+.168.55 (lambda (c.2011 tmp.169 tmp.170) (let () (if (fixnum? tmp.170) (if (fixnum? tmp.169) (unsafe-fx+ tmp.169 tmp.170) (error 100)) (error 101))))) (define L.safe--.171.54 (lambda (c.2010 tmp.172 tmp.173) (let () (if (fixnum? tmp.173) (if (fixnum? tmp.172) (unsafe-fx- tmp.172 tmp.173) (error 100)) (error 101))))) (define L.safe-eq?.177.53 (lambda (c.2009 tmp.178 tmp.179) (let () (eq? tmp.178 tmp.179)))) (let ((safe-eq?.177 (make-procedure L.safe-eq?.177.53 2 0)) (safe--.171 (make-procedure L.safe--.171.54 2 0)) (safe-+.168 (make-procedure L.safe-+.168.55 2 0)) (safe-*.165 (make-procedure L.safe-*.165.56 2 0)) (identity.72 (make-procedure L.identity.72.57 1 4)) (fact.73 (make-procedure L.fact.73.58 1 5))) (begin (unsafe-procedure-set! fact.73 0 safe--.171) (unsafe-procedure-set! fact.73 1 safe-*.165) (unsafe-procedure-set! fact.73 2 fact.73) (unsafe-procedure-set! fact.73 3 identity.72) (unsafe-procedure-set! fact.73 4 safe-eq?.177) (unsafe-procedure-set! identity.72 0 safe-eq?.177) (unsafe-procedure-set! identity.72 1 safe--.171) (unsafe-procedure-set! identity.72 2 safe-+.168) (unsafe-procedure-set! identity.72 3 identity.72) (call (unsafe-procedure-label L.fact.73.58) fact.73 5))))
+expected:           120
+src-interp:         interp-proc-exposed-lang-v9
+trg-interp:         interp-exprs-bits-lang-v8
+output-program:
+  (module (define L.fact.73.58 (lambda (c.2014 x.77) (let ((safe--.171 (mref c.2014 14)) (safe-*.165 (mref c.2014 22)) (fact.73 (mref c.2014 30)) (identity.72 (mref c.2014 38)) (safe-eq?.177 (mref c.2014 46))) (let ((x.78 (call (mref L.identity.72.57 -2) identity.72 x.77)) (y.79 (call (mref L.identity.72.57 -2) identity.72 0))) (if (!= (call (mref L.safe-eq?.177.53 -2) safe-eq?.177 x.78 y.79) 6) (let ((z.80 (call (mref L.identity.72.57 -2) identity.72 8))) z.80) (let ((n.81 (call (mref L.identity.72.57 -2) identity.72 8))) (let ((z.82 (call (mref L.safe--.171.54 -2) safe--.171 x.78 n.81))) (let ((y.83 (call (mref L.fact.73.58 -2) fact.73 z.82))) (call (mref L.safe-*.165.56 -2) safe-*.165 x.78 y.83))))))))) (define L.identity.72.57 (lambda (c.2013 x.74) (let ((safe-eq?.177 (mref c.2013 14)) (safe--.171 (mref c.2013 22)) (safe-+.168 (mref c.2013 30)) (identity.72 (mref c.2013 38))) (if (!= (call (mref L.safe-eq?.177.53 -2) safe-eq?.177 x.74 0) 6) 0 (let ((y.75 (call (mref L.safe--.171.54 -2) safe--.171 x.74 8))) (let ((x.76 (call (mref L.identity.72.57 -2) identity.72 y.75))) (call (mref L.safe-+.168.55 -2) safe-+.168 8 x.76))))))) (define L.safe-*.165.56 (lambda (c.2012 tmp.166 tmp.167) (let () (if (= (bitwise-and tmp.167 7) 0) (if (= (bitwise-and tmp.166 7) 0) (* tmp.166 (arithmetic-shift-right tmp.167 3)) 25662) 25918)))) (define L.safe-+.168.55 (lambda (c.2011 tmp.169 tmp.170) (let () (if (= (bitwise-and tmp.170 7) 0) (if (= (bitwise-and tmp.169 7) 0) (+ tmp.169 tmp.170) 25662) 25918)))) (define L.safe--.171.54 (lambda (c.2010 tmp.172 tmp.173) (let () (if (= (bitwise-and tmp.173 7) 0) (if (= (bitwise-and tmp.172 7) 0) (- tmp.172 tmp.173) 25662) 25918)))) (define L.safe-eq?.177.53 (lambda (c.2009 tmp.178 tmp.179) (let () (if (= tmp.178 tmp.179) 14 6)))) (let ((safe-eq?.177 (let ((tmp.2051 (+ (alloc 16) 2))) (begin (mset! tmp.2051 -2 L.safe-eq?.177.53) (mset! tmp.2051 6 16) tmp.2051))) (safe--.171 (let ((tmp.2052 (+ (alloc 16) 2))) (begin (mset! tmp.2052 -2 L.safe--.171.54) (mset! tmp.2052 6 16) tmp.2052))) (safe-+.168 (let ((tmp.2053 (+ (alloc 16) 2))) (begin (mset! tmp.2053 -2 L.safe-+.168.55) (mset! tmp.2053 6 16) tmp.2053))) (safe-*.165 (let ((tmp.2054 (+ (alloc 16) 2))) (begin (mset! tmp.2054 -2 L.safe-*.165.56) (mset! tmp.2054 6 16) tmp.2054))) (identity.72 (let ((tmp.2055 (+ (alloc 48) 2))) (begin (mset! tmp.2055 -2 L.identity.72.57) (mset! tmp.2055 6 8) tmp.2055))) (fact.73 (let ((tmp.2056 (+ (alloc 56) 2))) (begin (mset! tmp.2056 -2 L.fact.73.58) (mset! tmp.2056 6 8) tmp.2056)))) (begin (mset! fact.73 14 safe--.171) (mset! fact.73 22 safe-*.165) (mset! fact.73 30 fact.73) (mset! fact.73 38 identity.72) (mset! fact.73 46 safe-eq?.177) (mset! identity.72 14 safe-eq?.177) (mset! identity.72 22 safe--.171) (mset! identity.72 30 safe-+.168) (mset! identity.72 38 identity.72) (call (mref L.fact.73.58 -2) fact.73 40))))
+test-type:          "Checking output is interpretable"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:411:12
+params:             '(#<procedure:...est-suite/utils.rkt:412:13>)
+message:            "Exception raised"
+exception-message:
+  "+: contract violation\n  expected: number?\n  given: #<procedure:...c411/langs/base.rkt:499:8>"
+exception:
+  +: contract violation
+    expected: number?
+    given: #<procedure:...c411/langs/base.rkt:499:8>
+    context...:
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:465:0: mref
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:250:7
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > specify-representation suite
+FAILURE
+test-program:
+  (module (define L.fib_loop.12.19 (lambda (c.1975 n.13 acc1.14 acc2.15) (let ((safe-eq?.522 (unsafe-procedure-ref c.1975 0)) (safe-+.513 (unsafe-procedure-ref c.1975 1)) (fib_loop.12 (unsafe-procedure-ref c.1975 2))) (if (call (unsafe-procedure-label L.safe-eq?.522.17) safe-eq?.522 n.13 0) acc1.14 (if (call (unsafe-procedure-label L.safe-eq?.522.17) safe-eq?.522 n.13 1) acc2.15 (let ((new-n.16 (call (unsafe-procedure-label L.safe-+.513.18) safe-+.513 n.13 -1))) (let ((new-acc2.17 (call (unsafe-procedure-label L.safe-+.513.18) safe-+.513 acc1.14 acc2.15))) (call (unsafe-procedure-label L.fib_loop.12.19) fib_loop.12 new-n.16 acc2.15 new-acc2.17)))))))) (define L.safe-+.513.18 (lambda (c.1974 tmp.514 tmp.515) (let () (if (fixnum? tmp.515) (if (fixnum? tmp.514) (unsafe-fx+ tmp.514 tmp.515) (error 100)) (error 101))))) (define L.safe-eq?.522.17 (lambda (c.1973 tmp.523 tmp.524) (let () (eq? tmp.523 tmp.524)))) (let ((safe-eq?.522 (make-procedure L.safe-eq?.522.17 2 0)) (safe-+.513 (make-procedure L.safe-+.513.18 2 0)) (fib_loop.12 (make-procedure L.fib_loop.12.19 3 3))) (begin (unsafe-procedure-set! fib_loop.12 0 safe-eq?.522) (unsafe-procedure-set! fib_loop.12 1 safe-+.513) (unsafe-procedure-set! fib_loop.12 2 fib_loop.12) (call (unsafe-procedure-label L.fib_loop.12.19) fib_loop.12 5 0 1))))
+expected:           5
+src-interp:         interp-proc-exposed-lang-v9
+trg-interp:         interp-exprs-bits-lang-v8
+output-program:
+  (module (define L.fib_loop.12.19 (lambda (c.1975 n.13 acc1.14 acc2.15) (let ((safe-eq?.522 (mref c.1975 14)) (safe-+.513 (mref c.1975 22)) (fib_loop.12 (mref c.1975 30))) (if (!= (call (mref L.safe-eq?.522.17 -2) safe-eq?.522 n.13 0) 6) acc1.14 (if (!= (call (mref L.safe-eq?.522.17 -2) safe-eq?.522 n.13 8) 6) acc2.15 (let ((new-n.16 (call (mref L.safe-+.513.18 -2) safe-+.513 n.13 -8))) (let ((new-acc2.17 (call (mref L.safe-+.513.18 -2) safe-+.513 acc1.14 acc2.15))) (call (mref L.fib_loop.12.19 -2) fib_loop.12 new-n.16 acc2.15 new-acc2.17)))))))) (define L.safe-+.513.18 (lambda (c.1974 tmp.514 tmp.515) (let () (if (= (bitwise-and tmp.515 7) 0) (if (= (bitwise-and tmp.514 7) 0) (+ tmp.514 tmp.515) 25662) 25918)))) (define L.safe-eq?.522.17 (lambda (c.1973 tmp.523 tmp.524) (let () (if (= tmp.523 tmp.524) 14 6)))) (let ((safe-eq?.522 (let ((tmp.2063 (+ (alloc 16) 2))) (begin (mset! tmp.2063 -2 L.safe-eq?.522.17) (mset! tmp.2063 6 16) tmp.2063))) (safe-+.513 (let ((tmp.2064 (+ (alloc 16) 2))) (begin (mset! tmp.2064 -2 L.safe-+.513.18) (mset! tmp.2064 6 16) tmp.2064))) (fib_loop.12 (let ((tmp.2065 (+ (alloc 40) 2))) (begin (mset! tmp.2065 -2 L.fib_loop.12.19) (mset! tmp.2065 6 24) tmp.2065)))) (begin (mset! fib_loop.12 14 safe-eq?.522) (mset! fib_loop.12 22 safe-+.513) (mset! fib_loop.12 30 fib_loop.12) (call (mref L.fib_loop.12.19 -2) fib_loop.12 40 0 8))))
+test-type:          "Checking output is interpretable"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:411:12
+params:             '(#<procedure:...est-suite/utils.rkt:412:13>)
+message:            "Exception raised"
+exception-message:
+  "+: contract violation\n  expected: number?\n  given: #<procedure:...c411/langs/base.rkt:499:8>"
+exception:
+  +: contract violation
+    expected: number?
+    given: #<procedure:...c411/langs/base.rkt:499:8>
+    context...:
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:465:0: mref
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:250:7
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > specify-representation suite
+FAILURE
+test-program:
+  (module (define L.safe-vector-init.989.71 (lambda (c.2027 vec.990 len.991 i.992) (let ((safe-vector-init.989 (unsafe-procedure-ref c.2027 0))) (if (eq? len.991 i.992) vec.990 (begin (unsafe-vector-set! vec.990 i.992 0) (call (unsafe-procedure-label L.safe-vector-init.989.71) safe-vector-init.989 vec.990 len.991 (unsafe-fx+ i.992 1))))))) (define L.safe-make-vector.1044.70 (lambda (c.2026 tmp.1045) (let ((safe-vector-init.989 (unsafe-procedure-ref c.2026 0))) (if (fixnum? tmp.1045) (if (unsafe-fx>= tmp.1045 0) (let ((tmp.1046 (unsafe-make-vector tmp.1045))) (call (unsafe-procedure-label L.safe-vector-init.989.71) safe-vector-init.989 tmp.1046 tmp.1045 0)) (error 99)) (error 100))))) (let ((safe-make-vector.1044 (make-procedure L.safe-make-vector.1044.70 1 1)) (safe-vector-init.989 (make-procedure L.safe-vector-init.989.71 3 1))) (begin (unsafe-procedure-set! safe-vector-init.989 0 safe-vector-init.989) (unsafe-procedure-set! safe-make-vector.1044 0 safe-vector-init.989) (call (unsafe-procedure-label L.safe-make-vector.1044.70) safe-make-vector.1044 0))))
+expected:           #()
+src-interp:         interp-proc-exposed-lang-v9
+trg-interp:         interp-exprs-bits-lang-v8
+output-program:
+  (module (define L.safe-vector-init.989.71 (lambda (c.2027 vec.990 len.991 i.992) (let ((safe-vector-init.989 (mref c.2027 14))) (if (= len.991 i.992) vec.990 (begin (mset! vec.990 (+ (* (arithmetic-shift-right i.992 3) 8) 5) 0) (call (mref L.safe-vector-init.989.71 -2) safe-vector-init.989 vec.990 len.991 (+ i.992 8))))))) (define L.safe-make-vector.1044.70 (lambda (c.2026 tmp.1045) (let ((safe-vector-init.989 (mref c.2026 14))) (if (= (bitwise-and tmp.1045 7) 0) (if (>= tmp.1045 0) (let ((tmp.1046 (let ((tmp.2073 (+ (alloc (* (+ 1 (arithmetic-shift-right tmp.1045 3)) 8)) 3))) (begin (mset! tmp.2073 -3 tmp.1045) tmp.2073)))) (call (mref L.safe-vector-init.989.71 -2) safe-vector-init.989 tmp.1046 tmp.1045 0)) 25406) 25662)))) (let ((safe-make-vector.1044 (let ((tmp.2074 (+ (alloc 24) 2))) (begin (mset! tmp.2074 -2 L.safe-make-vector.1044.70) (mset! tmp.2074 6 8) tmp.2074))) (safe-vector-init.989 (let ((tmp.2075 (+ (alloc 24) 2))) (begin (mset! tmp.2075 -2 L.safe-vector-init.989.71) (mset! tmp.2075 6 24) tmp.2075)))) (begin (mset! safe-vector-init.989 14 safe-vector-init.989) (mset! safe-make-vector.1044 14 safe-vector-init.989) (call (mref L.safe-make-vector.1044.70 -2) safe-make-vector.1044 0))))
+test-type:          "Checking output is interpretable"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:411:12
+params:             '(#<procedure:...est-suite/utils.rkt:412:13>)
+message:            "Exception raised"
+exception-message:
+  "+: contract violation\n  expected: number?\n  given: #<procedure:...c411/langs/base.rkt:499:8>"
+exception:
+  +: contract violation
+    expected: number?
+    given: #<procedure:...c411/langs/base.rkt:499:8>
+    context...:
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:465:0: mref
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:250:7
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > specify-representation suite
+FAILURE
+test-program:
+  (module (define L.fact_loop.5.8 (lambda (c.1964 n.6 acc.7) (let ((safe-eq?.798 (unsafe-procedure-ref c.1964 0)) (safe-*.786 (unsafe-procedure-ref c.1964 1)) (safe--.792 (unsafe-procedure-ref c.1964 2)) (fact_loop.5 (unsafe-procedure-ref c.1964 3))) (if (call (unsafe-procedure-label L.safe-eq?.798.5) safe-eq?.798 n.6 0) acc.7 (call (unsafe-procedure-label L.fact_loop.5.8) fact_loop.5 (call (unsafe-procedure-label L.safe--.792.6) safe--.792 n.6 1) (call (unsafe-procedure-label L.safe-*.786.7) safe-*.786 acc.7 n.6)))))) (define L.safe-*.786.7 (lambda (c.1963 tmp.787 tmp.788) (let () (if (fixnum? tmp.788) (if (fixnum? tmp.787) (unsafe-fx* tmp.787 tmp.788) (error 100)) (error 101))))) (define L.safe--.792.6 (lambda (c.1962 tmp.793 tmp.794) (let () (if (fixnum? tmp.794) (if (fixnum? tmp.793) (unsafe-fx- tmp.793 tmp.794) (error 100)) (error 101))))) (define L.safe-eq?.798.5 (lambda (c.1961 tmp.799 tmp.800) (let () (eq? tmp.799 tmp.800)))) (let ((safe-eq?.798 (make-procedure L.safe-eq?.798.5 2 0)) (safe--.792 (make-procedure L.safe--.792.6 2 0)) (safe-*.786 (make-procedure L.safe-*.786.7 2 0)) (fact_loop.5 (make-procedure L.fact_loop.5.8 2 4))) (begin (unsafe-procedure-set! fact_loop.5 0 safe-eq?.798) (unsafe-procedure-set! fact_loop.5 1 safe-*.786) (unsafe-procedure-set! fact_loop.5 2 safe--.792) (unsafe-procedure-set! fact_loop.5 3 fact_loop.5) (call (unsafe-procedure-label L.fact_loop.5.8) fact_loop.5 5 1))))
+expected:           120
+src-interp:         interp-proc-exposed-lang-v9
+trg-interp:         interp-exprs-bits-lang-v8
+output-program:
+  (module (define L.fact_loop.5.8 (lambda (c.1964 n.6 acc.7) (let ((safe-eq?.798 (mref c.1964 14)) (safe-*.786 (mref c.1964 22)) (safe--.792 (mref c.1964 30)) (fact_loop.5 (mref c.1964 38))) (if (!= (call (mref L.safe-eq?.798.5 -2) safe-eq?.798 n.6 0) 6) acc.7 (call (mref L.fact_loop.5.8 -2) fact_loop.5 (call (mref L.safe--.792.6 -2) safe--.792 n.6 8) (call (mref L.safe-*.786.7 -2) safe-*.786 acc.7 n.6)))))) (define L.safe-*.786.7 (lambda (c.1963 tmp.787 tmp.788) (let () (if (= (bitwise-and tmp.788 7) 0) (if (= (bitwise-and tmp.787 7) 0) (* tmp.787 (arithmetic-shift-right tmp.788 3)) 25662) 25918)))) (define L.safe--.792.6 (lambda (c.1962 tmp.793 tmp.794) (let () (if (= (bitwise-and tmp.794 7) 0) (if (= (bitwise-and tmp.793 7) 0) (- tmp.793 tmp.794) 25662) 25918)))) (define L.safe-eq?.798.5 (lambda (c.1961 tmp.799 tmp.800) (let () (if (= tmp.799 tmp.800) 14 6)))) (let ((safe-eq?.798 (let ((tmp.2077 (+ (alloc 16) 2))) (begin (mset! tmp.2077 -2 L.safe-eq?.798.5) (mset! tmp.2077 6 16) tmp.2077))) (safe--.792 (let ((tmp.2078 (+ (alloc 16) 2))) (begin (mset! tmp.2078 -2 L.safe--.792.6) (mset! tmp.2078 6 16) tmp.2078))) (safe-*.786 (let ((tmp.2079 (+ (alloc 16) 2))) (begin (mset! tmp.2079 -2 L.safe-*.786.7) (mset! tmp.2079 6 16) tmp.2079))) (fact_loop.5 (let ((tmp.2080 (+ (alloc 48) 2))) (begin (mset! tmp.2080 -2 L.fact_loop.5.8) (mset! tmp.2080 6 16) tmp.2080)))) (begin (mset! fact_loop.5 14 safe-eq?.798) (mset! fact_loop.5 22 safe-*.786) (mset! fact_loop.5 30 safe--.792) (mset! fact_loop.5 38 fact_loop.5) (call (mref L.fact_loop.5.8 -2) fact_loop.5 40 8))))
+test-type:          "Checking output is interpretable"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:411:12
+params:             '(#<procedure:...est-suite/utils.rkt:412:13>)
+message:            "Exception raised"
+exception-message:
+  "+: contract violation\n  expected: number?\n  given: #<procedure:...c411/langs/base.rkt:499:8>"
+exception:
+  +: contract violation
+    expected: number?
+    given: #<procedure:...c411/langs/base.rkt:499:8>
+    context...:
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:465:0: mref
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:250:7
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > specify-representation suite
+FAILURE
+test-program:
+  (module (define L.map.68.40 (lambda (c.1996 f.69 ls.70) (let ((safe-eq?.1350 (unsafe-procedure-ref c.1996 0)) (map.68 (unsafe-procedure-ref c.1996 1)) (safe-cdr.1387 (unsafe-procedure-ref c.1996 2)) (safe-car.1385 (unsafe-procedure-ref c.1996 3)) (safe-cons.1382 (unsafe-procedure-ref c.1996 4))) (if (call (unsafe-procedure-label L.safe-eq?.1350.37) safe-eq?.1350 empty ls.70) empty (call (unsafe-procedure-label L.safe-cons.1382.35) safe-cons.1382 (if (procedure? f.69) (if (eq? (unsafe-procedure-arity f.69) 1) (call (unsafe-procedure-label f.69) f.69 (call (unsafe-procedure-label L.safe-car.1385.39) safe-car.1385 ls.70)) (error 125)) (error 126)) (call (unsafe-procedure-label L.map.68.40) map.68 f.69 (call (unsafe-procedure-label L.safe-cdr.1387.36) safe-cdr.1387 ls.70))))))) (define L.safe-car.1385.39 (lambda (c.1995 tmp.1386) (let () (if (pair? tmp.1386) (unsafe-car tmp.1386) (error 100))))) (define L.safe-+.1341.38 (lambda (c.1994 tmp.1342 tmp.1343) (let () (if (fixnum? tmp.1343) (if (fixnum? tmp.1342) (unsafe-fx+ tmp.1342 tmp.1343) (error 100)) (error 101))))) (define L.safe-eq?.1350.37 (lambda (c.1993 tmp.1351 tmp.1352) (let () (eq? tmp.1351 tmp.1352)))) (define L.safe-cdr.1387.36 (lambda (c.1992 tmp.1388) (let () (if (pair? tmp.1388) (unsafe-cdr tmp.1388) (error 100))))) (define L.safe-cons.1382.35 (lambda (c.1991 tmp.1383 tmp.1384) (let () (cons tmp.1383 tmp.1384)))) (define L.lambda.1955.41 (lambda (c.1997 x.71) (let ((safe-+.1341 (unsafe-procedure-ref c.1997 0))) (call (unsafe-procedure-label L.safe-+.1341.38) safe-+.1341 1 x.71)))) (let ((safe-cons.1382 (make-procedure L.safe-cons.1382.35 2 0)) (safe-cdr.1387 (make-procedure L.safe-cdr.1387.36 1 0)) (safe-eq?.1350 (make-procedure L.safe-eq?.1350.37 2 0)) (safe-+.1341 (make-procedure L.safe-+.1341.38 2 0)) (safe-car.1385 (make-procedure L.safe-car.1385.39 1 0)) (map.68 (make-procedure L.map.68.40 2 5))) (begin (unsafe-procedure-set! map.68 0 safe-eq?.1350) (unsafe-procedure-set! map.68 1 map.68) (unsafe-procedure-set! map.68 2 safe-cdr.1387) (unsafe-procedure-set! map.68 3 safe-car.1385) (unsafe-procedure-set! map.68 4 safe-cons.1382) (call (unsafe-procedure-label L.map.68.40) map.68 (let ((lambda.1955 (make-procedure L.lambda.1955.41 1 1))) (begin (unsafe-procedure-set! lambda.1955 0 safe-+.1341) lambda.1955)) (call (unsafe-procedure-label L.safe-cons.1382.35) safe-cons.1382 1 empty)))))
+expected:           (2)
+src-interp:         interp-proc-exposed-lang-v9
+trg-interp:         interp-exprs-bits-lang-v8
+output-program:
+  (module (define L.map.68.40 (lambda (c.1996 f.69 ls.70) (let ((safe-eq?.1350 (mref c.1996 14)) (map.68 (mref c.1996 22)) (safe-cdr.1387 (mref c.1996 30)) (safe-car.1385 (mref c.1996 38)) (safe-cons.1382 (mref c.1996 46))) (if (!= (call (mref L.safe-eq?.1350.37 -2) safe-eq?.1350 22 ls.70) 6) 22 (call (mref L.safe-cons.1382.35 -2) safe-cons.1382 (if (= (bitwise-and f.69 7) 2) (if (= (mref f.69 6) 8) (call (mref f.69 -2) f.69 (call (mref L.safe-car.1385.39 -2) safe-car.1385 ls.70)) 32062) 32318) (call (mref L.map.68.40 -2) map.68 f.69 (call (mref L.safe-cdr.1387.36 -2) safe-cdr.1387 ls.70))))))) (define L.safe-car.1385.39 (lambda (c.1995 tmp.1386) (let () (if (= (bitwise-and tmp.1386 7) 1) (mref tmp.1386 -1) 25662)))) (define L.safe-+.1341.38 (lambda (c.1994 tmp.1342 tmp.1343) (let () (if (= (bitwise-and tmp.1343 7) 0) (if (= (bitwise-and tmp.1342 7) 0) (+ tmp.1342 tmp.1343) 25662) 25918)))) (define L.safe-eq?.1350.37 (lambda (c.1993 tmp.1351 tmp.1352) (let () (if (= tmp.1351 tmp.1352) 14 6)))) (define L.safe-cdr.1387.36 (lambda (c.1992 tmp.1388) (let () (if (= (bitwise-and tmp.1388 7) 1) (mref tmp.1388 7) 25662)))) (define L.safe-cons.1382.35 (lambda (c.1991 tmp.1383 tmp.1384) (let () (let ((tmp.2097 (+ (alloc 16) 1))) (begin (mset! tmp.2097 -1 tmp.1383) (mset! tmp.2097 7 tmp.1384) tmp.2097))))) (define L.lambda.1955.41 (lambda (c.1997 x.71) (let ((safe-+.1341 (mref c.1997 14))) (call (mref L.safe-+.1341.38 -2) safe-+.1341 8 x.71)))) (let ((safe-cons.1382 (let ((tmp.2098 (+ (alloc 16) 2))) (begin (mset! tmp.2098 -2 L.safe-cons.1382.35) (mset! tmp.2098 6 16) tmp.2098))) (safe-cdr.1387 (let ((tmp.2099 (+ (alloc 16) 2))) (begin (mset! tmp.2099 -2 L.safe-cdr.1387.36) (mset! tmp.2099 6 8) tmp.2099))) (safe-eq?.1350 (let ((tmp.2100 (+ (alloc 16) 2))) (begin (mset! tmp.2100 -2 L.safe-eq?.1350.37) (mset! tmp.2100 6 16) tmp.2100))) (safe-+.1341 (let ((tmp.2101 (+ (alloc 16) 2))) (begin (mset! tmp.2101 -2 L.safe-+.1341.38) (mset! tmp.2101 6 16) tmp.2101))) (safe-car.1385 (let ((tmp.2102 (+ (alloc 16) 2))) (begin (mset! tmp.2102 -2 L.safe-car.1385.39) (mset! tmp.2102 6 8) tmp.2102))) (map.68 (let ((tmp.2103 (+ (alloc 56) 2))) (begin (mset! tmp.2103 -2 L.map.68.40) (mset! tmp.2103 6 16) tmp.2103)))) (begin (mset! map.68 14 safe-eq?.1350) (mset! map.68 22 map.68) (mset! map.68 30 safe-cdr.1387) (mset! map.68 38 safe-car.1385) (mset! map.68 46 safe-cons.1382) (call (mref L.map.68.40 -2) map.68 (let ((lambda.1955 (let ((tmp.2104 (+ (alloc 24) 2))) (begin (mset! tmp.2104 -2 L.lambda.1955.41) (mset! tmp.2104 6 8) tmp.2104)))) (begin (mset! lambda.1955 14 safe-+.1341) lambda.1955)) (call (mref L.safe-cons.1382.35 -2) safe-cons.1382 8 22)))))
+test-type:          "Checking output is interpretable"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:411:12
+params:             '(#<procedure:...est-suite/utils.rkt:412:13>)
+message:            "Exception raised"
+exception-message:
+  "+: contract violation\n  expected: number?\n  given: #<procedure:...c411/langs/base.rkt:499:8>"
+exception:
+  +: contract violation
+    expected: number?
+    given: #<procedure:...c411/langs/base.rkt:499:8>
+    context...:
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:465:0: mref
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:250:7
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > specify-representation suite
+FAILURE
+test-program:
+  (module (define L.safe-*.372.44 (lambda (c.2000 tmp.373 tmp.374) (let () (if (fixnum? tmp.374) (if (fixnum? tmp.373) (unsafe-fx* tmp.373 tmp.374) (error 100)) (error 101))))) (define L.safe-eq?.384.43 (lambda (c.1999 tmp.385 tmp.386) (let () (eq? tmp.385 tmp.386)))) (define L.safe-cons.416.42 (lambda (c.1998 tmp.417 tmp.418) (let () (cons tmp.417 tmp.418)))) (let ((safe-cons.416 (make-procedure L.safe-cons.416.42 2 0)) (safe-eq?.384 (make-procedure L.safe-eq?.384.43 2 0)) (safe-*.372 (make-procedure L.safe-*.372.44 2 0))) (call (unsafe-procedure-label L.safe-cons.416.42) safe-cons.416 (if (call (unsafe-procedure-label L.safe-eq?.384.43) safe-eq?.384 7 8) (call (unsafe-procedure-label L.safe-*.372.44) safe-*.372 7 8) (call (unsafe-procedure-label L.safe-*.372.44) safe-*.372 8 7)) empty)))
+expected:           (56)
+src-interp:         interp-proc-exposed-lang-v9
+trg-interp:         interp-exprs-bits-lang-v8
+output-program:
+  (module (define L.safe-*.372.44 (lambda (c.2000 tmp.373 tmp.374) (let () (if (= (bitwise-and tmp.374 7) 0) (if (= (bitwise-and tmp.373 7) 0) (* tmp.373 (arithmetic-shift-right tmp.374 3)) 25662) 25918)))) (define L.safe-eq?.384.43 (lambda (c.1999 tmp.385 tmp.386) (let () (if (= tmp.385 tmp.386) 14 6)))) (define L.safe-cons.416.42 (lambda (c.1998 tmp.417 tmp.418) (let () (let ((tmp.2109 (+ (alloc 16) 1))) (begin (mset! tmp.2109 -1 tmp.417) (mset! tmp.2109 7 tmp.418) tmp.2109))))) (let ((safe-cons.416 (let ((tmp.2110 (+ (alloc 16) 2))) (begin (mset! tmp.2110 -2 L.safe-cons.416.42) (mset! tmp.2110 6 16) tmp.2110))) (safe-eq?.384 (let ((tmp.2111 (+ (alloc 16) 2))) (begin (mset! tmp.2111 -2 L.safe-eq?.384.43) (mset! tmp.2111 6 16) tmp.2111))) (safe-*.372 (let ((tmp.2112 (+ (alloc 16) 2))) (begin (mset! tmp.2112 -2 L.safe-*.372.44) (mset! tmp.2112 6 16) tmp.2112)))) (call (mref L.safe-cons.416.42 -2) safe-cons.416 (if (!= (call (mref L.safe-eq?.384.43 -2) safe-eq?.384 56 64) 6) (call (mref L.safe-*.372.44 -2) safe-*.372 56 64) (call (mref L.safe-*.372.44 -2) safe-*.372 64 56)) 22)))
+test-type:          "Checking output is interpretable"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:411:12
+params:             '(#<procedure:...est-suite/utils.rkt:412:13>)
+message:            "Exception raised"
+exception-message:
+  "+: contract violation\n  expected: number?\n  given: #<procedure:...c411/langs/base.rkt:499:8>"
+exception:
+  +: contract violation
+    expected: number?
+    given: #<procedure:...c411/langs/base.rkt:499:8>
+    context...:
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:465:0: mref
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:250:7
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > specify-representation suite
+FAILURE
+test-program:
+  (module (define L.id.24.9 (lambda (c.1965 x.25) (let () x.25))) (let ((id.24 (make-procedure L.id.24.9 1 0))) (let ((x.26 (call (unsafe-procedure-label L.id.24.9) id.24 5))) (call (unsafe-procedure-label L.id.24.9) id.24 x.26))))
+expected:           5
+src-interp:         interp-proc-exposed-lang-v9
+trg-interp:         interp-exprs-bits-lang-v8
+output-program:
+  (module (define L.id.24.9 (lambda (c.1965 x.25) (let () x.25))) (let ((id.24 (let ((tmp.2113 (+ (alloc 16) 2))) (begin (mset! tmp.2113 -2 L.id.24.9) (mset! tmp.2113 6 8) tmp.2113)))) (let ((x.26 (call (mref L.id.24.9 -2) id.24 40))) (call (mref L.id.24.9 -2) id.24 x.26))))
+test-type:          "Checking output is interpretable"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:411:12
+params:             '(#<procedure:...est-suite/utils.rkt:412:13>)
+message:            "Exception raised"
+exception-message:
+  "+: contract violation\n  expected: number?\n  given: #<procedure:...c411/langs/base.rkt:499:8>"
+exception:
+  +: contract violation
+    expected: number?
+    given: #<procedure:...c411/langs/base.rkt:499:8>
+    context...:
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:465:0: mref
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:250:7
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > specify-representation suite
+FAILURE
+test-program:
+  (module (define L.map.1.68 (lambda (c.2024 f.2 ls.3) (let ((safe-eq?.1281 (unsafe-procedure-ref c.2024 0)) (map.1 (unsafe-procedure-ref c.2024 1)) (safe-cdr.1318 (unsafe-procedure-ref c.2024 2)) (safe-car.1316 (unsafe-procedure-ref c.2024 3)) (safe-cons.1313 (unsafe-procedure-ref c.2024 4))) (if (call (unsafe-procedure-label L.safe-eq?.1281.65) safe-eq?.1281 empty ls.3) empty (call (unsafe-procedure-label L.safe-cons.1313.63) safe-cons.1313 (if (procedure? f.2) (if (eq? (unsafe-procedure-arity f.2) 1) (call (unsafe-procedure-label f.2) f.2 (call (unsafe-procedure-label L.safe-car.1316.67) safe-car.1316 ls.3)) (error 125)) (error 126)) (call (unsafe-procedure-label L.map.1.68) map.1 f.2 (call (unsafe-procedure-label L.safe-cdr.1318.64) safe-cdr.1318 ls.3))))))) (define L.safe-car.1316.67 (lambda (c.2023 tmp.1317) (let () (if (pair? tmp.1317) (unsafe-car tmp.1317) (error 100))))) (define L.safe-+.1272.66 (lambda (c.2022 tmp.1273 tmp.1274) (let () (if (fixnum? tmp.1274) (if (fixnum? tmp.1273) (unsafe-fx+ tmp.1273 tmp.1274) (error 100)) (error 101))))) (define L.safe-eq?.1281.65 (lambda (c.2021 tmp.1282 tmp.1283) (let () (eq? tmp.1282 tmp.1283)))) (define L.safe-cdr.1318.64 (lambda (c.2020 tmp.1319) (let () (if (pair? tmp.1319) (unsafe-cdr tmp.1319) (error 100))))) (define L.safe-cons.1313.63 (lambda (c.2019 tmp.1314 tmp.1315) (let () (cons tmp.1314 tmp.1315)))) (define L.lambda.1956.69 (lambda (c.2025 x.4) (let ((safe-+.1272 (unsafe-procedure-ref c.2025 0))) (call (unsafe-procedure-label L.safe-+.1272.66) safe-+.1272 1 x.4)))) (let ((safe-cons.1313 (make-procedure L.safe-cons.1313.63 2 0)) (safe-cdr.1318 (make-procedure L.safe-cdr.1318.64 1 0)) (safe-eq?.1281 (make-procedure L.safe-eq?.1281.65 2 0)) (safe-+.1272 (make-procedure L.safe-+.1272.66 2 0)) (safe-car.1316 (make-procedure L.safe-car.1316.67 1 0)) (map.1 (make-procedure L.map.1.68 2 5))) (begin (unsafe-procedure-set! map.1 0 safe-eq?.1281) (unsafe-procedure-set! map.1 1 map.1) (unsafe-procedure-set! map.1 2 safe-cdr.1318) (unsafe-procedure-set! map.1 3 safe-car.1316) (unsafe-procedure-set! map.1 4 safe-cons.1313) (call (unsafe-procedure-label L.map.1.68) map.1 (let ((lambda.1956 (make-procedure L.lambda.1956.69 1 1))) (begin (unsafe-procedure-set! lambda.1956 0 safe-+.1272) lambda.1956)) (call (unsafe-procedure-label L.safe-cons.1313.63) safe-cons.1313 1 (call (unsafe-procedure-label L.safe-cons.1313.63) safe-cons.1313 2 (call (unsafe-procedure-label L.safe-cons.1313.63) safe-cons.1313 3 empty)))))))
+expected:           (2 3 4)
+src-interp:         interp-proc-exposed-lang-v9
+trg-interp:         interp-exprs-bits-lang-v8
+output-program:
+  (module (define L.map.1.68 (lambda (c.2024 f.2 ls.3) (let ((safe-eq?.1281 (mref c.2024 14)) (map.1 (mref c.2024 22)) (safe-cdr.1318 (mref c.2024 30)) (safe-car.1316 (mref c.2024 38)) (safe-cons.1313 (mref c.2024 46))) (if (!= (call (mref L.safe-eq?.1281.65 -2) safe-eq?.1281 22 ls.3) 6) 22 (call (mref L.safe-cons.1313.63 -2) safe-cons.1313 (if (= (bitwise-and f.2 7) 2) (if (= (mref f.2 6) 8) (call (mref f.2 -2) f.2 (call (mref L.safe-car.1316.67 -2) safe-car.1316 ls.3)) 32062) 32318) (call (mref L.map.1.68 -2) map.1 f.2 (call (mref L.safe-cdr.1318.64 -2) safe-cdr.1318 ls.3))))))) (define L.safe-car.1316.67 (lambda (c.2023 tmp.1317) (let () (if (= (bitwise-and tmp.1317 7) 1) (mref tmp.1317 -1) 25662)))) (define L.safe-+.1272.66 (lambda (c.2022 tmp.1273 tmp.1274) (let () (if (= (bitwise-and tmp.1274 7) 0) (if (= (bitwise-and tmp.1273 7) 0) (+ tmp.1273 tmp.1274) 25662) 25918)))) (define L.safe-eq?.1281.65 (lambda (c.2021 tmp.1282 tmp.1283) (let () (if (= tmp.1282 tmp.1283) 14 6)))) (define L.safe-cdr.1318.64 (lambda (c.2020 tmp.1319) (let () (if (= (bitwise-and tmp.1319 7) 1) (mref tmp.1319 7) 25662)))) (define L.safe-cons.1313.63 (lambda (c.2019 tmp.1314 tmp.1315) (let () (let ((tmp.2114 (+ (alloc 16) 1))) (begin (mset! tmp.2114 -1 tmp.1314) (mset! tmp.2114 7 tmp.1315) tmp.2114))))) (define L.lambda.1956.69 (lambda (c.2025 x.4) (let ((safe-+.1272 (mref c.2025 14))) (call (mref L.safe-+.1272.66 -2) safe-+.1272 8 x.4)))) (let ((safe-cons.1313 (let ((tmp.2115 (+ (alloc 16) 2))) (begin (mset! tmp.2115 -2 L.safe-cons.1313.63) (mset! tmp.2115 6 16) tmp.2115))) (safe-cdr.1318 (let ((tmp.2116 (+ (alloc 16) 2))) (begin (mset! tmp.2116 -2 L.safe-cdr.1318.64) (mset! tmp.2116 6 8) tmp.2116))) (safe-eq?.1281 (let ((tmp.2117 (+ (alloc 16) 2))) (begin (mset! tmp.2117 -2 L.safe-eq?.1281.65) (mset! tmp.2117 6 16) tmp.2117))) (safe-+.1272 (let ((tmp.2118 (+ (alloc 16) 2))) (begin (mset! tmp.2118 -2 L.safe-+.1272.66) (mset! tmp.2118 6 16) tmp.2118))) (safe-car.1316 (let ((tmp.2119 (+ (alloc 16) 2))) (begin (mset! tmp.2119 -2 L.safe-car.1316.67) (mset! tmp.2119 6 8) tmp.2119))) (map.1 (let ((tmp.2120 (+ (alloc 56) 2))) (begin (mset! tmp.2120 -2 L.map.1.68) (mset! tmp.2120 6 16) tmp.2120)))) (begin (mset! map.1 14 safe-eq?.1281) (mset! map.1 22 map.1) (mset! map.1 30 safe-cdr.1318) (mset! map.1 38 safe-car.1316) (mset! map.1 46 safe-cons.1313) (call (mref L.map.1.68 -2) map.1 (let ((lambda.1956 (let ((tmp.2121 (+ (alloc 24) 2))) (begin (mset! tmp.2121 -2 L.lambda.1956.69) (mset! tmp.2121 6 8) tmp.2121)))) (begin (mset! lambda.1956 14 safe-+.1272) lambda.1956)) (call (mref L.safe-cons.1313.63 -2) safe-cons.1313 8 (call (mref L.safe-cons.1313.63 -2) safe-cons.1313 16 (call (mref L.safe-cons.1313.63 -2) safe-cons.1313 24 22)))))))
+test-type:          "Checking output is interpretable"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:411:12
+params:             '(#<procedure:...est-suite/utils.rkt:412:13>)
+message:            "Exception raised"
+exception-message:
+  "+: contract violation\n  expected: number?\n  given: #<procedure:...c411/langs/base.rkt:499:8>"
+exception:
+  +: contract violation
+    expected: number?
+    given: #<procedure:...c411/langs/base.rkt:499:8>
+    context...:
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:465:0: mref
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:250:7
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > specify-representation suite
+FAILURE
+test-program:
+  (module (define L.safe-cdr.352.34 (lambda (c.1990 tmp.353) (let () (if (pair? tmp.353) (unsafe-cdr tmp.353) (error 100))))) (define L.safe-cons.347.33 (lambda (c.1989 tmp.348 tmp.349) (let () (cons tmp.348 tmp.349)))) (let ((safe-cons.347 (make-procedure L.safe-cons.347.33 2 0)) (safe-cdr.352 (make-procedure L.safe-cdr.352.34 1 0))) (call (unsafe-procedure-label L.safe-cdr.352.34) safe-cdr.352 (call (unsafe-procedure-label L.safe-cons.347.33) safe-cons.347 7 empty))))
+expected:           ()
+src-interp:         interp-proc-exposed-lang-v9
+trg-interp:         interp-exprs-bits-lang-v8
+output-program:
+  (module (define L.safe-cdr.352.34 (lambda (c.1990 tmp.353) (let () (if (= (bitwise-and tmp.353 7) 1) (mref tmp.353 7) 25662)))) (define L.safe-cons.347.33 (lambda (c.1989 tmp.348 tmp.349) (let () (let ((tmp.2122 (+ (alloc 16) 1))) (begin (mset! tmp.2122 -1 tmp.348) (mset! tmp.2122 7 tmp.349) tmp.2122))))) (let ((safe-cons.347 (let ((tmp.2123 (+ (alloc 16) 2))) (begin (mset! tmp.2123 -2 L.safe-cons.347.33) (mset! tmp.2123 6 16) tmp.2123))) (safe-cdr.352 (let ((tmp.2124 (+ (alloc 16) 2))) (begin (mset! tmp.2124 -2 L.safe-cdr.352.34) (mset! tmp.2124 6 8) tmp.2124)))) (call (mref L.safe-cdr.352.34 -2) safe-cdr.352 (call (mref L.safe-cons.347.33 -2) safe-cons.347 56 22))))
+test-type:          "Checking output is interpretable"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:411:12
+params:             '(#<procedure:...est-suite/utils.rkt:412:13>)
+message:            "Exception raised"
+exception-message:
+  "+: contract violation\n  expected: number?\n  given: #<procedure:...c411/langs/base.rkt:499:8>"
+exception:
+  +: contract violation
+    expected: number?
+    given: #<procedure:...c411/langs/base.rkt:499:8>
+    context...:
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:465:0: mref
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:250:7
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > specify-representation suite
+FAILURE
+test-program:
+  (module (define L.H.29.50 (lambda (c.2006 a.45 b.46 c.47 d.48 e.49 f.50 g.51 h.52 j.53) (let ((safe-+.858 (unsafe-procedure-ref c.2006 0))) (let ((r1.54 (call (unsafe-procedure-label L.safe-+.858.47) safe-+.858 a.45 b.46))) (let ((r2.55 (call (unsafe-procedure-label L.safe-+.858.47) safe-+.858 r1.54 c.47))) (let ((r3.56 (call (unsafe-procedure-label L.safe-+.858.47) safe-+.858 r2.55 d.48))) (let ((r4.57 (call (unsafe-procedure-label L.safe-+.858.47) safe-+.858 r3.56 e.49))) (let ((r5.58 (call (unsafe-procedure-label L.safe-+.858.47) safe-+.858 r4.57 f.50))) (let ((r6.59 (call (unsafe-procedure-label L.safe-+.858.47) safe-+.858 r5.58 g.51))) (let ((r7.60 (call (unsafe-procedure-label L.safe-+.858.47) safe-+.858 r6.59 h.52))) (call (unsafe-procedure-label L.safe-+.858.47) safe-+.858 r7.60 j.53))))))))))) (define L.G.28.49 (lambda (c.2005 a.37 b.38 c.39 d.40 e.41 f.42 g.43 h.44) (let ((H.29 (unsafe-procedure-ref c.2005 0))) (call (unsafe-procedure-label L.H.29.50) H.29 a.37 b.38 c.39 d.40 e.41 f.42 g.43 h.44 9)))) (define L.F.27.48 (lambda (c.2004 a.30 b.31 c.32 d.33 e.34 f.35 g.36) (let ((safe-+.858 (unsafe-procedure-ref c.2004 0)) (G.28 (unsafe-procedure-ref c.2004 1))) (call (unsafe-procedure-label L.safe-+.858.47) safe-+.858 10 (call (unsafe-procedure-label L.G.28.49) G.28 a.30 b.31 c.32 d.33 e.34 f.35 g.36 8))))) (define L.safe-+.858.47 (lambda (c.2003 tmp.859 tmp.860) (let () (if (fixnum? tmp.860) (if (fixnum? tmp.859) (unsafe-fx+ tmp.859 tmp.860) (error 100)) (error 101))))) (let ((safe-+.858 (make-procedure L.safe-+.858.47 2 0)) (F.27 (make-procedure L.F.27.48 7 2)) (G.28 (make-procedure L.G.28.49 8 1)) (H.29 (make-procedure L.H.29.50 9 1))) (begin (unsafe-procedure-set! H.29 0 safe-+.858) (unsafe-procedure-set! G.28 0 H.29) (unsafe-procedure-set! F.27 0 safe-+.858) (unsafe-procedure-set! F.27 1 G.28) (call (unsafe-procedure-label L.F.27.48) F.27 1 2 3 4 5 6 7))))
+expected:           55
+src-interp:         interp-proc-exposed-lang-v9
+trg-interp:         interp-exprs-bits-lang-v8
+output-program:
+  (module (define L.H.29.50 (lambda (c.2006 a.45 b.46 c.47 d.48 e.49 f.50 g.51 h.52 j.53) (let ((safe-+.858 (mref c.2006 14))) (let ((r1.54 (call (mref L.safe-+.858.47 -2) safe-+.858 a.45 b.46))) (let ((r2.55 (call (mref L.safe-+.858.47 -2) safe-+.858 r1.54 c.47))) (let ((r3.56 (call (mref L.safe-+.858.47 -2) safe-+.858 r2.55 d.48))) (let ((r4.57 (call (mref L.safe-+.858.47 -2) safe-+.858 r3.56 e.49))) (let ((r5.58 (call (mref L.safe-+.858.47 -2) safe-+.858 r4.57 f.50))) (let ((r6.59 (call (mref L.safe-+.858.47 -2) safe-+.858 r5.58 g.51))) (let ((r7.60 (call (mref L.safe-+.858.47 -2) safe-+.858 r6.59 h.52))) (call (mref L.safe-+.858.47 -2) safe-+.858 r7.60 j.53))))))))))) (define L.G.28.49 (lambda (c.2005 a.37 b.38 c.39 d.40 e.41 f.42 g.43 h.44) (let ((H.29 (mref c.2005 14))) (call (mref L.H.29.50 -2) H.29 a.37 b.38 c.39 d.40 e.41 f.42 g.43 h.44 72)))) (define L.F.27.48 (lambda (c.2004 a.30 b.31 c.32 d.33 e.34 f.35 g.36) (let ((safe-+.858 (mref c.2004 14)) (G.28 (mref c.2004 22))) (call (mref L.safe-+.858.47 -2) safe-+.858 80 (call (mref L.G.28.49 -2) G.28 a.30 b.31 c.32 d.33 e.34 f.35 g.36 64))))) (define L.safe-+.858.47 (lambda (c.2003 tmp.859 tmp.860) (let () (if (= (bitwise-and tmp.860 7) 0) (if (= (bitwise-and tmp.859 7) 0) (+ tmp.859 tmp.860) 25662) 25918)))) (let ((safe-+.858 (let ((tmp.2129 (+ (alloc 16) 2))) (begin (mset! tmp.2129 -2 L.safe-+.858.47) (mset! tmp.2129 6 16) tmp.2129))) (F.27 (let ((tmp.2130 (+ (alloc 32) 2))) (begin (mset! tmp.2130 -2 L.F.27.48) (mset! tmp.2130 6 56) tmp.2130))) (G.28 (let ((tmp.2131 (+ (alloc 24) 2))) (begin (mset! tmp.2131 -2 L.G.28.49) (mset! tmp.2131 6 64) tmp.2131))) (H.29 (let ((tmp.2132 (+ (alloc 24) 2))) (begin (mset! tmp.2132 -2 L.H.29.50) (mset! tmp.2132 6 72) tmp.2132)))) (begin (mset! H.29 14 safe-+.858) (mset! G.28 14 H.29) (mset! F.27 14 safe-+.858) (mset! F.27 22 G.28) (call (mref L.F.27.48 -2) F.27 8 16 24 32 40 48 56))))
+test-type:          "Checking output is interpretable"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:411:12
+params:             '(#<procedure:...est-suite/utils.rkt:412:13>)
+message:            "Exception raised"
+exception-message:
+  "+: contract violation\n  expected: number?\n  given: #<procedure:...c411/langs/base.rkt:499:8>"
+exception:
+  +: contract violation
+    expected: number?
+    given: #<procedure:...c411/langs/base.rkt:499:8>
+    context...:
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:465:0: mref
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:250:7
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > specify-representation suite
+FAILURE
+test-program:
+  (module (define L.safe-vector-init.1748.46 (lambda (c.2002 vec.1749 len.1750 i.1751) (let ((safe-vector-init.1748 (unsafe-procedure-ref c.2002 0))) (if (eq? len.1750 i.1751) vec.1749 (begin (unsafe-vector-set! vec.1749 i.1751 0) (call (unsafe-procedure-label L.safe-vector-init.1748.46) safe-vector-init.1748 vec.1749 len.1750 (unsafe-fx+ i.1751 1))))))) (define L.safe-make-vector.1803.45 (lambda (c.2001 tmp.1804) (let ((safe-vector-init.1748 (unsafe-procedure-ref c.2001 0))) (if (fixnum? tmp.1804) (if (unsafe-fx>= tmp.1804 0) (let ((tmp.1805 (unsafe-make-vector tmp.1804))) (call (unsafe-procedure-label L.safe-vector-init.1748.46) safe-vector-init.1748 tmp.1805 tmp.1804 0)) (error 99)) (error 100))))) (let ((safe-make-vector.1803 (make-procedure L.safe-make-vector.1803.45 1 1)) (safe-vector-init.1748 (make-procedure L.safe-vector-init.1748.46 3 1))) (begin (unsafe-procedure-set! safe-vector-init.1748 0 safe-vector-init.1748) (unsafe-procedure-set! safe-make-vector.1803 0 safe-vector-init.1748) (call (unsafe-procedure-label L.safe-make-vector.1803.45) safe-make-vector.1803 2))))
+expected:           #(0 0)
+src-interp:         interp-proc-exposed-lang-v9
+trg-interp:         interp-exprs-bits-lang-v8
+output-program:
+  (module (define L.safe-vector-init.1748.46 (lambda (c.2002 vec.1749 len.1750 i.1751) (let ((safe-vector-init.1748 (mref c.2002 14))) (if (= len.1750 i.1751) vec.1749 (begin (mset! vec.1749 (+ (* (arithmetic-shift-right i.1751 3) 8) 5) 0) (call (mref L.safe-vector-init.1748.46 -2) safe-vector-init.1748 vec.1749 len.1750 (+ i.1751 8))))))) (define L.safe-make-vector.1803.45 (lambda (c.2001 tmp.1804) (let ((safe-vector-init.1748 (mref c.2001 14))) (if (= (bitwise-and tmp.1804 7) 0) (if (>= tmp.1804 0) (let ((tmp.1805 (let ((tmp.2138 (+ (alloc (* (+ 1 (arithmetic-shift-right tmp.1804 3)) 8)) 3))) (begin (mset! tmp.2138 -3 tmp.1804) tmp.2138)))) (call (mref L.safe-vector-init.1748.46 -2) safe-vector-init.1748 tmp.1805 tmp.1804 0)) 25406) 25662)))) (let ((safe-make-vector.1803 (let ((tmp.2139 (+ (alloc 24) 2))) (begin (mset! tmp.2139 -2 L.safe-make-vector.1803.45) (mset! tmp.2139 6 8) tmp.2139))) (safe-vector-init.1748 (let ((tmp.2140 (+ (alloc 24) 2))) (begin (mset! tmp.2140 -2 L.safe-vector-init.1748.46) (mset! tmp.2140 6 24) tmp.2140)))) (begin (mset! safe-vector-init.1748 14 safe-vector-init.1748) (mset! safe-make-vector.1803 14 safe-vector-init.1748) (call (mref L.safe-make-vector.1803.45 -2) safe-make-vector.1803 16))))
+test-type:          "Checking output is interpretable"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:411:12
+params:             '(#<procedure:...est-suite/utils.rkt:412:13>)
+message:            "Exception raised"
+exception-message:
+  "+: contract violation\n  expected: number?\n  given: #<procedure:...c411/langs/base.rkt:499:8>"
+exception:
+  +: contract violation
+    expected: number?
+    given: #<procedure:...c411/langs/base.rkt:499:8>
+    context...:
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:465:0: mref
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:250:7
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > specify-representation suite
+FAILURE
+test-program:
+  (module (define L.safe-vector-init.575.22 (lambda (c.1978 vec.576 len.577 i.578) (let ((safe-vector-init.575 (unsafe-procedure-ref c.1978 0))) (if (eq? len.577 i.578) vec.576 (begin (unsafe-vector-set! vec.576 i.578 0) (call (unsafe-procedure-label L.safe-vector-init.575.22) safe-vector-init.575 vec.576 len.577 (unsafe-fx+ i.578 1))))))) (define L.safe-vector-set!.635.21 (lambda (c.1977 tmp.636 tmp.637 tmp.638) (let () (if (fixnum? tmp.637) (if (vector? tmp.636) (if (unsafe-fx>= tmp.637 0) (if (unsafe-fx< tmp.637 (unsafe-vector-length tmp.636)) (begin (unsafe-vector-set! tmp.636 tmp.637 tmp.638) (void)) (error 99)) (error 99)) (error 100)) (error 101))))) (define L.safe-make-vector.630.20 (lambda (c.1976 tmp.631) (let ((safe-vector-init.575 (unsafe-procedure-ref c.1976 0))) (if (fixnum? tmp.631) (if (unsafe-fx>= tmp.631 0) (let ((tmp.632 (unsafe-make-vector tmp.631))) (call (unsafe-procedure-label L.safe-vector-init.575.22) safe-vector-init.575 tmp.632 tmp.631 0)) (error 99)) (error 100))))) (let ((safe-make-vector.630 (make-procedure L.safe-make-vector.630.20 1 1)) (safe-vector-set!.635 (make-procedure L.safe-vector-set!.635.21 3 0)) (safe-vector-init.575 (make-procedure L.safe-vector-init.575.22 3 1))) (begin (unsafe-procedure-set! safe-vector-init.575 0 safe-vector-init.575) (unsafe-procedure-set! safe-make-vector.630 0 safe-vector-init.575) (let ((x.1.61 (call (unsafe-procedure-label L.safe-make-vector.630.20) safe-make-vector.630 3))) (let ((x.2.62 (call (unsafe-procedure-label L.safe-vector-set!.635.21) safe-vector-set!.635 x.1.61 0 1))) (let ((x.3.63 (call (unsafe-procedure-label L.safe-vector-set!.635.21) safe-vector-set!.635 x.1.61 1 2))) (let ((x.4.64 (call (unsafe-procedure-label L.safe-vector-set!.635.21) safe-vector-set!.635 x.1.61 2 3))) x.1.61)))))))
+expected:           #(1 2 3)
+src-interp:         interp-proc-exposed-lang-v9
+trg-interp:         interp-exprs-bits-lang-v8
+output-program:
+  (module (define L.safe-vector-init.575.22 (lambda (c.1978 vec.576 len.577 i.578) (let ((safe-vector-init.575 (mref c.1978 14))) (if (= len.577 i.578) vec.576 (begin (mset! vec.576 (+ (* (arithmetic-shift-right i.578 3) 8) 5) 0) (call (mref L.safe-vector-init.575.22 -2) safe-vector-init.575 vec.576 len.577 (+ i.578 8))))))) (define L.safe-vector-set!.635.21 (lambda (c.1977 tmp.636 tmp.637 tmp.638) (let () (if (= (bitwise-and tmp.637 7) 0) (if (= (bitwise-and tmp.636 7) 3) (if (>= tmp.637 0) (if (< tmp.637 (mref tmp.636 -3)) (begin (mset! tmp.636 (+ (* (arithmetic-shift-right tmp.637 3) 8) 5) tmp.638) 30) 25406) 25406) 25662) 25918)))) (define L.safe-make-vector.630.20 (lambda (c.1976 tmp.631) (let ((safe-vector-init.575 (mref c.1976 14))) (if (= (bitwise-and tmp.631 7) 0) (if (>= tmp.631 0) (let ((tmp.632 (let ((tmp.2141 (+ (alloc (* (+ 1 (arithmetic-shift-right tmp.631 3)) 8)) 3))) (begin (mset! tmp.2141 -3 tmp.631) tmp.2141)))) (call (mref L.safe-vector-init.575.22 -2) safe-vector-init.575 tmp.632 tmp.631 0)) 25406) 25662)))) (let ((safe-make-vector.630 (let ((tmp.2142 (+ (alloc 24) 2))) (begin (mset! tmp.2142 -2 L.safe-make-vector.630.20) (mset! tmp.2142 6 8) tmp.2142))) (safe-vector-set!.635 (let ((tmp.2143 (+ (alloc 16) 2))) (begin (mset! tmp.2143 -2 L.safe-vector-set!.635.21) (mset! tmp.2143 6 24) tmp.2143))) (safe-vector-init.575 (let ((tmp.2144 (+ (alloc 24) 2))) (begin (mset! tmp.2144 -2 L.safe-vector-init.575.22) (mset! tmp.2144 6 24) tmp.2144)))) (begin (mset! safe-vector-init.575 14 safe-vector-init.575) (mset! safe-make-vector.630 14 safe-vector-init.575) (let ((x.1.61 (call (mref L.safe-make-vector.630.20 -2) safe-make-vector.630 24))) (let ((x.2.62 (call (mref L.safe-vector-set!.635.21 -2) safe-vector-set!.635 x.1.61 0 8))) (let ((x.3.63 (call (mref L.safe-vector-set!.635.21 -2) safe-vector-set!.635 x.1.61 8 16))) (let ((x.4.64 (call (mref L.safe-vector-set!.635.21 -2) safe-vector-set!.635 x.1.61 16 24))) x.1.61)))))))
+test-type:          "Checking output is interpretable"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:411:12
+params:             '(#<procedure:...est-suite/utils.rkt:412:13>)
+message:            "Exception raised"
+exception-message:
+  "+: contract violation\n  expected: number?\n  given: #<procedure:...c411/langs/base.rkt:499:8>"
+exception:
+  +: contract violation
+    expected: number?
+    given: #<procedure:...c411/langs/base.rkt:499:8>
+    context...:
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:465:0: mref
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:250:7
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > specify-representation suite
+FAILURE
+test-program:
+  (module (define L.swap.65.76 (lambda (c.2032 x.66 y.67) (let ((safe-<.243 (unsafe-procedure-ref c.2032 0)) (swap.65 (unsafe-procedure-ref c.2032 1))) (if (call (unsafe-procedure-label L.safe-<.243.75) safe-<.243 y.67 x.66) x.66 (call (unsafe-procedure-label L.swap.65.76) swap.65 y.67 x.66))))) (define L.safe-<.243.75 (lambda (c.2031 tmp.244 tmp.245) (let () (if (fixnum? tmp.245) (if (fixnum? tmp.244) (unsafe-fx< tmp.244 tmp.245) (error 100)) (error 101))))) (let ((safe-<.243 (make-procedure L.safe-<.243.75 2 0)) (swap.65 (make-procedure L.swap.65.76 2 2))) (begin (unsafe-procedure-set! swap.65 0 safe-<.243) (unsafe-procedure-set! swap.65 1 swap.65) (call (unsafe-procedure-label L.swap.65.76) swap.65 1 2))))
+expected:           2
+src-interp:         interp-proc-exposed-lang-v9
+trg-interp:         interp-exprs-bits-lang-v8
+output-program:
+  (module (define L.swap.65.76 (lambda (c.2032 x.66 y.67) (let ((safe-<.243 (mref c.2032 14)) (swap.65 (mref c.2032 22))) (if (!= (call (mref L.safe-<.243.75 -2) safe-<.243 y.67 x.66) 6) x.66 (call (mref L.swap.65.76 -2) swap.65 y.67 x.66))))) (define L.safe-<.243.75 (lambda (c.2031 tmp.244 tmp.245) (let () (if (= (bitwise-and tmp.245 7) 0) (if (= (bitwise-and tmp.244 7) 0) (if (< tmp.244 tmp.245) 14 6) 25662) 25918)))) (let ((safe-<.243 (let ((tmp.2145 (+ (alloc 16) 2))) (begin (mset! tmp.2145 -2 L.safe-<.243.75) (mset! tmp.2145 6 16) tmp.2145))) (swap.65 (let ((tmp.2146 (+ (alloc 32) 2))) (begin (mset! tmp.2146 -2 L.swap.65.76) (mset! tmp.2146 6 16) tmp.2146)))) (begin (mset! swap.65 14 safe-<.243) (mset! swap.65 22 swap.65) (call (mref L.swap.65.76 -2) swap.65 8 16))))
+test-type:          "Checking output is interpretable"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:411:12
+params:             '(#<procedure:...est-suite/utils.rkt:412:13>)
+message:            "Exception raised"
+exception-message:
+  "+: contract violation\n  expected: number?\n  given: #<procedure:...c411/langs/base.rkt:499:8>"
+exception:
+  +: contract violation
+    expected: number?
+    given: #<procedure:...c411/langs/base.rkt:499:8>
+    context...:
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:465:0: mref
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:250:7
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > specify-representation suite
+FAILURE
+test-program:
+  (module (define L.fact.88.28 (lambda (c.1984 x.89) (let ((safe-eq?.1212 (unsafe-procedure-ref c.1984 0)) (safe-+.1203 (unsafe-procedure-ref c.1984 1)) (safe-*.1200 (unsafe-procedure-ref c.1984 2)) (fact.88 (unsafe-procedure-ref c.1984 3))) (if (call (unsafe-procedure-label L.safe-eq?.1212.25) safe-eq?.1212 x.89 0) 1 (let ((z.90 (call (unsafe-procedure-label L.safe-+.1203.26) safe-+.1203 x.89 -1))) (let ((y.91 (call (unsafe-procedure-label L.fact.88.28) fact.88 z.90))) (call (unsafe-procedure-label L.safe-*.1200.27) safe-*.1200 x.89 y.91))))))) (define L.safe-*.1200.27 (lambda (c.1983 tmp.1201 tmp.1202) (let () (if (fixnum? tmp.1202) (if (fixnum? tmp.1201) (unsafe-fx* tmp.1201 tmp.1202) (error 100)) (error 101))))) (define L.safe-+.1203.26 (lambda (c.1982 tmp.1204 tmp.1205) (let () (if (fixnum? tmp.1205) (if (fixnum? tmp.1204) (unsafe-fx+ tmp.1204 tmp.1205) (error 100)) (error 101))))) (define L.safe-eq?.1212.25 (lambda (c.1981 tmp.1213 tmp.1214) (let () (eq? tmp.1213 tmp.1214)))) (let ((safe-eq?.1212 (make-procedure L.safe-eq?.1212.25 2 0)) (safe-+.1203 (make-procedure L.safe-+.1203.26 2 0)) (safe-*.1200 (make-procedure L.safe-*.1200.27 2 0)) (fact.88 (make-procedure L.fact.88.28 1 4))) (begin (unsafe-procedure-set! fact.88 0 safe-eq?.1212) (unsafe-procedure-set! fact.88 1 safe-+.1203) (unsafe-procedure-set! fact.88 2 safe-*.1200) (unsafe-procedure-set! fact.88 3 fact.88) (call (unsafe-procedure-label L.fact.88.28) fact.88 10))))
+expected:           3628800
+src-interp:         interp-proc-exposed-lang-v9
+trg-interp:         interp-exprs-bits-lang-v8
+output-program:
+  (module (define L.fact.88.28 (lambda (c.1984 x.89) (let ((safe-eq?.1212 (mref c.1984 14)) (safe-+.1203 (mref c.1984 22)) (safe-*.1200 (mref c.1984 30)) (fact.88 (mref c.1984 38))) (if (!= (call (mref L.safe-eq?.1212.25 -2) safe-eq?.1212 x.89 0) 6) 8 (let ((z.90 (call (mref L.safe-+.1203.26 -2) safe-+.1203 x.89 -8))) (let ((y.91 (call (mref L.fact.88.28 -2) fact.88 z.90))) (call (mref L.safe-*.1200.27 -2) safe-*.1200 x.89 y.91))))))) (define L.safe-*.1200.27 (lambda (c.1983 tmp.1201 tmp.1202) (let () (if (= (bitwise-and tmp.1202 7) 0) (if (= (bitwise-and tmp.1201 7) 0) (* tmp.1201 (arithmetic-shift-right tmp.1202 3)) 25662) 25918)))) (define L.safe-+.1203.26 (lambda (c.1982 tmp.1204 tmp.1205) (let () (if (= (bitwise-and tmp.1205 7) 0) (if (= (bitwise-and tmp.1204 7) 0) (+ tmp.1204 tmp.1205) 25662) 25918)))) (define L.safe-eq?.1212.25 (lambda (c.1981 tmp.1213 tmp.1214) (let () (if (= tmp.1213 tmp.1214) 14 6)))) (let ((safe-eq?.1212 (let ((tmp.2151 (+ (alloc 16) 2))) (begin (mset! tmp.2151 -2 L.safe-eq?.1212.25) (mset! tmp.2151 6 16) tmp.2151))) (safe-+.1203 (let ((tmp.2152 (+ (alloc 16) 2))) (begin (mset! tmp.2152 -2 L.safe-+.1203.26) (mset! tmp.2152 6 16) tmp.2152))) (safe-*.1200 (let ((tmp.2153 (+ (alloc 16) 2))) (begin (mset! tmp.2153 -2 L.safe-*.1200.27) (mset! tmp.2153 6 16) tmp.2153))) (fact.88 (let ((tmp.2154 (+ (alloc 48) 2))) (begin (mset! tmp.2154 -2 L.fact.88.28) (mset! tmp.2154 6 8) tmp.2154)))) (begin (mset! fact.88 14 safe-eq?.1212) (mset! fact.88 22 safe-+.1203) (mset! fact.88 30 safe-*.1200) (mset! fact.88 38 fact.88) (call (mref L.fact.88.28 -2) fact.88 80))))
+test-type:          "Checking output is interpretable"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:411:12
+params:             '(#<procedure:...est-suite/utils.rkt:412:13>)
+message:            "Exception raised"
+exception-message:
+  "+: contract violation\n  expected: number?\n  given: #<procedure:...c411/langs/base.rkt:499:8>"
+exception:
+  +: contract violation
+    expected: number?
+    given: #<procedure:...c411/langs/base.rkt:499:8>
+    context...:
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:465:0: mref
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:250:7
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > specify-representation suite
+FAILURE
+test-program:
+  (module (define L.safe-cons.1520.72 (lambda (c.2028 tmp.1521 tmp.1522) (let () (cons tmp.1521 tmp.1522)))) (let ((safe-cons.1520 (make-procedure L.safe-cons.1520.72 2 0))) (call (unsafe-procedure-label L.safe-cons.1520.72) safe-cons.1520 7 empty)))
+expected:           (7)
+src-interp:         interp-proc-exposed-lang-v9
+trg-interp:         interp-exprs-bits-lang-v8
+output-program:
+  (module (define L.safe-cons.1520.72 (lambda (c.2028 tmp.1521 tmp.1522) (let () (let ((tmp.2158 (+ (alloc 16) 1))) (begin (mset! tmp.2158 -1 tmp.1521) (mset! tmp.2158 7 tmp.1522) tmp.2158))))) (let ((safe-cons.1520 (let ((tmp.2159 (+ (alloc 16) 2))) (begin (mset! tmp.2159 -2 L.safe-cons.1520.72) (mset! tmp.2159 6 16) tmp.2159)))) (call (mref L.safe-cons.1520.72 -2) safe-cons.1520 56 22)))
+test-type:          "Checking output is interpretable"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:411:12
+params:             '(#<procedure:...est-suite/utils.rkt:412:13>)
+message:            "Exception raised"
+exception-message:
+  "+: contract violation\n  expected: number?\n  given: #<procedure:...c411/langs/base.rkt:499:8>"
+exception:
+  +: contract violation
+    expected: number?
+    given: #<procedure:...c411/langs/base.rkt:499:8>
+    context...:
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:465:0: mref
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:250:7
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > specify-representation suite
+FAILURE
+test-program:
+  (module (define L.safe-+.651.60 (lambda (c.2016 tmp.652 tmp.653) (let () (if (fixnum? tmp.653) (if (fixnum? tmp.652) (unsafe-fx+ tmp.652 tmp.653) (error 100)) (error 101))))) (define L.safe-eq?.660.59 (lambda (c.2015 tmp.661 tmp.662) (let () (eq? tmp.661 tmp.662)))) (let ((safe-eq?.660 (make-procedure L.safe-eq?.660.59 2 0)) (safe-+.651 (make-procedure L.safe-+.651.60 2 0))) (if (call (unsafe-procedure-label L.safe-eq?.660.59) safe-eq?.660 (call (unsafe-procedure-label L.safe-+.651.60) safe-+.651 5 6) 11) 4 6)))
+expected:           4
+src-interp:         interp-proc-exposed-lang-v9
+trg-interp:         interp-exprs-bits-lang-v8
+output-program:
+  (module (define L.safe-+.651.60 (lambda (c.2016 tmp.652 tmp.653) (let () (if (= (bitwise-and tmp.653 7) 0) (if (= (bitwise-and tmp.652 7) 0) (+ tmp.652 tmp.653) 25662) 25918)))) (define L.safe-eq?.660.59 (lambda (c.2015 tmp.661 tmp.662) (let () (if (= tmp.661 tmp.662) 14 6)))) (let ((safe-eq?.660 (let ((tmp.2160 (+ (alloc 16) 2))) (begin (mset! tmp.2160 -2 L.safe-eq?.660.59) (mset! tmp.2160 6 16) tmp.2160))) (safe-+.651 (let ((tmp.2161 (+ (alloc 16) 2))) (begin (mset! tmp.2161 -2 L.safe-+.651.60) (mset! tmp.2161 6 16) tmp.2161)))) (if (!= (call (mref L.safe-eq?.660.59 -2) safe-eq?.660 (call (mref L.safe-+.651.60 -2) safe-+.651 40 48) 88) 6) 32 48)))
+test-type:          "Checking output is interpretable"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:411:12
+params:             '(#<procedure:...est-suite/utils.rkt:412:13>)
+message:            "Exception raised"
+exception-message:
+  "+: contract violation\n  expected: number?\n  given: #<procedure:...c411/langs/base.rkt:499:8>"
+exception:
+  +: contract violation
+    expected: number?
+    given: #<procedure:...c411/langs/base.rkt:499:8>
+    context...:
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:465:0: mref
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:250:7
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > specify-representation suite
+FAILURE
+test-program:
+  (module (define L.safe-*.717.24 (lambda (c.1980 tmp.718 tmp.719) (let () (if (fixnum? tmp.719) (if (fixnum? tmp.718) (unsafe-fx* tmp.718 tmp.719) (error 100)) (error 101))))) (define L.safe-+.720.23 (lambda (c.1979 tmp.721 tmp.722) (let () (if (fixnum? tmp.722) (if (fixnum? tmp.721) (unsafe-fx+ tmp.721 tmp.722) (error 100)) (error 101))))) (let ((safe-+.720 (make-procedure L.safe-+.720.23 2 0)) (safe-*.717 (make-procedure L.safe-*.717.24 2 0))) (call (unsafe-procedure-label L.safe-+.720.23) safe-+.720 (call (unsafe-procedure-label L.safe-+.720.23) safe-+.720 5 6) (call (unsafe-procedure-label L.safe-*.717.24) safe-*.717 4 5))))
+expected:           31
+src-interp:         interp-proc-exposed-lang-v9
+trg-interp:         interp-exprs-bits-lang-v8
+output-program:
+  (module (define L.safe-*.717.24 (lambda (c.1980 tmp.718 tmp.719) (let () (if (= (bitwise-and tmp.719 7) 0) (if (= (bitwise-and tmp.718 7) 0) (* tmp.718 (arithmetic-shift-right tmp.719 3)) 25662) 25918)))) (define L.safe-+.720.23 (lambda (c.1979 tmp.721 tmp.722) (let () (if (= (bitwise-and tmp.722 7) 0) (if (= (bitwise-and tmp.721 7) 0) (+ tmp.721 tmp.722) 25662) 25918)))) (let ((safe-+.720 (let ((tmp.2162 (+ (alloc 16) 2))) (begin (mset! tmp.2162 -2 L.safe-+.720.23) (mset! tmp.2162 6 16) tmp.2162))) (safe-*.717 (let ((tmp.2163 (+ (alloc 16) 2))) (begin (mset! tmp.2163 -2 L.safe-*.717.24) (mset! tmp.2163 6 16) tmp.2163)))) (call (mref L.safe-+.720.23 -2) safe-+.720 (call (mref L.safe-+.720.23 -2) safe-+.720 40 48) (call (mref L.safe-*.717.24 -2) safe-*.717 32 40))))
+test-type:          "Checking output is interpretable"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:411:12
+params:             '(#<procedure:...est-suite/utils.rkt:412:13>)
+message:            "Exception raised"
+exception-message:
+  "+: contract violation\n  expected: number?\n  given: #<procedure:...c411/langs/base.rkt:499:8>"
+exception:
+  +: contract violation
+    expected: number?
+    given: #<procedure:...c411/langs/base.rkt:499:8>
+    context...:
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:465:0: mref
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:250:7
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > specify-representation suite
+FAILURE
+test-program:
+  (module (define L.fact.18.32 (lambda (c.1988 x.19) (let ((safe-eq?.1902 (unsafe-procedure-ref c.1988 0)) (fact.18 (unsafe-procedure-ref c.1988 1)) (safe--.1896 (unsafe-procedure-ref c.1988 2)) (safe-*.1890 (unsafe-procedure-ref c.1988 3))) (if (call (unsafe-procedure-label L.safe-eq?.1902.29) safe-eq?.1902 x.19 0) 1 (call (unsafe-procedure-label L.safe-*.1890.31) safe-*.1890 x.19 (call (unsafe-procedure-label L.fact.18.32) fact.18 (call (unsafe-procedure-label L.safe--.1896.30) safe--.1896 x.19 1))))))) (define L.safe-*.1890.31 (lambda (c.1987 tmp.1891 tmp.1892) (let () (if (fixnum? tmp.1892) (if (fixnum? tmp.1891) (unsafe-fx* tmp.1891 tmp.1892) (error 100)) (error 101))))) (define L.safe--.1896.30 (lambda (c.1986 tmp.1897 tmp.1898) (let () (if (fixnum? tmp.1898) (if (fixnum? tmp.1897) (unsafe-fx- tmp.1897 tmp.1898) (error 100)) (error 101))))) (define L.safe-eq?.1902.29 (lambda (c.1985 tmp.1903 tmp.1904) (let () (eq? tmp.1903 tmp.1904)))) (let ((safe-eq?.1902 (make-procedure L.safe-eq?.1902.29 2 0)) (safe--.1896 (make-procedure L.safe--.1896.30 2 0)) (safe-*.1890 (make-procedure L.safe-*.1890.31 2 0)) (fact.18 (make-procedure L.fact.18.32 1 4))) (begin (unsafe-procedure-set! fact.18 0 safe-eq?.1902) (unsafe-procedure-set! fact.18 1 fact.18) (unsafe-procedure-set! fact.18 2 safe--.1896) (unsafe-procedure-set! fact.18 3 safe-*.1890) (call (unsafe-procedure-label L.fact.18.32) fact.18 5))))
+expected:           120
+src-interp:         interp-proc-exposed-lang-v9
+trg-interp:         interp-exprs-bits-lang-v8
+output-program:
+  (module (define L.fact.18.32 (lambda (c.1988 x.19) (let ((safe-eq?.1902 (mref c.1988 14)) (fact.18 (mref c.1988 22)) (safe--.1896 (mref c.1988 30)) (safe-*.1890 (mref c.1988 38))) (if (!= (call (mref L.safe-eq?.1902.29 -2) safe-eq?.1902 x.19 0) 6) 8 (call (mref L.safe-*.1890.31 -2) safe-*.1890 x.19 (call (mref L.fact.18.32 -2) fact.18 (call (mref L.safe--.1896.30 -2) safe--.1896 x.19 8))))))) (define L.safe-*.1890.31 (lambda (c.1987 tmp.1891 tmp.1892) (let () (if (= (bitwise-and tmp.1892 7) 0) (if (= (bitwise-and tmp.1891 7) 0) (* tmp.1891 (arithmetic-shift-right tmp.1892 3)) 25662) 25918)))) (define L.safe--.1896.30 (lambda (c.1986 tmp.1897 tmp.1898) (let () (if (= (bitwise-and tmp.1898 7) 0) (if (= (bitwise-and tmp.1897 7) 0) (- tmp.1897 tmp.1898) 25662) 25918)))) (define L.safe-eq?.1902.29 (lambda (c.1985 tmp.1903 tmp.1904) (let () (if (= tmp.1903 tmp.1904) 14 6)))) (let ((safe-eq?.1902 (let ((tmp.2164 (+ (alloc 16) 2))) (begin (mset! tmp.2164 -2 L.safe-eq?.1902.29) (mset! tmp.2164 6 16) tmp.2164))) (safe--.1896 (let ((tmp.2165 (+ (alloc 16) 2))) (begin (mset! tmp.2165 -2 L.safe--.1896.30) (mset! tmp.2165 6 16) tmp.2165))) (safe-*.1890 (let ((tmp.2166 (+ (alloc 16) 2))) (begin (mset! tmp.2166 -2 L.safe-*.1890.31) (mset! tmp.2166 6 16) tmp.2166))) (fact.18 (let ((tmp.2167 (+ (alloc 48) 2))) (begin (mset! tmp.2167 -2 L.fact.18.32) (mset! tmp.2167 6 8) tmp.2167)))) (begin (mset! fact.18 14 safe-eq?.1902) (mset! fact.18 22 fact.18) (mset! fact.18 30 safe--.1896) (mset! fact.18 38 safe-*.1890) (call (mref L.fact.18.32 -2) fact.18 40))))
+test-type:          "Checking output is interpretable"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:411:12
+params:             '(#<procedure:...est-suite/utils.rkt:412:13>)
+message:            "Exception raised"
+exception-message:
+  "+: contract violation\n  expected: number?\n  given: #<procedure:...c411/langs/base.rkt:499:8>"
+exception:
+  +: contract violation
+    expected: number?
+    given: #<procedure:...c411/langs/base.rkt:499:8>
+    context...:
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:465:0: mref
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:250:7
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > specify-representation suite
+FAILURE
+test-program:
+  (module (define L.safe-car.1454.62 (lambda (c.2018 tmp.1455) (let () (if (pair? tmp.1455) (unsafe-car tmp.1455) (error 100))))) (define L.safe-cons.1451.61 (lambda (c.2017 tmp.1452 tmp.1453) (let () (cons tmp.1452 tmp.1453)))) (let ((safe-cons.1451 (make-procedure L.safe-cons.1451.61 2 0)) (safe-car.1454 (make-procedure L.safe-car.1454.62 1 0))) (call (unsafe-procedure-label L.safe-car.1454.62) safe-car.1454 (call (unsafe-procedure-label L.safe-cons.1451.61) safe-cons.1451 7 empty))))
+expected:           7
+src-interp:         interp-proc-exposed-lang-v9
+trg-interp:         interp-exprs-bits-lang-v8
+output-program:
+  (module (define L.safe-car.1454.62 (lambda (c.2018 tmp.1455) (let () (if (= (bitwise-and tmp.1455 7) 1) (mref tmp.1455 -1) 25662)))) (define L.safe-cons.1451.61 (lambda (c.2017 tmp.1452 tmp.1453) (let () (let ((tmp.2172 (+ (alloc 16) 1))) (begin (mset! tmp.2172 -1 tmp.1452) (mset! tmp.2172 7 tmp.1453) tmp.2172))))) (let ((safe-cons.1451 (let ((tmp.2173 (+ (alloc 16) 2))) (begin (mset! tmp.2173 -2 L.safe-cons.1451.61) (mset! tmp.2173 6 16) tmp.2173))) (safe-car.1454 (let ((tmp.2174 (+ (alloc 16) 2))) (begin (mset! tmp.2174 -2 L.safe-car.1454.62) (mset! tmp.2174 6 8) tmp.2174)))) (call (mref L.safe-car.1454.62 -2) safe-car.1454 (call (mref L.safe-cons.1451.61 -2) safe-cons.1451 56 22))))
+test-type:          "Checking output is interpretable"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:411:12
+params:             '(#<procedure:...est-suite/utils.rkt:412:13>)
+message:            "Exception raised"
+exception-message:
+  "+: contract violation\n  expected: number?\n  given: #<procedure:...c411/langs/base.rkt:499:8>"
+exception:
+  +: contract violation
+    expected: number?
+    given: #<procedure:...c411/langs/base.rkt:499:8>
+    context...:
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:465:0: mref
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:250:7
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > specify-representation suite
+FAILURE
+test-program:
+  (module (define L.safe-*.1683.52 (lambda (c.2008 tmp.1684 tmp.1685) (let () (if (fixnum? tmp.1685) (if (fixnum? tmp.1684) (unsafe-fx* tmp.1684 tmp.1685) (error 100)) (error 101))))) (define L.safe-cons.1727.51 (lambda (c.2007 tmp.1728 tmp.1729) (let () (cons tmp.1728 tmp.1729)))) (let ((safe-cons.1727 (make-procedure L.safe-cons.1727.51 2 0)) (safe-*.1683 (make-procedure L.safe-*.1683.52 2 0))) (call (unsafe-procedure-label L.safe-cons.1727.51) safe-cons.1727 (call (unsafe-procedure-label L.safe-*.1683.52) safe-*.1683 7 8) empty)))
+expected:           (56)
+src-interp:         interp-proc-exposed-lang-v9
+trg-interp:         interp-exprs-bits-lang-v8
+output-program:
+  (module (define L.safe-*.1683.52 (lambda (c.2008 tmp.1684 tmp.1685) (let () (if (= (bitwise-and tmp.1685 7) 0) (if (= (bitwise-and tmp.1684 7) 0) (* tmp.1684 (arithmetic-shift-right tmp.1685 3)) 25662) 25918)))) (define L.safe-cons.1727.51 (lambda (c.2007 tmp.1728 tmp.1729) (let () (let ((tmp.2178 (+ (alloc 16) 1))) (begin (mset! tmp.2178 -1 tmp.1728) (mset! tmp.2178 7 tmp.1729) tmp.2178))))) (let ((safe-cons.1727 (let ((tmp.2179 (+ (alloc 16) 2))) (begin (mset! tmp.2179 -2 L.safe-cons.1727.51) (mset! tmp.2179 6 16) tmp.2179))) (safe-*.1683 (let ((tmp.2180 (+ (alloc 16) 2))) (begin (mset! tmp.2180 -2 L.safe-*.1683.52) (mset! tmp.2180 6 16) tmp.2180)))) (call (mref L.safe-cons.1727.51 -2) safe-cons.1727 (call (mref L.safe-*.1683.52 -2) safe-*.1683 56 64) 22)))
+test-type:          "Checking output is interpretable"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:411:12
+params:             '(#<procedure:...est-suite/utils.rkt:412:13>)
+message:            "Exception raised"
+exception-message:
+  "+: contract violation\n  expected: number?\n  given: #<procedure:...c411/langs/base.rkt:499:8>"
+exception:
+  +: contract violation
+    expected: number?
+    given: #<procedure:...c411/langs/base.rkt:499:8>
+    context...:
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:465:0: mref
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:250:7
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > specify-representation suite
+FAILURE
+test-program:
+  (module (define L.safe-vector-init.1541.16 (lambda (c.1972 vec.1542 len.1543 i.1544) (let ((safe-vector-init.1541 (unsafe-procedure-ref c.1972 0))) (if (eq? len.1543 i.1544) vec.1542 (begin (unsafe-vector-set! vec.1542 i.1544 0) (call (unsafe-procedure-label L.safe-vector-init.1541.16) safe-vector-init.1541 vec.1542 len.1543 (unsafe-fx+ i.1544 1))))))) (define L.safe-vector-ref.1605.15 (lambda (c.1971 tmp.1606 tmp.1607) (let () (if (fixnum? tmp.1607) (if (vector? tmp.1606) (if (unsafe-fx>= tmp.1607 0) (if (unsafe-fx< tmp.1607 (unsafe-vector-length tmp.1606)) (unsafe-vector-ref tmp.1606 tmp.1607) (error 99)) (error 99)) (error 100)) (error 101))))) (define L.safe-make-vector.1596.14 (lambda (c.1970 tmp.1597) (let ((safe-vector-init.1541 (unsafe-procedure-ref c.1970 0))) (if (fixnum? tmp.1597) (if (unsafe-fx>= tmp.1597 0) (let ((tmp.1598 (unsafe-make-vector tmp.1597))) (call (unsafe-procedure-label L.safe-vector-init.1541.16) safe-vector-init.1541 tmp.1598 tmp.1597 0)) (error 99)) (error 100))))) (let ((safe-make-vector.1596 (make-procedure L.safe-make-vector.1596.14 1 1)) (safe-vector-ref.1605 (make-procedure L.safe-vector-ref.1605.15 2 0)) (safe-vector-init.1541 (make-procedure L.safe-vector-init.1541.16 3 1))) (begin (unsafe-procedure-set! safe-vector-init.1541 0 safe-vector-init.1541) (unsafe-procedure-set! safe-make-vector.1596 0 safe-vector-init.1541) (call (unsafe-procedure-label L.safe-vector-ref.1605.15) safe-vector-ref.1605 (call (unsafe-procedure-label L.safe-make-vector.1596.14) safe-make-vector.1596 2) 0))))
+expected:           0
+src-interp:         interp-proc-exposed-lang-v9
+trg-interp:         interp-exprs-bits-lang-v8
+output-program:
+  (module (define L.safe-vector-init.1541.16 (lambda (c.1972 vec.1542 len.1543 i.1544) (let ((safe-vector-init.1541 (mref c.1972 14))) (if (= len.1543 i.1544) vec.1542 (begin (mset! vec.1542 (+ (* (arithmetic-shift-right i.1544 3) 8) 5) 0) (call (mref L.safe-vector-init.1541.16 -2) safe-vector-init.1541 vec.1542 len.1543 (+ i.1544 8))))))) (define L.safe-vector-ref.1605.15 (lambda (c.1971 tmp.1606 tmp.1607) (let () (if (= (bitwise-and tmp.1607 7) 0) (if (= (bitwise-and tmp.1606 7) 3) (if (>= tmp.1607 0) (if (< tmp.1607 (mref tmp.1606 -3)) (mref tmp.1606 (+ (* (arithmetic-shift-right tmp.1607 3) 8) 5)) 25406) 25406) 25662) 25918)))) (define L.safe-make-vector.1596.14 (lambda (c.1970 tmp.1597) (let ((safe-vector-init.1541 (mref c.1970 14))) (if (= (bitwise-and tmp.1597 7) 0) (if (>= tmp.1597 0) (let ((tmp.1598 (let ((tmp.2185 (+ (alloc (* (+ 1 (arithmetic-shift-right tmp.1597 3)) 8)) 3))) (begin (mset! tmp.2185 -3 tmp.1597) tmp.2185)))) (call (mref L.safe-vector-init.1541.16 -2) safe-vector-init.1541 tmp.1598 tmp.1597 0)) 25406) 25662)))) (let ((safe-make-vector.1596 (let ((tmp.2186 (+ (alloc 24) 2))) (begin (mset! tmp.2186 -2 L.safe-make-vector.1596.14) (mset! tmp.2186 6 8) tmp.2186))) (safe-vector-ref.1605 (let ((tmp.2187 (+ (alloc 16) 2))) (begin (mset! tmp.2187 -2 L.safe-vector-ref.1605.15) (mset! tmp.2187 6 16) tmp.2187))) (safe-vector-init.1541 (let ((tmp.2188 (+ (alloc 24) 2))) (begin (mset! tmp.2188 -2 L.safe-vector-init.1541.16) (mset! tmp.2188 6 24) tmp.2188)))) (begin (mset! safe-vector-init.1541 14 safe-vector-init.1541) (mset! safe-make-vector.1596 14 safe-vector-init.1541) (call (mref L.safe-vector-ref.1605.15 -2) safe-vector-ref.1605 (call (mref L.safe-make-vector.1596.14 -2) safe-make-vector.1596 16) 0))))
+test-type:          "Checking output is interpretable"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:411:12
+params:             '(#<procedure:...est-suite/utils.rkt:412:13>)
+message:            "Exception raised"
+exception-message:
+  "+: contract violation\n  expected: number?\n  given: #<procedure:...c411/langs/base.rkt:499:8>"
+exception:
+  +: contract violation
+    expected: number?
+    given: #<procedure:...c411/langs/base.rkt:499:8>
+    context...:
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:465:0: mref
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:250:7
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+--------------------
+ > compiler testomatic test suite > v9 public test suite > specify-representation suite
+FAILURE
+test-program:
+  (module (define L.fact.20.13 (lambda (c.1969 x.21) (let ((safe-eq?.936 (unsafe-procedure-ref c.1969 0)) (safe-+.927 (unsafe-procedure-ref c.1969 1)) (safe-*.924 (unsafe-procedure-ref c.1969 2)) (fact.20 (unsafe-procedure-ref c.1969 3))) (if (call (unsafe-procedure-label L.safe-eq?.936.10) safe-eq?.936 x.21 0) 1 (let ((z.22 (call (unsafe-procedure-label L.safe-+.927.11) safe-+.927 x.21 -1))) (let ((y.23 (call (unsafe-procedure-label L.fact.20.13) fact.20 z.22))) (call (unsafe-procedure-label L.safe-*.924.12) safe-*.924 x.21 y.23))))))) (define L.safe-*.924.12 (lambda (c.1968 tmp.925 tmp.926) (let () (if (fixnum? tmp.926) (if (fixnum? tmp.925) (unsafe-fx* tmp.925 tmp.926) (error 100)) (error 101))))) (define L.safe-+.927.11 (lambda (c.1967 tmp.928 tmp.929) (let () (if (fixnum? tmp.929) (if (fixnum? tmp.928) (unsafe-fx+ tmp.928 tmp.929) (error 100)) (error 101))))) (define L.safe-eq?.936.10 (lambda (c.1966 tmp.937 tmp.938) (let () (eq? tmp.937 tmp.938)))) (let ((safe-eq?.936 (make-procedure L.safe-eq?.936.10 2 0)) (safe-+.927 (make-procedure L.safe-+.927.11 2 0)) (safe-*.924 (make-procedure L.safe-*.924.12 2 0)) (fact.20 (make-procedure L.fact.20.13 1 4))) (begin (unsafe-procedure-set! fact.20 0 safe-eq?.936) (unsafe-procedure-set! fact.20 1 safe-+.927) (unsafe-procedure-set! fact.20 2 safe-*.924) (unsafe-procedure-set! fact.20 3 fact.20) (call (unsafe-procedure-label L.fact.20.13) fact.20 5))))
+expected:           120
+src-interp:         interp-proc-exposed-lang-v9
+trg-interp:         interp-exprs-bits-lang-v8
+output-program:
+  (module (define L.fact.20.13 (lambda (c.1969 x.21) (let ((safe-eq?.936 (mref c.1969 14)) (safe-+.927 (mref c.1969 22)) (safe-*.924 (mref c.1969 30)) (fact.20 (mref c.1969 38))) (if (!= (call (mref L.safe-eq?.936.10 -2) safe-eq?.936 x.21 0) 6) 8 (let ((z.22 (call (mref L.safe-+.927.11 -2) safe-+.927 x.21 -8))) (let ((y.23 (call (mref L.fact.20.13 -2) fact.20 z.22))) (call (mref L.safe-*.924.12 -2) safe-*.924 x.21 y.23))))))) (define L.safe-*.924.12 (lambda (c.1968 tmp.925 tmp.926) (let () (if (= (bitwise-and tmp.926 7) 0) (if (= (bitwise-and tmp.925 7) 0) (* tmp.925 (arithmetic-shift-right tmp.926 3)) 25662) 25918)))) (define L.safe-+.927.11 (lambda (c.1967 tmp.928 tmp.929) (let () (if (= (bitwise-and tmp.929 7) 0) (if (= (bitwise-and tmp.928 7) 0) (+ tmp.928 tmp.929) 25662) 25918)))) (define L.safe-eq?.936.10 (lambda (c.1966 tmp.937 tmp.938) (let () (if (= tmp.937 tmp.938) 14 6)))) (let ((safe-eq?.936 (let ((tmp.2189 (+ (alloc 16) 2))) (begin (mset! tmp.2189 -2 L.safe-eq?.936.10) (mset! tmp.2189 6 16) tmp.2189))) (safe-+.927 (let ((tmp.2190 (+ (alloc 16) 2))) (begin (mset! tmp.2190 -2 L.safe-+.927.11) (mset! tmp.2190 6 16) tmp.2190))) (safe-*.924 (let ((tmp.2191 (+ (alloc 16) 2))) (begin (mset! tmp.2191 -2 L.safe-*.924.12) (mset! tmp.2191 6 16) tmp.2191))) (fact.20 (let ((tmp.2192 (+ (alloc 48) 2))) (begin (mset! tmp.2192 -2 L.fact.20.13) (mset! tmp.2192 6 8) tmp.2192)))) (begin (mset! fact.20 14 safe-eq?.936) (mset! fact.20 22 safe-+.927) (mset! fact.20 30 safe-*.924) (mset! fact.20 38 fact.20) (call (mref L.fact.20.13 -2) fact.20 40))))
+test-type:          "Checking output is interpretable"
+name:               check-not-exn
+location:
+  /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:411:12
+params:             '(#<procedure:...est-suite/utils.rkt:412:13>)
+message:            "Exception raised"
+exception-message:
+  "+: contract violation\n  expected: number?\n  given: #<procedure:...c411/langs/base.rkt:499:8>"
+exception:
+  +: contract violation
+    expected: number?
+    given: #<procedure:...c411/langs/base.rkt:499:8>
+    context...:
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:465:0: mref
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/langs/base.rkt:250:7
+     /cs/local/lib/pkg/racket-8.7/share/racket/pkgs/cpsc411-lib/cpsc411/test-suite/utils.rkt:347:25
+     /cs/local/lib/pkg/racket-8.7/share/racket/collects/racket/engine.rkt:42:24
+--------------------
+2130 success(es) 24 failure(s) 0 error(s) 2154 test(s) run
+24
+24/2154 test failures
