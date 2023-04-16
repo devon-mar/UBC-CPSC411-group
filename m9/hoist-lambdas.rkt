@@ -86,8 +86,6 @@
                   ,@(map hoist-lambdas-value vs))))
             alocs labels arity vs-list)
             ,(hoist-lambdas-value value))]
-      [`(closure-call ,v ,vs ...)
-        `(closure-call ,(hoist-lambdas-value v) ,@(map hoist-lambdas-value vs))]
       [`(call ,v ,vs ...)
         `(call ,(hoist-lambdas-value v) ,@(map hoist-lambdas-value vs))]
       [`(let ([,as ,vs] ...) ,v)
