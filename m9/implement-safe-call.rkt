@@ -61,7 +61,7 @@
        ,aloc
        (lambda ,params ,(implement-safe-call-value v))))
 
-  ;; exprs-unsafe-data-lang-v9-p exprs-unsafe-lang-v9-p
+  ;; exprs-unsafe-data-lang-v9-p -> exprs-unsafe-lang-v9-p
   (define (implement-safe-call-p p)
     (match p
       [`(module (define ,alocs (lambda (,params ...) ,vs)) ... ,v)
@@ -70,7 +70,7 @@
            ,@(map implement-safe-call-proc alocs params vs)
            ,(implement-safe-call-value v))]))
 
-  ;; exprs-unsafe-data-lang-v9-value exprs-unsafe-lang-v9-value
+  ;; exprs-unsafe-data-lang-v9-value -> exprs-unsafe-lang-v9-value
   (define (implement-safe-call-value v)
     (match v
       [`(call ,p ,vs ...)
@@ -81,7 +81,7 @@
           [(aloc? p)
             `(if (procedure? ,p)
                (if (eq? (unsafe-procedure-arity ,p) ,(length vs))
-                 (unsafe-procedure-call ,p ,@vs)
+                 (unsafe-procedure-call ,p ,@(map implement-safe-call-value vs))
                  ,bad-arity-error)
                ,bad-proc-error)]
           [else
@@ -112,7 +112,7 @@
       ;; triv
       [_ (implement-safe-call-triv v)]))
 
-  ;; exprs-unsafe-data-lang-v9-effect exprs-unsafe-lang-v9-effect
+  ;; exprs-unsafe-data-lang-v9-effect -> exprs-unsafe-lang-v9-effect
   (define (implement-safe-call-effect e)
     (match e
       ;; modified template - removed tail effect
@@ -121,7 +121,7 @@
       [`(,primop ,vs ...)
         `(,primop ,@(map implement-safe-call-value vs))]))
 
-  ;; exprs-unsafe-data-lang-v9-triv exprs-unsafe-lang-v9-triv
+  ;; exprs-unsafe-data-lang-v9-triv -> exprs-unsafe-lang-v9-triv
   (define (implement-safe-call-triv t)
     (match t
       [#t t]
@@ -309,4 +309,10 @@
        (if (eq? #\a (call (lambda () #\a)))
          42
          (void))))
+
+  (check-42
+    '(module
+       (define foo.1 (lambda (x.1) (if (unsafe-fx> x.1 4) 2 42)))
+       (define bar.1 (lambda () 2))
+       (call foo.1 (call bar.1))))
   )
