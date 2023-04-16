@@ -14,18 +14,23 @@
 ;; each primitive operation which perform dynamic tag checking, to ensure type safety.
 ;;
 ;; Argument type errors will return (error (modulo i+100 uint8-max)) where i is the
-;; argument index in left to right order. For example given the set of arguments '(x y),
+;; argument index in left to right order. For example, given the set of arguments '(x y),
 ;; a type error on x will return 100 and a type error on y will return 101.
 ;;
 ;; Any other error on arguments besides type will return 99.
 ;;
 ;; All vectors will be initialised to 0.
+;;
+;; Implementation details:
+;; - A mutable set is used to keep track of what safe primop procs we need to insert.
 (define/contract (implement-safe-primops p)
   (-> exprs-unique-lang-v9? exprs-unsafe-data-lang-v9?)
 
   (define uint8-max 255)
 
+  ;; aloc for the vector-init procedure.
   (define vector-init-aloc (fresh 'safe-vector-init))
+  ;; The actual vector init procedure.
   (define vector-init-proc
     (let ([vec (fresh 'vec)]
           [len (fresh 'len)]
@@ -44,45 +49,20 @@
     (-> symbol? void?)
     (set-add! used-prim-fs p))
 
-  ;; Return a definition of a safe primop that calls.
   ;; Don't call this directly - used the macro below!
-  ;; 
-  ;; f if all arguments correspond to the types in types.
-  ;; If the arguments are of the wrong type, (error 2) is returned.
-  ;; If an argument is of the right type but fails some predicate check, (error 3) is returned.
+  ;; See below for documentation.
   (define/contract (make-safe-primop aloc f checks)
-    (-> aloc? (or/c symbol? procedure?) (listof (or/c symbol? list?)) any/c)
+    (-> aloc? (or/c symbol? procedure?) (listof (or/c symbol? procedure?)) any/c)
     (define-values (types preds)
       (splitf-at checks symbol?))
 
     (define vs (map (lambda (_) (fresh 'tmp)) types))
 
-    ;; some of this stuff is stolen from cpsc411's fvar stuff
-    (define/contract (placeholder? x)
-      (-> any/c boolean?)
-      (and (symbol? x)
-           (regexp-match-exact? #rx"^arg[0-9]+" (symbol->string x))))
-
-    ;; return the aloc corresponding to the placeholder from vs.
-    (define/contract (placeholder->aloc x)
-      (-> placeholder? aloc?)
-      (list-ref vs (string->number (substring (symbol->string x) 3))))
-
-    ;; replace all argN placeholders
-    (define/contract (replace-placeholders lst)
-      (-> (listof any/c) (listof any/c))
-      (map (lambda (x)
-             (match x
-               [(? list?) (replace-placeholders x)]
-               [(? placeholder?) (placeholder->aloc x)]
-               [_ x]))
-           lst))
-
     (define pred-checks
       (for/fold ([body (if (procedure? f) (apply f vs) (cons f vs))])
                 ([p preds])
         `(if
-           ,(replace-placeholders p)
+           ,(apply p vs)
            ,body (error 99))))
 
     `(define ,aloc
@@ -97,64 +77,82 @@
                  ,body
                  (error ,(modulo i uint8-max))))))))
 
-  ;; unsafes: must be a quoted symbol or procedure
+  ;; Usage:
   ;;
-  ;; Checks must start with a list of symbol? corresponding to primops
-  ;; that check argument types. After all argument types have been defined,
-  ;; arbitrary preds can be given to specify any requirements. In these preds,
-  ;; arg0... argN may be used to refer to arguments.
+  ;; (make-safe-primop-procs clause ...)
+  ;;
+  ;; clause = [safe unsafe type ... check ...]
+  ;;
+  ;; unsafe = symbol?
+  ;;        | procedure?
+  ;;
+  ;; check = procedure?
+  ;;
+  ;; safe: The "safe" primop. It will be automatically quoted.
+  ;; unsafe: The corresponding quoted "unsafe" symbol or procedure. If a procedure, it must take
+  ;;         exactly (length type) args.
+  ;; type: Quoted symbol for each argument. The symbol should probably end with a ?.
+  ;; check: A procedure? that takes (length type) args. It must return an exprs-unsafe-data-lang-v9-value.
+  ;;        This should be used to implement any additional argument checks.
+  ;;
+  ;; ->: A dictionary of safe primop to unsafe define ast that implements the checks.
   (define-syntax-rule (make-safe-primop-procs [safes unsafes checks ...] ...)
     (for/fold ([acc '()])
               ([s (list 'safes ...)]
                [u (list unsafes ...)]
-               [types (list (list 'checks ...) ...)])
+               [types (list (list checks ...) ...)])
       (define aloc (fresh (string->symbol (format "safe-~a" 's))))
       (dict-set acc s (cons aloc (make-safe-primop aloc u types)))))
 
-  ;; Dictionary of primop-f to (cons proc-aloc proc-define)
+  ;; Contains the safe primop definitions. See above.
   (define safe-procs
     (make-safe-primop-procs
-      [* 'unsafe-fx* fixnum? fixnum?]
-      [+ 'unsafe-fx+ fixnum? fixnum?]
-      [- 'unsafe-fx- fixnum? fixnum?]
-      [< 'unsafe-fx< fixnum? fixnum?]
-      [eq? 'eq? any/c any/c]
-      [<= 'unsafe-fx<= fixnum? fixnum?]
-      [> 'unsafe-fx> fixnum? fixnum?]
-      [>= 'unsafe-fx>= fixnum? fixnum?]
+      [* 'unsafe-fx* 'fixnum? 'fixnum?]
+      [+ 'unsafe-fx+ 'fixnum? 'fixnum?]
+      [- 'unsafe-fx- 'fixnum? 'fixnum?]
+      [< 'unsafe-fx< 'fixnum? 'fixnum?]
+      [eq? 'eq? 'any/c 'any/c]
+      [<= 'unsafe-fx<= 'fixnum? 'fixnum?]
+      [> 'unsafe-fx> 'fixnum? 'fixnum?]
+      [>= 'unsafe-fx>= 'fixnum? 'fixnum?]
       ;; unops
-      [fixnum? 'fixnum? any/c]
-      [boolean? 'boolean? any/c]
-      [empty? 'empty? any/c]
-      [void? 'void? any/c]
-      [ascii-char? 'ascii-char? any/c]
-      [error? 'error? any/c]
-      [not 'not any/c]
-      [pair? 'pair? any/c]
-      [procedure? 'procedure? any/c]
-      [vector? 'vector? any/c]
-      [cons 'cons any/c any/c]
-      [car 'unsafe-car pair?]
-      [cdr 'unsafe-cdr pair?]
+      [fixnum? 'fixnum? 'any/c]
+      [boolean? 'boolean? 'any/c]
+      [empty? 'empty? 'any/c]
+      [void? 'void? 'any/c]
+      [ascii-char? 'ascii-char? 'any/c]
+      [error? 'error? 'any/c]
+      [not 'not 'any/c]
+      [pair? 'pair? 'any/c]
+      [procedure? 'procedure? 'any/c]
+      [vector? 'vector? 'any/c]
+      [cons 'cons 'any/c 'any/c]
+      [car 'unsafe-car 'pair?]
+      [cdr 'unsafe-cdr 'pair?]
       [make-vector
         (lambda (size)
           (define tmp (fresh 'tmp))
           `(let ([,tmp (unsafe-make-vector ,size)])
              (call ,vector-init-aloc ,tmp ,size 0)))
-        fixnum? (unsafe-fx>= arg0 0)]
-      [vector-length 'unsafe-vector-length vector?]
+        'fixnum?
+        (lambda (size) `(unsafe-fx>= ,size 0))]
+      [vector-length 'unsafe-vector-length 'vector?]
       [vector-set!
         (lambda (vec idx val)
           `(begin
              (unsafe-vector-set! ,vec ,idx ,val)
              (void)))
-        vector? fixnum? any/c
-        (unsafe-fx< arg1 (unsafe-vector-length arg0)) (unsafe-fx>= arg1 0)]
+
+        'vector? 'fixnum? 'any/c
+
+        (lambda (vec idx _val) `(unsafe-fx< ,idx (unsafe-vector-length ,vec)))
+        (lambda (_vec idx _val) `(unsafe-fx>= ,idx 0))]
       [vector-ref
         'unsafe-vector-ref
-        vector? fixnum?
-        (unsafe-fx< arg1 (unsafe-vector-length arg0)) (unsafe-fx>= arg1 0)]
-      [procedure-arity 'unsafe-procedure-arity procedure?]))
+        'vector? 'fixnum?
+        (lambda (vec idx) `(unsafe-fx< ,idx (unsafe-vector-length ,vec)))
+        (lambda (_vec idx) `(unsafe-fx>= ,idx 0))]
+      [procedure-arity 'unsafe-procedure-arity 'procedure?]))
 
   ;; not used
   #;
@@ -233,7 +231,7 @@
 
 (module+ test
   (require rackunit)
-  
+
   (define-check (check-42 p)
     (check-equal?
       (interp-exprs-unsafe-data-lang-v9 (implement-safe-primops p))
