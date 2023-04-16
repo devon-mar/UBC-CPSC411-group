@@ -12,7 +12,7 @@
 (define/contract (define->letrec p)
   (-> exprs-unsafe-lang-v9? just-exprs-lang-v9?)
 
-  ;; exprs-unsafe-lang-v9-p just-exprs-lang-v9-p
+  ;; exprs-unsafe-lang-v9-p -> just-exprs-lang-v9-p
   (define (define->letrec-p p)
     (match p
       [`(module (define ,alocs (lambda (,params ...) ,vs)) ... ,v)
