@@ -81,7 +81,7 @@
       (define func1 (lambda (fn x y) (call (call fn x y) (call * x y))))
       (let ([func2 (lambda (x y) (lambda (a) (call - a (call + x (call * y y)))))])
         (call func1 func2 17 7)))
-    (- (* 17 7) (+ 17 (* 7 7))))
+    53)
 
   ;; factorial
   (check-execute

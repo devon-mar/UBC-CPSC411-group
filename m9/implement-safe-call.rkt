@@ -94,7 +94,7 @@
                   bad-arity-error)]
               [_
                 (define tmp (fresh 'iscv-tmp))
-                `(let ([,tmp ,p])
+                `(let ([,tmp ,(implement-safe-call-value p)])
                    (if (procedure? ,tmp)
                      (if (eq? (unsafe-procedure-arity ,tmp) ,(length vs))
                        (unsafe-procedure-call ,tmp ,@(map implement-safe-call-value vs))
