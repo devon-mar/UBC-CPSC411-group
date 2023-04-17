@@ -74,6 +74,12 @@
   (define (implement-safe-call-value v)
     (match v
       [`(call ,p ,vs ...)
+        `(if (procedure? ,p)
+           (if (eq? (unsafe-procedure-arity ,p) ,(length vs))
+             (unsafe-procedure-call ,p ,@(map implement-safe-call-value vs))
+             ,bad-arity-error)
+           ,bad-proc-error)
+        #;
         (cond
           [(and (dict-has-key? arities p) (= (length vs) (dict-ref arities p)))
            `(unsafe-procedure-call ,p ,@(map implement-safe-call-value vs))]
