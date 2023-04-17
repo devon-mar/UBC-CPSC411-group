@@ -94,7 +94,7 @@
                   bad-arity-error)]
               [_
                 (define tmp (fresh 'iscv-tmp))
-                `(let ([,tmp ,p])
+                `(let ([,tmp ,(implement-safe-call-value p)])
                    (if (procedure? ,tmp)
                      (if (eq? (unsafe-procedure-arity ,tmp) ,(length vs))
                        (unsafe-procedure-call ,tmp ,@(map implement-safe-call-value vs))
@@ -327,12 +327,13 @@
   ;; a let should be introduced
   (check-42
     '(module
+       (define one.1 (lambda () 1))
        (let ([v.1 (unsafe-make-vector 1)])
          (begin
            (unsafe-vector-set! v.1 0 0)
            (call
              (begin
                ;; this should only be evaluated once!
-               (unsafe-vector-set! v.1 0 (unsafe-fx+ (unsafe-vector-ref v.1 0) 1))
+               (unsafe-vector-set! v.1 0 (unsafe-fx+ (unsafe-vector-ref v.1 0) (call one.1)))
                (lambda () (unsafe-fx+ (unsafe-vector-ref v.1 0) 41))))))))
   )
