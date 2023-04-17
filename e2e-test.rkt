@@ -109,7 +109,7 @@
     '(module
       (let ([cons (call cons 5 #t)])
         (if (call cdr cons)
-            (call - (call car 5) -8)
+            (call - (call car cons) -8)
             (error 2))))
     13)
 
@@ -123,6 +123,25 @@
                      (lambda (a) (call - a (call + x (call * y y)))))])
         (call func1 func2 17 7)))
     53)
+
+  ;; call with lambda
+  (check-execute
+    '(module
+      (call
+        (lambda (fn1 fn2 fn3 x y z)
+          (call -
+            (call fn1 fn2 x)
+            (call fn3 y y (lambda () z))))
+        (lambda (fn x)
+          (call (lambda (x y) (call - x y)) 10 (call fn x)))
+        (lambda (x)
+          (call + x x))
+        (lambda (x y fn)
+          (call * (call - x y) (call fn)))
+        10
+        17
+        51))
+    -10)
 
   ;; lambda - bad arity
   (check-error
