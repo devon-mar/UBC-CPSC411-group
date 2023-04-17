@@ -14,7 +14,7 @@
 (define/contract (resolve-predicates p)
   (-> block-pred-lang-v8? block-asm-lang-v8?)
 
-  ;; s -> s
+  ;; block-pred-lang-v8-s -> block-asm-lang-v8-s
   (define (convert-s s)
     (match s
       [`(set! ,loc_1 (mref ,loc_2 ,index)) s]
@@ -22,7 +22,7 @@
       [`(set! ,loc ,triv) s]
       [`(mset! ,loc ,index ,triv) s]))
 
-  ;; tail -> tail
+  ;; block-pred-lang-v8-tail -> block-asm-lang-v8-tail
   (define (convert-tail t)
     (match t
       [`(jump ,trg) `(jump ,trg)]
@@ -32,7 +32,13 @@
           ,(convert-tail tail))]
       [`(if ,pred ,t1 ,t2) (convert-if pred t1 t2)]))
 
-  ;; (if pred (jump trg) (jump trg)) -> (jump trg) | (if pred (jump trg) (jump trg))
+  ;; block-pred-lang-v8-pred block-pred-lang-v8-trg block-pred-lang-v8-trg
+  ;; -> block-asm-lang-v8-tail
+  ;;
+  ;; Convert if-pred-jump to if-relop-jump or jump:
+  ;; (if pred (jump trg) (jump trg))
+  ;; ->
+  ;; (jump trg) | (if (relop loc opand) (jump trg) (jump trg))
   (define (convert-if pred t1 t2)
     (match pred
       [`(true) t1]
@@ -40,7 +46,7 @@
       [`(not ,nested-pred) (convert-if nested-pred t2 t1)]
       [`(,relop ,loc ,opand) `(if (,relop ,loc ,opand) ,t1 ,t2)]))
 
-  ;; b -> b
+  ;; block-pred-lang-v8-b -> block-asm-lang-b
   (define (convert-b b)
     (match b
       [`(define ,label ,tail) `(define ,label ,(convert-tail tail))]))
