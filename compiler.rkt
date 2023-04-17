@@ -29,6 +29,7 @@
  "m6/assign-call-undead-variables.rkt"
  "m6/assign-frame-variables.rkt"
 
+ "m7/check-exprs-lang.rkt"
  "m7/implement-safe-primops.rkt"
  "m7/specify-representation.rkt"
  "m7/remove-complex-opera.rkt"
