@@ -1,5 +1,7 @@
 #lang racket
 
+;; E2E tests
+
 (module+ test
   (require
     rackunit
