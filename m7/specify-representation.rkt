@@ -182,7 +182,7 @@
           ,@(map specify-representation-proc labels alocs values)
           ,(specify-representation-value/value value))]))
 
-  ;; proc-exposed-lang-v9-p -> exprs-bits-lang-v8-value
+  ;; proc-exposed-lang-v9-value -> exprs-bits-lang-v8-value
   (define (specify-representation-value/value v)
     (match v
       ;; modified template - removed tail value
