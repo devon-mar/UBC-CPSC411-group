@@ -16,8 +16,8 @@ For versions of the skeletons from prior versions of the course, see the tags.
 
 ### Milestone 2
 
-| Exercise | Pass                    | File                         |
-|----------|-------------------------|------------------------------|
+| Exercise | Pass                   | File                          |
+|----------|------------------------|-------------------------------|
 | 1        | `uniquify`             |  `m2/uniquify.rkt`            |
 | 2        | `sequentialize-let`    |  `m2/sequentialize-let.rkt`   |
 | 3        | `normalize-bind`       |  `m2/normalize-bind.rkt`      |
