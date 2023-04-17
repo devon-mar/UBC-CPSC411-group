@@ -139,7 +139,7 @@
             [lambda (lambda (x y) (call * x y))]
             [let (lambda (x y) (call + x y))])
         (call + (call lambda 2 3) (call let -9 8))))
-    17)
+    11)
 
   ;; lambdas
   (check-execute
@@ -195,7 +195,7 @@
             [fn (lambda (x y z) (call * (call - x z) y))])
           (let ([fn (let ([a 20]
                           [b 7])
-                 (lambda (x y) (call * (call + (call - x t) a) (call - y b))))])
+                 (lambda (x y) (call * (call + (call fn x t a) a) (call - y b))))])
         (call fn -12 9))))
     16)
 
