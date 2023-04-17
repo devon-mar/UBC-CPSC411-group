@@ -351,7 +351,7 @@
   ;; Takes an proc-exposed-lang-v9-value and transorms it into an
   ;; proc-exposed-lang-v9-pred by checking if the value is != #f.
   ;;
-  ;; proc-exposed-lang-v9-value -> exprs-bits-lang-v8-pred
+  ;; exprs-bits-lang-v8-value -> exprs-bits-lang-v8-pred
   (define (value->pred v)
     `(!= ,v ,(current-false-ptr)))
 
