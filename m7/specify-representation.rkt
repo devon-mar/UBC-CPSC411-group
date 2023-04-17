@@ -174,15 +174,15 @@
        (lambda ,params
          ,(specify-representation-value/value v))))
 
-  ;; proc-exposed-lang-v9-p exprs-bits-lang-v8-p
+  ;; proc-exposed-lang-v9-p -> exprs-bits-lang-v8-p
   (define (specify-representation-p p)
     (match p
       [`(module (define ,labels (lambda (,alocs ...) ,values)) ... ,value)
        `(module
-            ,@(map specify-representation-proc labels alocs values)
+          ,@(map specify-representation-proc labels alocs values)
           ,(specify-representation-value/value value))]))
 
-  ;; proc-exposed-lang-v9-p exprs-bits-lang-v8-value
+  ;; proc-exposed-lang-v9-p -> exprs-bits-lang-v8-value
   (define (specify-representation-value/value v)
     (match v
       ;; modified template - removed tail value
@@ -215,7 +215,7 @@
         #:when (primop? primop)
         (specify-representation-primop/effect primop vs)]))
 
-  ;; "only imperative primops (only unsafe-vector-set! so far) can be directly called in effect context"
+  ;; "only imperative primops can be directly called in effect context"
   ;;
   ;; proc-exposed-lang-v9-primop (listof proc-exposed-lang-v9-value) -> exprs-bits-lang-v8-effect
   (define (specify-representation-primop/effect p vs)
@@ -230,8 +230,9 @@
            ,(specify-representation-value/value proc)
            ,(proc-env-idx->offset idx)
            ,(specify-representation-value/value val))]))
+      ;; removed the other cases. If ever needed they are available in m9/templates.rkt
 
-  ;; proc-exposed-lang-v9-triv exprs-bits-lang-v8-triv
+  ;; proc-exposed-lang-v9-triv -> exprs-bits-lang-v8-triv
   (define (specify-representation-triv/value t)
     (match t
       [(? label?)
@@ -358,7 +359,7 @@
 
   ;; The following functions' return value may only be used in pred position of
   ;; the target language.
-  ;; proc-exposed-lang-v9-p exprs-bits-lang-v8-pred
+  ;; proc-exposed-lang-v9-p -> exprs-bits-lang-v8-pred
   (define (specify-representation-value/pred v)
     (match v
       [`(call ,vs ...)
