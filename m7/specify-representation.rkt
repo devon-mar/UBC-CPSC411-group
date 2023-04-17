@@ -864,11 +864,11 @@
   ;; Other M8 tests
   (check-42
     '(module
-       (let ([v.1 (unsafe-make-vector 10)])
+       (let ([v.1 (unsafe-make-vector 2)])
          (begin
            (begin
              (unsafe-vector-set! v.1 0 30)
-             (unsafe-vector-set! v.1 1 2))
+             (unsafe-vector-set! v.1 1 10))
            (let ([a.1 (unsafe-fx+ (unsafe-vector-ref v.1 0) (unsafe-vector-ref v.1 1))])
              (unsafe-fx+ (unsafe-vector-length v.1) a.1))))))
 
