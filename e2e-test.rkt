@@ -91,20 +91,20 @@
                     (let ([a (call vector-set! vec 5 (call + (call vector-ref vec 5) x))])
                       (call vector-ref vec 5)))])
           (let ([fn2 (lambda ()
-                      (let ([a (call vector-set! vec 5 (call + (call vector-ref vec 5) 1))])
+                      (let ([a (call vector-set! vec 5 (call * (call vector-ref vec 5) -7))])
                         fn))])
             (call
               (call
                 (lambda ()
-                  (let ([a (call vector-set! vec 5 (call + (call vector-ref vec 5) 5))])
+                  (let ([a (call vector-set! vec 5 (call + (call vector-ref vec 5) 66))])
                     (call
                       (call
                         (lambda (z)
-                          (let ([a (call vector-set! vec 5 (call + (call vector-ref vec 5) z))])
+                          (let ([a (call vector-set! vec 5 (call - (call vector-ref vec 5) z))])
                             fn2))
-                        10)))))
-              7)))))
-    23)
+                        17)))))
+              99)))))
+    -244)
 
   ;; cons operations
   (check-execute
@@ -114,6 +114,32 @@
             (call - (call car cons) -8)
             (error 2))))
     13)
+
+  ;; lambda in cons
+  (check-execute
+    '(module
+      (let ([a 3])
+        (let ([cons (call cons 5 (lambda (x) (call + x (call - x a))))])
+          (call (call cdr cons) (call car cons)))))
+    7)
+
+  ;; lambda in vector
+  (check-execute
+    '(module
+      (let ([vec (call make-vector 20)]
+            [a 10])
+        (let ([a (call vector-set! vec 15 (lambda (x) (call * x (call - x a))))])
+          (call (call vector-ref vec 15) 6))))
+    -24)
+
+  ;; lambda - overide
+  (check-execute
+    '(module
+      (let ([+ (lambda (x y) (call + x (call + x y)))]
+            [lambda (lambda (x y) (call * x y))]
+            [let (lambda (x y) (call + x y))])
+        (call + (call lambda 2 3) (call let -9 8))))
+    17)
 
   ;; lambdas
   (check-execute
@@ -165,10 +191,14 @@
   ;; lambda - free variables
   (check-execute
     '(module
-      (let ([fn (let ([a 20] [b 7])
-                 (lambda (x y) (call * (call + x a) (call - y b))))])
-        (call fn -12 9)))
+      (let ([t 10]
+            [fn (lambda (x y z) (call * (call - x z) y))])
+          (let ([fn (let ([a 20]
+                          [b 7])
+                 (lambda (x y) (call * (call + (call - x t) a) (call - y b))))])
+        (call fn -12 9))))
     16)
+
 
   ;; factorial
   (check-execute
