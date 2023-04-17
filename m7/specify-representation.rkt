@@ -55,7 +55,7 @@
   (define (vec-idx->offset i)
     (if (int64? i)
       (+ (* (current-word-size-bytes) (add1 i)) vec-len-offset)
-      `(+ (* ,(untag-fixnum i) ,(current-word-size-bytes)) ,(+ (current-word-size-bytes) vec-len-offset))))
+      `(+ (* ,(untag-fixnum (specify-representation-value/value i)) ,(current-word-size-bytes)) ,(+ (current-word-size-bytes) vec-len-offset))))
 
   ;; Returns an offset for the ith var in a procedure's environment.
   (define (proc-env-idx->offset i)
@@ -68,8 +68,7 @@
     (-> any/c boolean?)
     (and
       (memq p
-            '(unsafe-fx
-              unsafe-fx*
+            '(unsafe-fx*
               unsafe-fx+
               unsafe-fx-
               eq?
@@ -179,10 +178,10 @@
     (match p
       [`(module (define ,labels (lambda (,alocs ...) ,values)) ... ,value)
        `(module
-            ,@(map specify-representation-proc labels alocs values)
+          ,@(map specify-representation-proc labels alocs values)
           ,(specify-representation-value/value value))]))
 
-  ;; proc-exposed-lang-v9-p -> exprs-bits-lang-v8-value
+  ;; proc-exposed-lang-v9-value -> exprs-bits-lang-v8-value
   (define (specify-representation-value/value v)
     (match v
       ;; modified template - removed tail v
@@ -205,7 +204,7 @@
         (specify-representation-primop/value primop vs)]
       [_ (specify-representation-triv/value v)]))
 
-  ;; proc-exposed-lang-v9 -> exprs-bits-lang-v8-effect
+  ;; proc-exposed-lang-v9-effect -> exprs-bits-lang-v8-effect
   (define (specify-representation-effect/effect e)
     (match e
       ;; Modified template - Removed 'tail' effect since we assume valid input
@@ -317,6 +316,8 @@
       [`(unsafe-procedure-ref ,proc ,idx)
        `(mref ,(specify-representation-value/value proc)
               ,(proc-env-idx->offset idx))]
+      ;; "When implementing make-procedure, we assume the size of the environment
+      ;; is a fixnum constant, since this is guaranteed by how our compiler generates make-procedure"
       [`(make-procedure ,label ,arity ,size)
         (alloc/tag
           ;; we need:
@@ -326,7 +327,7 @@
           (* (current-word-size-bytes) (+ 2 size))
           (current-procedure-tag)
           (lambda (a)
-            `((mset! ,a ,procedure-label-offset ,label)
+            `((mset! ,a ,procedure-label-offset ,(specify-representation-value/value label))
               (mset! ,a ,procedure-arity-offset ,(specify-representation-value/value arity)))))]
       ;; modfied template - squashed cases - the rest all need to be converted
       ;; to something of the form (if (!= (relop ,@vs) #f) #t #f)
@@ -357,6 +358,8 @@
   ;; proc-exposed-lang-v9-p exprs-bits-lang-v8-pred
   (define (specify-representation-value/pred v)
     (match v
+      ;; modified template - squashed value and value ... since they
+      ;; are the same type
       [`(call ,vs ...)
        `(!= (call ,@(map specify-representation-value/value vs)) ,(current-false-ptr))]
       [`(let ([,as ,vs] ...) ,v)
@@ -924,4 +927,17 @@
        (let
          ([p.1 (make-procedure L.foo.1 0 3)])
          (procedure? p.1))))
+  (check-eval-true
+    '(module
+       (define L.foo.1 (lambda () (void)))
+       (procedure? (make-procedure L.foo.1 0 3))))
+  (check-eval-false '(module (procedure? (void))))
+
+  (check-true
+    (procedure?
+      (interp-exprs-bits-lang-v8
+        '(module
+           (define L.foo.1 (lambda () (void)))
+           (unsafe-procedure-label (make-procedure L.foo.1 0 0))))))
+
   )
