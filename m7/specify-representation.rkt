@@ -309,8 +309,6 @@
        `(mref ,(specify-representation-value/value v) ,vec-len-offset)]
       [`(unsafe-vector-ref ,vec ,idx)
        `(mref ,(specify-representation-value/value vec) ,(vec-idx->vec-offset idx))]
-      ;; modified template - removed unsafe-vector-set! since it should never
-      ;; appear in value context
       [`(unsafe-procedure-label ,proc)
        `(mref ,(specify-representation-value/value proc) ,procedure-label-offset)]
       [`(unsafe-procedure-arity ,proc)
@@ -331,6 +329,9 @@
           (lambda (a)
             `((mset! ,a ,procedure-label-offset ,(specify-representation-value/value label))
               (mset! ,a ,procedure-arity-offset ,(specify-representation-value/value arity)))))]
+      ;; modified template - removed unsafe-vector-set! and unsafe-procedure-set!
+      ;; since it should never appear in value context
+      ;;
       ;; modfied template - squashed cases - the rest all need to be converted
       ;; to something of the form (if (!= (relop ,@vs) #f) #t #f)
       ;;
