@@ -58,14 +58,32 @@
   (check-execute '(module 42) 42)
   (check-execute '(module #t) #t)
   (check-execute '(module #f) #f)
-  (check-execute '(module empty) 'empty)
+  (check-execute '(module empty) '())
   (check-execute '(module (void)) '(void))
   (check-execute '(module (error 15)) '(error 15))
   (check-execute '(module #\J) #\J)
-  (check-execute '(module (cons 4 #t)) (cons 4 #t))
+  (check-execute '(module (call cons empty (call cons 2 #\B))) (cons '() (cons 2 #\B)))
   (check-execute '(module (call cons 4 #t)) (cons 4 #t))
   (check-execute '(module (call make-vector 4)) (make-vector 4))
 
+  ;; vector operations
+  (check-execute
+    '(module
+      (let ([vec (call make-vector 4)])
+        (let ([a (call vector-set! vec 2 178)]
+              [b (call vector-set! vec 3 -44)])
+          (call - (call vector-ref vec 2) (call vector-ref vec 3)))))
+    222)
+
+  ;; lambda
+  (check-execute
+    '(module
+      (define func1 (lambda (fn x y) ((fn x y) (call * x y))))
+      (let ([func2 (lambda (x y) (lambda (a) (call - a (call + x (call * y y)))))])
+        (call func1 func2 17 7)))
+    (- (* 17 7) (+ 17 (* 7 7))))
+
+  ;; factorial
   (check-execute
     '(module
       (define fact
