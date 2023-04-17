@@ -218,6 +218,7 @@
       [#f t]
       ['empty t]
       ['(void) t]
+      ;; (error uint8)
       [`(error ,_) t]
       [(? ascii-char-literal?) t]
       [_ (implement-safe-primops-prim-f t)]))

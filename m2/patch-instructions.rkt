@@ -126,7 +126,7 @@
             (set! ,loc ,tmp)))
         (fn loc)))
 
-  ;; para-asm-lang-v8-s -> paren-x64-mops-v8-s
+  ;; para-asm-lang-v8-s -> (List-of paren-x64-mops-v8-s)
   (define (patch-instructions-s s)
     (match s
       [`(set! ,loc1 (mref ,loc2 ,index))
