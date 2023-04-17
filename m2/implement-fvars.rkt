@@ -119,6 +119,7 @@
       [(? int64?) o]
       [loc (implement-fvars-loc loc)]))
 
+  ;; nested-asm-lang-fvars-v8-triv -> nested-asm-lang-v8-triv
   (define (implement-fvars-triv t)
     (match t
       [(? label?) t]

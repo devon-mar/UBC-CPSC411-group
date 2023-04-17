@@ -65,7 +65,7 @@
        `(begin
          ,@(map sequentialize-let-effect effects)
          ,(sequentialize-let-pred pred))]
-      [`(,_relop ,_ ,_) p]))
+      [`(,_relop ,_opand1 ,_opand2) p]))
 
   ;; values-bits-lang-v8-tail -> imp-mf-lang-v8-tail
   (define (sequentialize-let-tail t)
@@ -79,7 +79,7 @@
          ,(sequentialize-let-pred p)
          ,(sequentialize-let-tail t1)
          ,(sequentialize-let-tail t2))]
-      [`(call ,_ ,_ ...) t]
+      [`(call ,_triv ,_opand ...) t]
       [`(begin ,effects ... ,tail)
        `(begin
          ,@(map sequentialize-let-effect effects)
@@ -99,14 +99,14 @@
          ,(sequentialize-let-pred p)
          ,(sequentialize-let-value v1)
          ,(sequentialize-let-value v2))]
-      [`(call ,_ ,_ ...) v]
+      [`(call ,_triv ,_opand ...) v]
       [`(begin ,effects ... ,value)
        `(begin
          ,@(map sequentialize-let-effect effects)
          ,(sequentialize-let-value value))]
-      [`(mref ,_ ,_) v]
-      [`(alloc ,_) v]
-      [`(,_binop ,_ ,_) v]
+      [`(mref ,_aloc ,_opand) v]
+      [`(alloc ,_opand) v]
+      [`(,_binop ,_opand1 ,_opand2) v]
       ;; triv
       [_ v]))
 

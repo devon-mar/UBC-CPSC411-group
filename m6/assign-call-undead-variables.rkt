@@ -84,6 +84,7 @@
   ;; Assigns call undead variables for a procedure with the given label,
   ;; info, and tail. Only the info field is modified in the returned procedure.
   ;;
+  ;; tail: asm-pred-lang-v8/conflicts-tail
   ;; -> asm-pred-lang-v8/pre-framed-procedure
   (define/contract (assign-call-undead-variables-proc label info tail)
     (-> label? info? any/c any/c)
@@ -92,6 +93,7 @@
        ,(update-info info)
        ,tail))
 
+  ;; asm-pred-lang-v8/conflicts-p -> asm-pred-lang-v8/pre-framed-p
   (define (assign-call-undead-variables-p p)
     (match p
       [`(module ,info (define ,labels ,infos ,tails) ... ,tail)

@@ -25,7 +25,7 @@
   ;; (Block-Asm-Lang-v8 tail) -> (List-of (Para-Asm-Lang-v8 s))
   (define (flatten-tail t)
     (match t
-      [`(jump ,_) (list t)]
+      [`(jump ,_trg) (list t)]
       [`(begin ,s ... ,tail)
        (append s (flatten-tail tail))]
       [`(if (,relop ,loc ,opand) (jump ,trg1) (jump ,trg2))

@@ -38,7 +38,7 @@
   ;; tail undead-set-tree/rloc -> void
   (define (conflict-tail tail ust)
     (match (cons tail ust)
-      [(cons `(jump ,_ ,_ ...) _) (void)]
+      [(cons `(jump ,_trg ,_loc ...) _) (void)]
       [(cons `(begin ,effects ... ,tail) `(,usts ...))
        (for ([e effects] [u usts])
          (conflict-effect e u))
@@ -59,7 +59,7 @@
       [(cons `(mset! ,loc ,idx ,triv) undead-out)
         ;; mset does not assign registers, frame variables, or alocs
         (void)]
-      [(cons `(set! ,loc (,_ ,loc ,_)) undead-out)
+      [(cons `(set! ,loc (,_binop ,loc ,_opand)) undead-out)
        (for ([u undead-out])
          (unless
            (equal? loc u)
@@ -76,7 +76,7 @@
        (conflict-pred pred ustp)
        (conflict-effect effect1 ust1)
        (conflict-effect effect2 ust2)]
-      [(cons `(return-point ,_ ,tail) `((,_ ...) ,ust))
+      [(cons `(return-point ,_label ,tail) `((,_ ...) ,ust))
        (conflict-tail tail ust)]))
 
   ;; Updates conflict graph for the locs in the pred
@@ -97,7 +97,7 @@
        (conflict-pred ppred ustp)
        (conflict-pred pred1 ust1)
        (conflict-pred pred2 ust2)]
-      [(cons `(,_relop ,_ ,_) _)
+      [(cons `(,_relop ,_loc ,_opand) _)
        (void)]))
 
   (match p
@@ -659,12 +659,12 @@
       (rdi (rax r8))
       (r8 (rax rdi))))
 
-  (check-conflict 
+  (check-conflict
     `(module
       ((new-frames ())
        (locals (x.1 x.2))
        (call-undead ()))
-      (begin 
+      (begin
         (begin ;; Allocate array of size 3 to x.1
           (set! x.1 ,(current-heap-base-pointer-register))
           (set! ,(current-heap-base-pointer-register) (+ ,(current-heap-base-pointer-register) 3)))
@@ -673,8 +673,8 @@
         (begin
           (set! x.2 10)
           (set! x.1 (+ x.1 x.2)))
-        (jump r15))) 
-    `(((r12 r15 x.1) (r15 x.1)) (x.1 r15) (x.1 r15) ((x.2 x.1 r15) (r15)) ()) 
+        (jump r15)))
+    `(((r12 r15 x.1) (r15 x.1)) (x.1 r15) (x.1 r15) ((x.2 x.1 r15) (r15)) ())
     `((x.2 (r15 x.1)) (x.1 (x.2 r15 r12)) (r12 (x.1 r15)) (r15 (x.2 x.1 r12))))
 
   ;; verify x.3 has empty conflict graph with just mref
@@ -683,7 +683,7 @@
       ((new-frames ())
        (locals (x.1 x.2 x.3))
        (call-undead ()))
-      (begin 
+      (begin
         (set! x.2 (mref x.3 0))
         (begin
           (set! x.2 10)
@@ -698,7 +698,7 @@
       ((new-frames ())
        (locals (x.1 x.2 x.3))
        (call-undead ()))
-      (begin 
+      (begin
         (set! x.3 (mref x.2 0))
         (begin
           (set! x.2 10)

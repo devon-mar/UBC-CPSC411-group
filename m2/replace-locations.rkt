@@ -61,7 +61,7 @@
   ;; assignment asm-pred-lang-v8/assignments-tail -> nested-asm-lang-fvars-v8-tail
   (define (replace-locations-tail as t)
     (match t
-      [`(jump ,trg ,_ ...)
+      [`(jump ,trg ,_loc ...)
         `(jump ,(replace-locations-trg as trg))]
       [`(begin ,es ... ,t)
         `(begin
@@ -146,7 +146,7 @@
       ['bitwise-ior (void)]
       ['bitwise-xor (void)]
       ['arithmetic-shift-right (void)]))
-  
+
   ;; not used
   #;
   (define (replace-locations-relop r)
