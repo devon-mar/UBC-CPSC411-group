@@ -30,6 +30,7 @@
   (define pair-car-offset (* -1 (current-pair-tag)))
   (define pair-cdr-offset (- (current-word-size-bytes) (current-pair-tag)))
   (define vec-len-offset (* -1 (current-vector-tag)))
+  (define vec-base-offset (+ (current-word-size-bytes) vec-len-offset)) ;; offset of the 0th element
   (define procedure-label-offset (* -1 (current-procedure-tag)))
   (define procedure-arity-offset (- (current-word-size-bytes) (current-procedure-tag)))
   (define procedure-env-base-offset (- (* 2 (current-word-size-bytes)) (current-procedure-tag)))
@@ -39,8 +40,8 @@
   ;;
   ;; n: proc-exposed-lang-v9-value
   ;; tag: int64?
-  ;; f: (-> aloc (listof proc-exposed-lang-v9-effect))
-  ;; -> proc-exposed-lang-v9-value (PTR)
+  ;; f: (-> aloc (listof exprs-bits-lang-v8-effect))
+  ;; -> exprs-bits-lang-v8-value (PTR)
   (define/contract (alloc/tag n tag f)
     (-> any/c int64? (-> aloc? (listof any/c)) any/c)
     (define tmp (fresh))
@@ -51,19 +52,22 @@
 
   ;; Returns an offset for use with mset! or mref for the ith element of a vector.
   ;;
-  ;; exprs-unsafe-lang-v9-value -> exprs-bits-lang-v8-value
-  (define (vec-idx->offset i)
-    (if (int64? i)
-      (+ (* (current-word-size-bytes) (add1 i)) vec-len-offset)
-      `(+ (* ,(untag-fixnum (specify-representation-value/value i)) ,(current-word-size-bytes)) ,(+ (current-word-size-bytes) vec-len-offset))))
+  ;; proc-exposed-lang-v9-value -> exprs-bits-lang-v8-value
+  (define (vec-idx->vec-offset idx)
+    (if (int64? idx)
+      (+ (* (current-word-size-bytes) idx) vec-base-offset)
+      `(+ (* ,(untag-fixnum (specify-representation-value/value idx)) ,(current-word-size-bytes)) ,vec-base-offset)))
 
   ;; Returns an offset for the ith var in a procedure's environment.
+  ;;
+  ;; proc-exposed-lang-v9-value -> exprs-bits-lang-v8-value
   (define (proc-env-idx->offset i)
     (if (int64? i)
      (+ procedure-env-base-offset (* i (current-word-size-bytes)))
      `(+ (* ,(untag-fixnum (specify-representation-value/value i)) ,(current-word-size-bytes))
          ,procedure-env-base-offset)))
 
+  ;; Returns #t if p is a proc-exposed-lang-v9-primop, otherwise returns #f.
   (define/contract (primop? p)
     (-> any/c boolean?)
     (and
@@ -100,7 +104,7 @@
               unsafe-procedure-set!))
       #t))
 
-  ;; Takes a pred and returns a value that is equal to the true/false ptr.
+  ;; Takes a pred and returns a value that returns #t or #f based on p.
   ;;
   ;; proc-exposed-lang-v9-pred -> exprs-bits-lang-v8-value
   (define (pred->value p)
@@ -137,9 +141,6 @@
              (define/contract (tag i)
                (-> v/c int64?)
                (bitwise-ior (arithmetic-shift (to-int i) (shiftp)) (tagp)))
-             ;; If the value of i can be determined statically (ie int64?),
-             ;; an int64 will be returned. Otherwise a value that does it
-             ;; at runtime will be returned.
              (define (untag i)
                `(arithmetic-shift-right ,i ,(shiftp)))))]))
 
@@ -178,13 +179,13 @@
     (match p
       [`(module (define ,labels (lambda (,alocs ...) ,values)) ... ,value)
        `(module
-          ,@(map specify-representation-proc labels alocs values)
+            ,@(map specify-representation-proc labels alocs values)
           ,(specify-representation-value/value value))]))
 
-  ;; proc-exposed-lang-v9-value -> exprs-bits-lang-v8-value
+  ;; proc-exposed-lang-v9-p exprs-bits-lang-v8-value
   (define (specify-representation-value/value v)
     (match v
-      ;; modified template - removed tail v
+      ;; modified template - removed tail value
       [`(call ,vs ...)
        `(call ,@(map specify-representation-value/value vs))]
       [`(let ([,as ,vs] ...) ,v)
@@ -204,7 +205,7 @@
         (specify-representation-primop/value primop vs)]
       [_ (specify-representation-triv/value v)]))
 
-  ;; proc-exposed-lang-v9-effect -> exprs-bits-lang-v8-effect
+  ;; proc-exposed-lang-v9 -> exprs-bits-lang-v8-effect
   (define (specify-representation-effect/effect e)
     (match e
       ;; Modified template - Removed 'tail' effect since we assume valid input
@@ -216,13 +217,13 @@
 
   ;; "only imperative primops (only unsafe-vector-set! so far) can be directly called in effect context"
   ;;
-  ;; proc-exposed-lang-v9-primop (listof exprs-unsafe-data-lang-v8-value) -> exprs-bits-lang-v8-effect
+  ;; proc-exposed-lang-v9-primop (listof proc-exposed-lang-v9-value) -> exprs-bits-lang-v8-effect
   (define (specify-representation-primop/effect p vs)
     (match (cons p vs)
       [`(unsafe-vector-set! ,vec ,idx ,val)
         `(mset!
            ,(specify-representation-value/value vec)
-           ,(vec-idx->offset idx)
+           ,(vec-idx->vec-offset idx)
            ,(specify-representation-value/value val))]
       [`(unsafe-procedure-set! ,proc ,idx ,val)
         `(mset!
@@ -230,7 +231,7 @@
            ,(proc-env-idx->offset idx)
            ,(specify-representation-value/value val))]))
 
-  ;; proc-exposed-lang-v9-triv -> exprs-bits-lang-v8-triv
+  ;; proc-exposed-lang-v9-triv exprs-bits-lang-v8-triv
   (define (specify-representation-triv/value t)
     (match t
       [(? label?)
@@ -254,7 +255,7 @@
 
   ;; "Only primops that produce values can appear in value context"
   ;;
-  ;; proc-exposed-lang-v9-primop (listof exprs-unsafe-data-lang-v8-value) -> exprs-bits-lang-v8-value
+  ;; proc-exposed-lang-v9-primop (listof proc-exposed-lang-v9-value) -> exprs-bits-lang-v8-value
   (define (specify-representation-primop/value p vs)
     (match (cons p vs)
       [`(unsafe-fx* ,vs ...)
@@ -306,7 +307,7 @@
       [`(unsafe-vector-length ,v)
        `(mref ,(specify-representation-value/value v) ,vec-len-offset)]
       [`(unsafe-vector-ref ,vec ,idx)
-       `(mref ,(specify-representation-value/value vec) ,(vec-idx->offset idx))]
+       `(mref ,(specify-representation-value/value vec) ,(vec-idx->vec-offset idx))]
       ;; modified template - removed unsafe-vector-set! since it should never
       ;; appear in value context
       [`(unsafe-procedure-label ,proc)
@@ -345,21 +346,21 @@
       ;; 'error?
       ;; 'pair?
       ;; 'vector?
-      ;; 'procedure?
+      ;; procedure?
       [_ (pred->value (specify-representation-primop/pred p vs))]))
 
   ;; Takes an exprs-bits-lang-v8-value and transorms it into an
-  ;; proc-exposed-lang-v9-pred by checking if the value is != #f.
+  ;; exprs-bits-lang-v8-pred by checking if the value is != #f.
   ;;
   ;; exprs-bits-lang-v8-value -> exprs-bits-lang-v8-pred
   (define (value->pred v)
     `(!= ,v ,(current-false-ptr)))
 
+  ;; The following functions' return value may only be used in pred position of
+  ;; the target language.
   ;; proc-exposed-lang-v9-p exprs-bits-lang-v8-pred
   (define (specify-representation-value/pred v)
     (match v
-      ;; modified template - squashed value and value ... since they
-      ;; are the same type
       [`(call ,vs ...)
        `(!= (call ,@(map specify-representation-value/value vs)) ,(current-false-ptr))]
       [`(let ([,as ,vs] ...) ,v)
@@ -375,7 +376,7 @@
        (specify-representation-primop/pred primop vs)]
       [_ (specify-representation-triv/pred v)]))
 
-  ;; proc-exposed-lang-v9-primop (listof exprs-unsafe-data-lang-v8-value) -> exprs-bits-lang-v8-value
+  ;; proc-exposed-lang-v9-primop (listof proc-exposed-lang-v9-value) -> exprs-bits-lang-v8-value
   (define (specify-representation-primop/pred p vs)
     (define v (car vs))
     (match p
@@ -428,19 +429,19 @@
   (require rackunit)
 
   (define-check (check-42 p)
-    (define v (interp-proc-exposed-lang-v9 (specify-representation p)))
+    (define v (interp-exprs-bits-lang-v8 (specify-representation p)))
     (check-equal? (bitwise-and v (current-fixnum-mask)) (current-fixnum-tag))
     (check-equal? (arithmetic-shift v (* -1 (current-fixnum-shift))) 42))
 
   (define-check (check-eval-true p)
     (check-equal?
-     (interp-proc-exposed-lang-v9 (specify-representation p))
+     (interp-exprs-bits-lang-v8 (specify-representation p))
      (current-true-ptr)
      (format "expected true: ~a" p)))
 
   (define-check (check-eval-false p)
     (check-equal?
-     (interp-proc-exposed-lang-v9 (specify-representation p))
+     (interp-exprs-bits-lang-v8 (specify-representation p))
      (current-false-ptr)
      (format "expected false ~a" p)))
 
@@ -525,12 +526,12 @@
   (define-syntax-rule (unop-test unop t fs ...)
     (begin
       (check-equal?
-       (interp-proc-exposed-lang-v9
+       (interp-exprs-bits-lang-v8
         (specify-representation '(module (unop t))))
        (current-true-ptr)
        (format "expected true: (~a ~a)" 'unop 't))
       (check-equal?
-       (interp-proc-exposed-lang-v9
+       (interp-exprs-bits-lang-v8
         (specify-representation '(module (unop fs))))
        (current-false-ptr)
        (format "expected false: (~a ~a)" 'unop 'fs)) ...))
@@ -673,7 +674,6 @@
       [vector? (lambda (tmp.44) (vector? tmp.44))]
       [procedure? (lambda (tmp.50) (procedure? tmp.50))]))
 
-  ;; generates boilerplate that calls the given primop
   (define-syntax-rule (safe-primop-module primop args ...)
     `(module
        (define ,(string->symbol (format "L.~a.1" 'primop)) ,@(dict-ref safe-primops 'primop))
@@ -936,8 +936,8 @@
   (check-true
     (procedure?
       (interp-exprs-bits-lang-v8
-        '(module
-           (define L.foo.1 (lambda () (void)))
-           (unsafe-procedure-label (make-procedure L.foo.1 0 0))))))
-
+        (specify-representation
+          '(module
+             (define L.foo.1 (lambda () (void)))
+             (unsafe-procedure-label (make-procedure L.foo.1 0 0)))))))
   )
