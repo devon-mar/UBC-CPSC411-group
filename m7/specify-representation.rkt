@@ -348,7 +348,7 @@
       ;; 'procedure?
       [_ (pred->value (specify-representation-primop/pred p vs))]))
 
-  ;; Takes an proc-exposed-lang-v9-value and transorms it into an
+  ;; Takes an exprs-bits-lang-v8-value and transorms it into an
   ;; proc-exposed-lang-v9-pred by checking if the value is != #f.
   ;;
   ;; exprs-bits-lang-v8-value -> exprs-bits-lang-v8-pred
