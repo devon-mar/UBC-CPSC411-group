@@ -32,9 +32,9 @@
     (-> aloc? any/c any/c)
     (match value
       [`(begin ,es ... ,value)
-        `(begin
-           ,@(map normalize-bind-effect es)
-           ,(normalize-bind-set aloc value))]
+       `(begin
+          ,@(map normalize-bind-effect es)
+          ,(normalize-bind-set aloc value))]
       [`(if ,pred ,vt ,vf)
        `(if ,(normalize-bind-pred pred)
           ,(normalize-bind-set aloc vt)
@@ -52,15 +52,14 @@
     (-> aloc? any/c any/c any/c)
     (match value
       [`(begin ,es ... ,value)
-        `(begin
-           ,@(map normalize-bind-effect es)
-           ,(normalize-bind-mset aloc opand value))]
+       `(begin
+          ,@(map normalize-bind-effect es)
+          ,(normalize-bind-mset aloc opand value))]
       [`(if ,pred ,vt ,vf)
        `(if ,(normalize-bind-pred pred)
           ,(normalize-bind-mset aloc opand vt)
           ,(normalize-bind-mset aloc opand vf))]
-      [_
-        (value->triv value (lambda (t) `(mset! ,aloc ,opand ,t)))]))
+      [_ (value->triv value (lambda (t) `(mset! ,aloc ,opand ,t)))]))
 
   ;; tail: imp-mf-lang-v8-tail?
   ;; -> proc-imp-cmf-lang-v8-proc
@@ -74,86 +73,80 @@
   (define (normalize-bind-p p)
     (match p
       [`(module (define ,labels (lambda (,alocs ...) ,tails)) ... ,tail)
-        `(module
-           ,@(map normalize-bind-proc labels alocs tails)
-           ,(normalize-bind-tail tail))]))
+       `(module
+          ,@(map normalize-bind-proc labels alocs tails)
+          ,(normalize-bind-tail tail))]))
 
   ;; imp-mf-lang-v8-pred -> proc-imp-cmf-lang-v8-pred
   (define (normalize-bind-pred p)
     (match p
       [`(true)
-        p]
+       p]
       [`(false)
-        p]
+       p]
       [`(not ,p)
-        `(not ,(normalize-bind-pred p))]
+       `(not ,(normalize-bind-pred p))]
       [`(begin ,es ... ,p)
-        `(begin
-           ,@(map normalize-bind-effect es)
-           ,(normalize-bind-pred p))]
+       `(begin
+          ,@(map normalize-bind-effect es)
+          ,(normalize-bind-pred p))]
       [`(if ,p1 ,p2 ,p3)
-        `(if
-           ,(normalize-bind-pred p1)
-           ,(normalize-bind-pred p2)
-           ,(normalize-bind-pred p3))]
-      [`(,_ ,_ ,_) p]))
+       `(if
+          ,(normalize-bind-pred p1)
+          ,(normalize-bind-pred p2)
+          ,(normalize-bind-pred p3))]
+      [`(,_relop ,_opand1 ,_opand2) p]))
 
   ;; imp-mf-lang-v8-tail -> proc-imp-cmf-lang-v8-tail
   (define (normalize-bind-tail t)
     (match t
       [`(begin ,es ... ,tail)
-        `(begin
-           ,@(map normalize-bind-effect es)
-           ,(normalize-bind-tail tail))]
+       `(begin
+          ,@(map normalize-bind-effect es)
+          ,(normalize-bind-tail tail))]
       [`(if ,p ,t1 ,t2)
-        `(if
-           ,(normalize-bind-pred p)
-           ,(normalize-bind-tail t1)
-           ,(normalize-bind-tail t2))]
-      [`(call ,_ ,_ ...) t]
-      ;; value
-      [_ (normalize-bind-value t)]))
+       `(if
+          ,(normalize-bind-pred p)
+          ,(normalize-bind-tail t1)
+          ,(normalize-bind-tail t2))]
+      [`(call ,_triv ,_opand ...) t]
+      [value (normalize-bind-value value)]))
 
   ;; imp-mf-lang-v8-value -> proc-imp-cmf-lang-v8-value
   (define (normalize-bind-value v)
     (match v
-      ;; (mref aloc opand)
-      [`(mref ,_ ,_)
+      [`(mref ,_aloc ,_opand)
         v]
-      ;; (aloc opand)
-      [`(alloc ,_)
+      [`(alloc ,_opand)
         v]
       [`(begin ,es ... ,v)
-        `(begin
-           ,@(map normalize-bind-effect es)
-           ,(normalize-bind-value v))]
-      [`(if ,p ,v1 ,v2)
-        `(if
-           ,(normalize-bind-pred p)
-           ,(normalize-bind-value v1)
-           ,(normalize-bind-value v2))]
-      [`(call ,_ ,_ ...) v]
-      ;; (binop ,opand ,opand)
-      [`(,_ ,_ ,_) v]
-      ;; triv
-      [_ v]))
+       `(begin
+          ,@(map normalize-bind-effect es)
+          ,(normalize-bind-value v))]
+      [`(if ,pred ,v1 ,v2)
+       `(if
+          ,(normalize-bind-pred pred)
+          ,(normalize-bind-value v1)
+          ,(normalize-bind-value v2))]
+      [`(call ,_triv ,_opand ...) v]
+      [`(,_binop ,_opand1 ,_opand2) v]
+      [triv triv]))
 
   ;; imp-mf-lang-v8-effect -> proc-imp-cmf-lang-v8-effect
   (define (normalize-bind-effect e)
     (match e
-      [`(set! ,a ,v)
-        (normalize-bind-set a v)]
-      [`(mset! ,a ,o ,v)
-        (normalize-bind-mset a o v)]
-			;; modified template - removed tail effect.
-      [`(begin ,es ...)
-        `(begin
-           ,@(map normalize-bind-effect es))]
-      [`(if ,p ,e1 ,e2)
-        `(if
-           ,(normalize-bind-pred p)
-           ,(normalize-bind-effect e1)
-           ,(normalize-bind-effect e2))]))
+      [`(set! ,aloc ,value)
+       (normalize-bind-set aloc value)]
+      [`(mset! ,aloc ,opand ,value)
+       (normalize-bind-mset aloc opand value)]
+      [`(begin ,es ... ,et)
+       `(begin
+          ,@(map normalize-bind-effect (append es (list et))))]
+      [`(if ,pred ,e1 ,e2)
+       `(if
+          ,(normalize-bind-pred pred)
+          ,(normalize-bind-effect e1)
+          ,(normalize-bind-effect e2))]))
 
   ;; If v is not already a triv, turn it into one
   ;; by introducing a begin.
@@ -164,10 +157,10 @@
     (match v
       [(or (? opand?) (? label?)) (f v)]
       [_
-        (define tmp (fresh 'tmp))
-        `(begin
-           ,(normalize-bind-set tmp v)
-           ,(f tmp))]))
+       (define tmp (fresh 'tmp))
+       `(begin
+          ,(normalize-bind-set tmp v)
+          ,(f tmp))]))
 
   ;; not used
   #;
@@ -297,29 +290,29 @@
         x.3)))
 
   ;; M3 tests
-	(define-check (check-42 p)
-		(check-equal?
-			(interp-imp-cmf-lang-v8 (normalize-bind p))
-			42))
+  (define-check (check-42 p)
+    (check-equal?
+      (interp-imp-cmf-lang-v8 (normalize-bind p))
+      42))
 
   (check-42
-	  ;; tail/value
-	  ;; value/triv
+    ;; tail/value
+    ;; value/triv
     '(module 42))
 
-	(check-42
-		'(module
-	     ;; pred/(relop triv triv)
-	     ;; pred/(true)
+  (check-42
+    '(module
+       ;; pred/(relop triv triv)
+       ;; pred/(true)
        (if (true)
-	       ;; pred/(not pred)
+         ;; pred/(not pred)
          (if (not (true)) 0 42)
          ;; pred/(false)
          (if (false) 1 0))))
 
   (check-42
     '(module
-	     ;; value/(if pred value value)
+       ;; value/(if pred value value)
        (if (begin (set! x.1 (if (true) 20 0)) (= x.1 20))
          42
          0)))
@@ -333,12 +326,12 @@
 
   (check-42
     '(module
-	     ;; tail/(begin effect ... tail)
+       ;; tail/(begin effect ... tail)
        (begin
          (set! x.1 1)
          (set! x.2 41)
-	       ;; tail/(if pred tail tail)
-	       ;; value/(binop triv triv)
+         ;; tail/(if pred tail tail)
+         ;; value/(binop triv triv)
          (if (false) 40 (+ x.2 x.1)))))
 
   (check-42
@@ -355,7 +348,7 @@
   (check-42
     '(module
        (begin
-	       ;; effect/(begin effect ... effect)
+         ;; effect/(begin effect ... effect)
          (begin
            (set!
              x.1
@@ -364,7 +357,7 @@
                (set! x.2 10)
                (set! x.3 20)
                (+ x.2 x.3)))
-	         ;; effect/(if pred effect effect)
+           ;; effect/(if pred effect effect)
            (if (true) (set! x.4 12) (set! x.4 40)))
          (+ x.1 x.4))))
 
