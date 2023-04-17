@@ -92,7 +92,14 @@
                      ,(implement-safe-call-triv p)
                      ,@(map implement-safe-call-value vs))
                   bad-arity-error)]
-              [_ bad-proc-error])])]
+              [_
+                (define tmp (fresh 'iscv-tmp))
+                `(let ([,tmp ,p])
+                   (if (procedure? ,tmp)
+                     (if (eq? (unsafe-procedure-arity ,tmp) ,(length vs))
+                       (unsafe-procedure-call ,tmp ,@(map implement-safe-call-value vs))
+                       ,bad-arity-error)
+                     ,bad-proc-error))])])]
       [`(let ([,as ,vs] ...) ,v)
         `(let
            ,(map (lambda (a v) `[,a ,(implement-safe-call-value v)]) as vs)
@@ -315,4 +322,17 @@
        (define foo.1 (lambda (x.1) (if (unsafe-fx> x.1 4) 2 42)))
        (define bar.1 (lambda () 2))
        (call foo.1 (call bar.1))))
+
+
+  ;; a let should be introduced
+  (check-42
+    '(module
+       (let ([v.1 (unsafe-make-vector 1)])
+         (begin
+           (unsafe-vector-set! v.1 0 0)
+           (call
+             (begin
+               ;; this should only be evaluated once!
+               (unsafe-vector-set! v.1 0 (unsafe-fx+ (unsafe-vector-ref v.1 0) 1))
+               (lambda () (unsafe-fx+ (unsafe-vector-ref v.1 0) 41))))))))
   )
