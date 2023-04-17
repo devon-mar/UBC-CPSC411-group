@@ -178,7 +178,7 @@
     (match p
       [`(module (define ,labels (lambda (,alocs ...) ,values)) ... ,value)
        `(module
-            ,@(map specify-representation-proc labels alocs values)
+          ,@(map specify-representation-proc labels alocs values)
           ,(specify-representation-value/value value))]))
 
   ;; proc-exposed-lang-v9-value -> exprs-bits-lang-v8-value
