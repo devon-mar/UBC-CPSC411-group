@@ -205,7 +205,7 @@
         (specify-representation-primop/value primop vs)]
       [_ (specify-representation-triv/value v)]))
 
-  ;; proc-exposed-lang-v9 -> exprs-bits-lang-v8-effect
+  ;; proc-exposed-lang-v9-effect -> exprs-bits-lang-v8-effect
   (define (specify-representation-effect/effect e)
     (match e
       ;; Modified template - Removed 'tail' effect since we assume valid input
