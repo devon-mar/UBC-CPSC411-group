@@ -74,31 +74,19 @@
   (define (implement-safe-call-value v)
     (match v
       [`(call ,p ,vs ...)
-        `(if (procedure? ,p)
-           (if (eq? (unsafe-procedure-arity ,p) ,(length vs))
-             (unsafe-procedure-call ,p ,@(map implement-safe-call-value vs))
-             ,bad-arity-error)
-           ,bad-proc-error)
-        #;
-        (cond
-          [(and (dict-has-key? arities p) (= (length vs) (dict-ref arities p)))
-           `(unsafe-procedure-call ,p ,@(map implement-safe-call-value vs))]
-          [(dict-has-key? arities p) bad-arity-error]
-          [(aloc? p)
-            `(if (procedure? ,p)
-               (if (eq? (unsafe-procedure-arity ,p) ,(length vs))
-                 (unsafe-procedure-call ,p ,@(map implement-safe-call-value vs))
-                 ,bad-arity-error)
-               ,bad-proc-error)]
-          [else
-            (match p
-              [`(lambda (,as ...) ,_)
-                (if (= (length as) (length vs))
-                  `(unsafe-procedure-call
-                     ,(implement-safe-call-triv p)
-                     ,@(map implement-safe-call-value vs))
-                  bad-arity-error)]
-              [_ bad-proc-error])])]
+        (if (aloc? p)
+          `(if (procedure? ,p)
+             (if (eq? (unsafe-procedure-arity ,p) ,(length vs))
+               (unsafe-procedure-call ,p ,@(map implement-safe-call-value vs))
+               ,bad-arity-error)
+             ,bad-proc-error)
+          (let ([tmp (fresh 'isc-tmp)])
+            `(let ([,tmp ,p])
+               (if (procedure? ,p)
+                 (if (eq? (unsafe-procedure-arity ,tmp) ,(length vs))
+                   (unsafe-procedure-call ,tmp ,@(map implement-safe-call-value vs))
+                   ,bad-arity-error)
+                 ,bad-proc-error))))]
       [`(let ([,as ,vs] ...) ,v)
         `(let
            ,(map (lambda (a v) `[,a ,(implement-safe-call-value v)]) as vs)
