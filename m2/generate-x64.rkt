@@ -9,7 +9,7 @@
 ;; Milestone 4 Exercise 1
 ;; Milestone 6 Exercise 19
 ;; Milestone 7 Exercise 9
-;; Milestone 7 Exercise 14
+;; Milestone 8 Exercise 14
 ;;
 ;; Compile the Paren-x64 v8 program into a valid sequence of x64 instructions,
 ;; represented as a string.
@@ -63,21 +63,22 @@
         (format "~a ~a" (relop->x64-jmp relop) (sanitize-label label))]))
 
   ;; paren-x64-v8-trg -> string
-  ;; If the trg is a label, santize it. Otherwise return t
+  ;; Return t in x64 representation, sanitized if it is a label
   (define (generate-x64-trg t)
     (match t
       [(? register?)
-        t]
+       (symbol->string t)]
       [(? label?)
        (sanitize-label t)]))
 
   ;; paren-x64-v8-triv -> string
+  ;; Return t in x64 representation, sanitized if it is a label
   (define (generate-x64-triv t)
     (match t
       [(? int64?)
-       t]
-      [_ 
-        (generate-x64-trg t)]))
+       (number->string t)]
+      [trg
+       (generate-x64-trg trg)]))
 
   ;; not used
   #;
@@ -89,11 +90,12 @@
        (void)]))
 
   ;; paren-x64-v8-loc -> string?
+  ;; Return the x64 representation of loc
   (define/contract (generate-x64-loc l)
     (-> any/c string?)
     (match l
       [(? register?) (symbol->string l)]
-      [_ (addr->x64 l)]))
+      [addr (addr->x64 addr)]))
 
   ;; Returns the displacement mode operand for the given addr
   ;;
@@ -110,6 +112,7 @@
         (format "QWORD [~a + ~a]" r1 r2)]))
 
   ;; paren-x64-v8-binop -> string?
+  ;; Return the x64 instruction for the binop b
   (define/contract (binop->ins b)
     (-> symbol? string?)
     (match b
@@ -117,9 +120,9 @@
       ['+ "add"]
       ['- "sub"]
       ['bitwise-and "and"]
- 	 	  ['bitwise-ior "or"]
- 	 	  ['bitwise-xor "xor"]
- 	 	  ['arithmetic-shift-right "sar"]))
+      ['bitwise-ior "or"]
+      ['bitwise-xor "xor"]
+      ['arithmetic-shift-right "sar"]))
 
   ;; Returns the appropriate x64 jump instructions for the relop r.
   ;;
@@ -351,7 +354,7 @@
        (set! ,rax ,(fixnum 50))
        (set! ,rax (bitwise-xor rax rax))
        (set! ,rax (+ ,rax ,fn42))))
-  
+
   ;; Test arithmetic-shift-right
   (check-42
     `(begin
@@ -359,7 +362,7 @@
        (set! ,rax (* ,rax 32))
        (set! ,rax (arithmetic-shift-right ,rax 5))
        (set! ,rax (+ ,rax ,(fixnum 10)))))
-  
+
   ;; Test ior
   (check-42
     `(begin
@@ -389,4 +392,4 @@
        (set! r8 8)
        (set! (,hbp + r8) ,(fixnum 42))
        (set! ,rax (,hbp + r8))))
-)
+  )
