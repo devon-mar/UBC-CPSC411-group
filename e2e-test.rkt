@@ -81,6 +81,38 @@
           (call - (call vector-ref vec 2) (call vector-ref vec 3)))))
     222)
 
+  ;; vector lambda
+  (check-execute
+    '(module
+      (let ([vec (call make-vector 10)])
+        (let ([fn (lambda (x)
+                    (let ([a (call vector-set! vec 5 (call + (call vector-ref vec 5) x))])
+                      (call vector-ref vec 5)))])
+          (let ([fn2 (lambda ()
+                      (let ([a (call vector-set! vec 5 (call + (call vector-ref vec 5) 1))])
+                        fn))])
+            (call
+              (call
+                (lambda ()
+                  (let ([a (call vector-set! vec 5 (call + (call vector-ref vec 5) 5))])
+                    (call
+                      (call
+                        (lambda (z)
+                          (let ([a (call vector-set! vec 5 (call + (call vector-ref vec 5) z))])
+                            fn2))
+                        10)))))
+              7)))))
+    23)
+
+  ;; cons operations
+  (check-execute
+    '(module
+      (let ([cons (call cons 5 #t)])
+        (if (call cdr cons)
+            (call - (call car 5) -8)
+            (error 2))))
+    13)
+
   ;; lambdas
   (check-execute
     '(module
