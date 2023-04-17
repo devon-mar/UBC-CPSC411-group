@@ -81,7 +81,7 @@
           (call - (call vector-ref vec 2) (call vector-ref vec 3)))))
     222)
 
-  ;; lambda
+  ;; lambdas
   (check-execute
     '(module
       (define func1
@@ -91,6 +91,31 @@
                      (lambda (a) (call - a (call + x (call * y y)))))])
         (call func1 func2 17 7)))
     53)
+
+  ;; lambda - bad arity
+  (check-error
+    '(module
+      (let ([func (lambda (x y)
+                    (call + x (call + x y)))])
+        (call func 2)))
+    125)
+
+  ;; lambda - bad arity indirect
+  (check-error
+    '(module
+      (let ([func (lambda (a)
+                    (lambda (x y)
+                      (call + x (call + a y))))])
+        (call (call func 7) 9)))
+    125)
+
+  ;; lambda - free variables
+  (check-execute
+    '(module
+      (let ([fn (let ([a 20] [b 7])
+                 (lambda (x y) (call * (call + x a) (call - y b))))])
+        (call fn -12 9)))
+    16)
 
   ;; factorial
   (check-execute
