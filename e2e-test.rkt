@@ -54,13 +54,19 @@
         (execute p))
       v))
 
+  ;; Check that program compiles and executes to error with code
+  (define-check (check-error p code)
+    (check-equal?
+      (car (nasm-run/error-string+code (compile p)))
+      code))
+
   ;; base cases
   (check-execute '(module 42) 42)
   (check-execute '(module #t) #t)
   (check-execute '(module #f) #f)
   (check-execute '(module empty) '())
-  (check-execute '(module (void)) '(void))
-  (check-execute '(module (error 15)) '(error 15))
+  (check-execute '(module (void)) eof)
+  (check-error '(module (error 15)) 15)
   (check-execute '(module #\J) #\J)
   (check-execute '(module (call cons empty (call cons 2 #\B))) (cons '() (cons 2 #\B)))
   (check-execute '(module (call cons 4 #t)) (cons 4 #t))
