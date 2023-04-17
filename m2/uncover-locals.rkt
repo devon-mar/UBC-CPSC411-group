@@ -54,7 +54,7 @@
           (uncover-locals-pred p1)
           (uncover-locals-pred p2)
           (uncover-locals-pred p3))]
-      [`(,_ ,l ,o)
+      [`(,_relop ,l ,o)
         (set-union
           (uncover-locals-loc l)
           (uncover-locals-opand o))]))
@@ -63,7 +63,7 @@
   (define/contract (uncover-locals-tail t)
     (-> any/c set?)
     (match t
-      [`(jump ,trg ,_ ...)
+      [`(jump ,trg ,_loc ...)
         (uncover-locals-trg trg)]
       [`(begin ,es ... ,t)
         (foldl
@@ -79,7 +79,7 @@
   ;; asm-pred-lang-v8-effect -> set
   (define (uncover-locals-effect e)
     (match e
-      [`(return-point ,_ ,tail)
+      [`(return-point ,_label ,tail)
         (uncover-locals-tail tail)]
       [`(set! ,loc1 (mref ,loc2 ,index))
         (set-union
@@ -91,7 +91,7 @@
           (uncover-locals-loc loc)
           (uncover-locals-index index)
           (uncover-locals-triv triv))]
-      [`(set! ,loc (,_ ,loc ,opand))
+      [`(set! ,loc (,_binop ,loc ,opand))
         (set-union
           (uncover-locals-loc loc)
           (uncover-locals-opand opand))]
@@ -427,7 +427,7 @@
     (equal? bar-tail m5-tail-2)
     (equal? (list->set (info-ref bar-info 'locals)) m5-locals-2)
     (equal? (list->set (info-ref info 'locals)) m5-locals-1)))
-    
+
   ;; Check mops are handled correctly
   (check-match
   (uncover-locals

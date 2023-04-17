@@ -75,7 +75,7 @@
            ,(select-instructions-pred p)
            ,(select-instructions-tail t1)
            ,(select-instructions-tail t2))]
-      [`(jump ,_ ,_ ...)
+      [`(jump ,_trg ,_loc ...)
         t]))
 
 
@@ -131,7 +131,7 @@
          `((set! ,tmp ,o))
          (f tmp))]
       [(? aloc?) (f o)]))
-  
+
   ;; not used
   #;
   (define (select-instructions-triv t)
@@ -214,7 +214,7 @@
   (check-42 `(set! ,rax (+ 40 2)))
   (check-42 `(set! ,rax (* 21 2)))
   (check-42 `(set! ,rax (- 50 8)))
-  
+
   ;; relop with 2 int64s
   (check-42
      `(if (= 1 1)

@@ -98,7 +98,7 @@
       (cond
         [(empty? p) acc]
         [(empty? regs)
-         (f 
+         (f
            (cdr p)
            regs
            (add1 next-fv)
@@ -170,6 +170,7 @@
            ,(impose-calling-conventions-pred nfvs-box p1)
            ,(impose-calling-conventions-pred nfvs-box p2)
            ,(impose-calling-conventions-pred nfvs-box p3))]
+      ;; (relop opand opand)
       [`(,_ ,_ ,_)
         p]))
 
@@ -263,7 +264,7 @@
        (void)]
       [(? aloc?)
        (void)]))
-  
+
   ;; not used
   #;
   (define (impose-calling-conventions-triv t)
@@ -342,7 +343,7 @@
   (check-false (check-list-lengths '((1) ()) '(1)))
   (check-true (check-list-lengths '(() (1) (1 2) (1 2 3)) '(0 1 2 3)))
   (check-false (check-list-lengths '((1) (1 2) (1 2 3)) '(1 0 3)))
-          
+
 
 
   ;; tail/value
@@ -366,7 +367,7 @@
          x.1)))
 
   ;; value/call
-  (define prog1 
+  (define prog1
     '(module
        (define L.foo.1 (lambda () 42))
        (begin
