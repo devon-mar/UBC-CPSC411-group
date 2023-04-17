@@ -183,13 +183,13 @@
   ;; (set! reg triv/int64)
   (check-42 '(begin (set! rax 42)))
 
-	(check-42
+  (check-42
     `(begin
        ;; (set! addr int32)
        (set! ,(fbp 0) 42)
        ;; (set! reg loc/addr)
        (set! rax ,(fbp 0))))
-		
+
 
   (check-42
     `(begin
